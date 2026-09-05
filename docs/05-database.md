@@ -1,6 +1,6 @@
 # 05 — Ma'lumotlar bazasi arxitekturasi
 
-To'liq DDL: [`db/schema.sql`](../db/schema.sql) — 40 ta jadval, PostgreSQL 16 + PostGIS.
+To'liq DDL: [`db/migrations/0001_init.sql`](../db/migrations/0001_init.sql) — 40 ta jadval, PostgreSQL 16 + PostGIS.
 
 ## 5.1. ER diagram (asosiy o'zak)
 
@@ -154,14 +154,35 @@ statistik shaklda qoladi.
 | Admin: verifikatsiya navbati | `idx_docs_verify` (partial) | < 20 ms |
 | Tracking: buyurtma marshruti | `idx_dl_order_time` + partition pruning | < 50 ms |
 
-## 5.5. Migratsiya strategiyasi
+## 5.5. Migratsiya strategiyasi va DB qatlami
 
-- **Prisma Migrate** (yoki TypeORM migrations) — versiyalangan, `up` va `down`.
-- PostGIS/trigger kabi raw SQL — `prisma/migrations/*/migration.sql` ichida qo'lda.
-- **Zero-downtime qoidasi:** ustun o'chirish va nom o'zgartirish ikki bosqichda
-  (avval kod ikkalasini ham qo'llab-quvvatlaydi, keyin eski ustun o'chiriladi).
+> **2-bosqichda aniqlashtirilgan qaror.** 1-bosqichda "Prisma Migrate yoki
+> TypeORM" deb qoldirilgan edi. Kodga o'tganda tanlov yakunlandi:
+> **SQL-first migratsiya + Kysely query builder**. Sabab quyida.
+
+| Variant | Nima uchun tanlanmadi |
+|---|---|
+| Prisma | PostGIS tiplarini `Unsupported` deb belgilaydi va ular bilan ishlab bo'lmaydi; partitioning va `DEFERRABLE` triggerlarni generatsiya qilmaydi. Natijada "generatsiya qilingan, keyin qo'lda tuzatilgan" migratsiya paydo bo'ladi — eng yomon holat |
+| TypeORM | Migratsiyalari ishonchsiz, geo bilan ishlash noqulay, ekotizim sekinlashgan |
+| **Kysely** ⭐ | Query builder, ORM emas: to'liq tip xavfsizligi + SQL ustidan to'liq nazorat. Kodgeneratsiya bosqichi yo'q. Generatsiya qilingan SQL o'qiladigan va `EXPLAIN ANALYZE` bilan optimallashtiriladigan bo'ladi |
+
+**Amalda:**
+- `db/migrations/NNNN_*.sql` — versiyalangan SQL fayllar, **yagona haqiqat manbai**.
+- `apps/api/src/infra/database/migrator.ts` — ularni tartib bilan qo'llaydi va
+  `schema_migrations` jadvalida checksum bilan qayd etadi.
+- **Qo'llangan migratsiyani tahrirlash mumkin emas** — checksum mos kelmasa
+  migrator xato beradi. Tuzatish uchun yangi fayl yoziladi.
+- `apps/api/src/infra/database/database.types.ts` — SQL'ning TS aksi;
+  har bir modul o'z jadvallarini qo'shib boradi.
+- Geo so'rovlar (`ST_DWithin`, `ST_MakePoint`) Kysely'ning `sql` shabloni
+  orqali — parametrlangan va SQL injection'dan himoyalangan.
+
+**Zero-downtime qoidalari (o'zgarishsiz):**
+- Ustun o'chirish va nom o'zgartirish ikki bosqichda (avval kod ikkalasini ham
+  qo'llab-quvvatlaydi, keyin eski ustun o'chiriladi).
 - Har bir migratsiya staging'da prod hajmidagi ma'lumotda sinaladi.
-- `CREATE INDEX CONCURRENTLY` — prodda jadval bloklanmasligi uchun.
+- `CREATE INDEX CONCURRENTLY` — prodda jadval bloklanmasligi uchun (bunday
+  migratsiya tranzaksiyadan tashqarida, alohida faylda bajariladi).
 
 ## 5.6. Seed ma'lumotlar (`db/seeds/`)
 

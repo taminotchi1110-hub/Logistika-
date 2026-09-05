@@ -1,10 +1,31 @@
 # KARVON — O'zbekiston uchun raqamli yuk almashinuv platformasi
 
-> **Holat:** 1-BOSQICH — Arxitektura, Ma'lumotlar bazasi, User Flow, UI/UX, Development Plan
-> **Versiya:** 1.0 · **Sana:** 2026-09-05
+> **Holat:** 2-BOSQICH — Sprint 0 (fundament) + Sprint 1 (autentifikatsiya) kodlandi
+> **Versiya:** 0.1.0 · **Sana:** 2026-09-05
 
 Yuk beruvchi (shipper) va haydovchi (carrier) ni real vaqtda bog'laydigan, GPS tracking,
 avtomatik matching, escrow to'lov va reyting tizimiga ega marketplace platforma.
+
+---
+
+## Tez boshlash
+
+```bash
+npm install
+cp .env.example .env
+npm run infra:up        # PostgreSQL+PostGIS, Redis, MinIO, Adminer
+npm run db:migrate      # sxema
+npm run db:seed         # 14 viloyat, transport turlari, tariflar
+npm run dev             # http://localhost:3000/v1 · hujjat: /docs
+```
+
+Batafsil: [docs/13-backend.md](docs/13-backend.md)
+
+| Bosqich | Holat |
+|---|---|
+| 1 — Arxitektura, DB, user flow, UI/UX, roadmap | ✅ tayyor |
+| 2 — Sprint 0 + Auth (OTP, JWT, sessiyalar, spravochnik) | ✅ tayyor |
+| 3 — Transport, hujjatlar, yuk e'loni, lenta, geo | ⏳ keyingi |
 
 ---
 
@@ -15,6 +36,7 @@ avtomatik matching, escrow to'lov va reyting tizimiga ega marketplace platforma.
 | Backend | **NestJS (Node.js 22 + TypeScript)** | Modular DI arxitektura, REST+WebSocket+Queue bitta framework ichida, TS tufayli mobil/admin bilan umumiy tiplar |
 | AI/ML servis | **Python 3.12 + FastAPI** (2-yil) | Matching/ETA/fraud modellari uchun alohida servis |
 | DB | **PostgreSQL 16 + PostGIS 3.4** | Geo-so'rovlar (radius, polygon, marshrut) native, ACID, partitioning |
+| DB qatlami | **Kysely** (query builder) + SQL-first migratsiya | ORM PostGIS, partitioning va DEFERRABLE triggerlarni to'g'ri chiqara olmaydi. Kysely — to'liq tip xavfsizligi + SQL ustidan to'liq nazorat, kodgeneratsiyasiz ([sabab](docs/05-database.md#55-migratsiya-strategiyasi-va-db-qatlami)) |
 | Cache/Queue | **Redis 7** | GEO index, BullMQ, OTP, rate-limit, pub/sub, WS adapter |
 | Realtime | **Socket.IO (NestJS Gateway) + Redis adapter** | Horizontal scale, mobil tarmoqda reconnect/fallback |
 | Routing/ETA | **OSRM yoki Valhalla (self-hosted, OSM Uzbekistan)** | Distance-matrix cheksiz va bepul; API xarajati 0 |
@@ -50,30 +72,35 @@ avtomatik matching, escrow to'lov va reyting tizimiga ega marketplace platforma.
 | 10 | [docs/10-security.md](docs/10-security.md) | Xavfsizlik, anti-fraud, compliance |
 | 11 | [docs/11-roadmap.md](docs/11-roadmap.md) | Sprintlar, jamoa, byudjet, KPI |
 | 12 | [docs/12-uz-integrations.md](docs/12-uz-integrations.md) | Click/Payme/SMS/soliq/xarita integratsiyalari |
-| — | [db/schema.sql](db/schema.sql) | To'liq PostgreSQL DDL |
+| 13 | [docs/13-backend.md](docs/13-backend.md) | **Backend: ishga tushirish, kod xaritasi, testlar** |
+| — | [db/migrations/0001_init.sql](db/migrations/0001_init.sql) | To'liq PostgreSQL DDL |
+| — | [db/seeds/0001_reference.sql](db/seeds/0001_reference.sql) | Spravochnik ma'lumotlari |
 
 ---
 
-## Rejalashtirilgan repo strukturasi (2-bosqichda yaratiladi)
+## Repo strukturasi
 
 ```
 karvon/
 ├── apps/
-│   ├── api/              # NestJS core API (REST + WS)
-│   ├── worker/           # BullMQ consumerlar (matching, notification, payout)
-│   ├── admin-web/        # React admin SPA
-│   └── mobile/           # Flutter (shipper + driver bitta ilovada, role bo'yicha)
-├── packages/
-│   ├── contracts/        # Zod/OpenAPI sxemalar, TS tiplar (API↔admin umumiy)
-│   └── config/           # eslint, tsconfig, prettier
-├── services/
-│   └── ai-matching/      # FastAPI (v2)
+│   └── api/              # ✅ NestJS core API (REST; WebSocket 4-bosqichda)
+│       ├── src/
+│       │   ├── config/           # env validatsiya (zod), JWT kalitlari
+│       │   ├── common/           # xatolar, filter, interceptor, guard, util
+│       │   ├── infra/            # PostgreSQL (Kysely), Redis, migrator
+│       │   └── modules/          # auth · users · sms · reference · health
+│       └── test/                 # e2e testlar
 ├── db/
-│   ├── migrations/       # Prisma/TypeORM migratsiyalari
-│   └── seeds/            # viloyat, tuman, transport turlari
-├── infra/
-│   ├── docker/
-│   ├── k8s/
-│   └── terraform/
-└── docs/
+│   ├── migrations/       # ✅ SQL — yagona haqiqat manbai
+│   └── seeds/            # ✅ viloyat, tuman, transport turlari, tariflar
+├── docs/                 # ✅ 13 ta hujjat
+├── docker-compose.yml    # ✅ postgres+postgis, redis, minio, adminer
+│
+│   # keyingi bosqichlarda:
+├── apps/worker/          # BullMQ consumerlar (matching, notification, payout)
+├── apps/admin-web/       # React admin SPA
+├── apps/mobile/          # Flutter (klient + haydovchi bitta ilovada)
+├── packages/contracts/   # API ↔ admin umumiy TS tiplar
+├── services/ai-matching/ # FastAPI (V2)
+└── infra/                # k8s, terraform
 ```

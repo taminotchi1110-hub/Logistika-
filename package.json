@@ -1,0 +1,31 @@
+{
+  "name": "karvon",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Karvon — O'zbekiston uchun yuk almashinuv platformasi",
+  "engines": {
+    "node": ">=20.11.0",
+    "npm": ">=10.0.0"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run start:dev --workspace=@karvon/api",
+    "build": "npm run build --workspace=@karvon/api",
+    "test": "npm run test --workspace=@karvon/api",
+    "lint": "npm run lint --workspace=@karvon/api",
+    "format": "prettier --write \"apps/**/*.{ts,js,json}\" \"*.{json,md}\"",
+    "db:migrate": "npm run db:migrate --workspace=@karvon/api",
+    "db:seed": "npm run db:seed --workspace=@karvon/api",
+    "db:reset": "npm run db:reset --workspace=@karvon/api",
+    "infra:up": "docker compose up -d",
+    "infra:down": "docker compose down",
+    "infra:logs": "docker compose logs -f",
+    "infra:nuke": "docker compose down -v"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3"
+  }
+}
