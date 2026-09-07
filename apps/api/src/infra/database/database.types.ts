@@ -209,6 +209,190 @@ export interface SpecialRequirementsTable {
   extraCostHintTiyin: string | null;
 }
 
+// ---------------------------------------------------------------- transport
+export interface VehiclesTable {
+  id: Generated<string>;
+  driverId: string;
+  companyId: string | null;
+  vehicleTypeId: number;
+  bodyTypeId: number;
+  brand: string;
+  model: string;
+  year: number | null;
+  plateNumber: string;
+  color: string | null;
+  capacityKg: number;
+  volumeM3: string;
+  lengthM: string | null;
+  widthM: string | null;
+  heightM: string | null;
+  hasTrailer: Generated<boolean>;
+  trailerCapacityKg: number | null;
+  trailerVolumeM3: string | null;
+  hasHydroBoard: Generated<boolean>;
+  hasRamp: Generated<boolean>;
+  tempMinC: number | null;
+  tempMaxC: number | null;
+  adrCertified: Generated<boolean>;
+  insuranceExpiresAt: ColumnType<Date, Date | string | null, Date | string | null> | null;
+  inspectionExpiresAt: ColumnType<Date, Date | string | null, Date | string | null> | null;
+  verificationStatus: Generated<VerificationStatus>;
+  isActive: Generated<boolean>;
+  isPrimary: Generated<boolean>;
+  createdAt: CreatedAt;
+  updatedAt: UpdatedAt;
+  deletedAt: Date | null;
+}
+
+export interface DriverRoutesTable {
+  id: Generated<string>;
+  driverId: string;
+  fromRegionId: number;
+  toRegionId: number | null;
+  isRegular: Generated<boolean>;
+  priority: Generated<number>;
+  createdAt: CreatedAt;
+}
+
+// ---------------------------------------------------------------- manzillar
+export interface SavedAddressesTable {
+  id: Generated<string>;
+  userId: string;
+  label: string;
+  addressText: string;
+  regionId: number | null;
+  districtId: number | null;
+  contactName: string | null;
+  contactPhone: string | null;
+  notes: string | null;
+  useCount: Generated<number>;
+  createdAt: CreatedAt;
+  // `geom` (geography) ataylab yoʻq — u faqat xom SQL orqali yoziladi/oʻqiladi
+}
+
+// ---------------------------------------------------------------- hujjatlar
+export type DocumentType =
+  | 'PASSPORT'
+  | 'ID_CARD'
+  | 'DRIVER_LICENSE'
+  | 'VEHICLE_REG'
+  | 'INSURANCE'
+  | 'CARGO_DOC'
+  | 'WAYBILL'
+  | 'CONTRACT'
+  | 'POD'
+  | 'POP'
+  | 'SIGNATURE'
+  | 'OTHER';
+
+export type OwnerType = 'USER' | 'DRIVER' | 'VEHICLE' | 'LOAD' | 'ORDER' | 'COMPANY';
+
+export interface DocumentsTable {
+  id: Generated<string>;
+  ownerType: OwnerType;
+  ownerId: string;
+  type: DocumentType;
+  fileKey: string;
+  fileName: string | null;
+  mimeType: string | null;
+  sizeBytes: number | null;
+  checksumSha256: string | null;
+  pageSide: string | null;
+  verificationStatus: Generated<VerificationStatus>;
+  verifiedBy: string | null;
+  verifiedAt: Date | null;
+  rejectionReason: string | null;
+  expiresAt: ColumnType<Date, Date | string | null, Date | string | null> | null;
+  uploadedBy: string | null;
+  createdAt: CreatedAt;
+  deletedAt: Date | null;
+}
+
+// ---------------------------------------------------------------- yuk
+export type LoadStatus =
+  | 'DRAFT'
+  | 'PUBLISHED'
+  | 'MATCHING'
+  | 'OFFERS_RECEIVED'
+  | 'ASSIGNED'
+  | 'EXPIRED'
+  | 'CANCELLED';
+
+export type PaymentMethod = 'CASH' | 'CARD' | 'BANK_TRANSFER' | 'ESCROW';
+
+export interface LoadsTable {
+  id: Generated<string>;
+  publicNo: Generated<string>;
+  shipperId: string;
+  companyId: string | null;
+  status: Generated<LoadStatus>;
+
+  title: string;
+  description: string | null;
+  categoryId: number;
+  weightKg: number;
+  volumeM3: string | null;
+  packagesCount: number | null;
+  packageType: string | null;
+  isFragile: Generated<boolean>;
+  tempMinC: number | null;
+  tempMaxC: number | null;
+
+  pickupAddress: string;
+  pickupRegionId: number;
+  pickupDistrictId: number | null;
+  pickupContactName: string | null;
+  pickupContactPhone: string | null;
+  pickupFrom: Date | string;
+  pickupTo: Date | string;
+
+  deliveryAddress: string;
+  deliveryRegionId: number;
+  deliveryDistrictId: number | null;
+  deliveryContactName: string | null;
+  deliveryContactPhone: string | null;
+  deliveryBy: Date | string | null;
+
+  distanceKm: string | null;
+  durationMin: number | null;
+  routePolyline: string | null;
+
+  requiredVehicleTypeIds: Generated<number[]>;
+  requiredBodyTypeIds: Generated<number[]>;
+  specialRequirementIds: Generated<number[]>;
+
+  priceTiyin: string | null;
+  isNegotiable: Generated<boolean>;
+  paymentMethod: Generated<PaymentMethod>;
+  suggestedPriceTiyin: string | null;
+
+  isTop: Generated<boolean>;
+  topUntil: Date | null;
+  viewCount: Generated<number>;
+  offerCount: Generated<number>;
+  publishedAt: Date | null;
+  expiresAt: Date | string | null;
+  createdAt: CreatedAt;
+  updatedAt: UpdatedAt;
+  // `pickup_geom` / `delivery_geom` — faqat xom SQL orqali (PostGIS)
+}
+
+// ------------------------------------------------------- narx statistikasi
+export interface RoutePriceStatsTable {
+  id: Generated<string>;
+  fromRegionId: number;
+  toRegionId: number;
+  vehicleTypeId: number;
+  periodStart: ColumnType<Date, Date | string, Date | string>;
+  ordersCount: number;
+  medianPriceTiyin: string;
+  p25PriceTiyin: string | null;
+  p75PriceTiyin: string | null;
+  avgPricePerKmTiyin: string | null;
+  avgDistanceKm: string | null;
+  computedAt: CreatedAt;
+}
+
 // ---------------------------------------------------------------- DB
 export interface Database {
   users: UsersTable;
@@ -224,6 +408,12 @@ export interface Database {
   bodyTypes: BodyTypesTable;
   cargoCategories: CargoCategoriesTable;
   specialRequirements: SpecialRequirementsTable;
+  vehicles: VehiclesTable;
+  driverRoutes: DriverRoutesTable;
+  savedAddresses: SavedAddressesTable;
+  documents: DocumentsTable;
+  loads: LoadsTable;
+  routePriceStats: RoutePriceStatsTable;
 }
 
 // Qulay aliaslar
@@ -234,3 +424,16 @@ export type UserUpdate = Updateable<UsersTable>;
 export type UserSession = Selectable<UserSessionsTable>;
 export type OtpRequest = Selectable<OtpRequestsTable>;
 export type DriverProfile = Selectable<DriverProfilesTable>;
+
+export type Vehicle = Selectable<VehiclesTable>;
+export type NewVehicle = Insertable<VehiclesTable>;
+export type VehicleUpdate = Updateable<VehiclesTable>;
+
+export type DocumentRow = Selectable<DocumentsTable>;
+export type NewDocument = Insertable<DocumentsTable>;
+
+export type Load = Selectable<LoadsTable>;
+export type NewLoad = Insertable<LoadsTable>;
+export type LoadUpdate = Updateable<LoadsTable>;
+
+export type SavedAddress = Selectable<SavedAddressesTable>;

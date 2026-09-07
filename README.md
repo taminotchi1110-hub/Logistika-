@@ -1,7 +1,7 @@
 # KARVON — O'zbekiston uchun raqamli yuk almashinuv platformasi
 
-> **Holat:** 2-BOSQICH — Sprint 0 (fundament) + Sprint 1 (autentifikatsiya) kodlandi
-> **Versiya:** 0.1.0 · **Sana:** 2026-09-05
+> **Holat:** 3-BOSQICH — transport, hujjatlar, geo servis, yuk e'loni va haydovchi lentasi kodlandi
+> **Versiya:** 0.3.0 · **Sana:** 2026-09-05
 
 Yuk beruvchi (shipper) va haydovchi (carrier) ni real vaqtda bog'laydigan, GPS tracking,
 avtomatik matching, escrow to'lov va reyting tizimiga ega marketplace platforma.
@@ -25,7 +25,8 @@ Batafsil: [docs/13-backend.md](docs/13-backend.md)
 |---|---|
 | 1 — Arxitektura, DB, user flow, UI/UX, roadmap | ✅ tayyor |
 | 2 — Sprint 0 + Auth (OTP, JWT, sessiyalar, spravochnik) | ✅ tayyor |
-| 3 — Transport, hujjatlar, yuk e'loni, lenta, geo | ⏳ keyingi |
+| 3 — Transport, hujjatlar, geo servis, yuk e'loni va lenta | ✅ tayyor |
+| 4 — Matching, takliflar, buyurtma, WebSocket, push | ⏳ keyingi |
 
 ---
 
@@ -73,6 +74,7 @@ Batafsil: [docs/13-backend.md](docs/13-backend.md)
 | 11 | [docs/11-roadmap.md](docs/11-roadmap.md) | Sprintlar, jamoa, byudjet, KPI |
 | 12 | [docs/12-uz-integrations.md](docs/12-uz-integrations.md) | Click/Payme/SMS/soliq/xarita integratsiyalari |
 | 13 | [docs/13-backend.md](docs/13-backend.md) | **Backend: ishga tushirish, kod xaritasi, testlar** |
+| 14 | [docs/14-loads-and-fleet.md](docs/14-loads-and-fleet.md) | **Transport, hujjatlar, geo servis, yuk e'loni** |
 | — | [db/migrations/0001_init.sql](db/migrations/0001_init.sql) | To'liq PostgreSQL DDL |
 | — | [db/seeds/0001_reference.sql](db/seeds/0001_reference.sql) | Spravochnik ma'lumotlari |
 
@@ -87,13 +89,14 @@ karvon/
 │       ├── src/
 │       │   ├── config/           # env validatsiya (zod), JWT kalitlari
 │       │   ├── common/           # xatolar, filter, interceptor, guard, util
-│       │   ├── infra/            # PostgreSQL (Kysely), Redis, migrator
-│       │   └── modules/          # auth · users · sms · reference · health
+│       │   ├── infra/            # PostgreSQL (Kysely), Redis, S3, migrator
+│       │   └── modules/          # auth · users · sms · reference · geo · media
+│       │                         # documents · vehicles · drivers · addresses · loads
 │       └── test/                 # e2e testlar
 ├── db/
 │   ├── migrations/       # ✅ SQL — yagona haqiqat manbai
 │   └── seeds/            # ✅ viloyat, tuman, transport turlari, tariflar
-├── docs/                 # ✅ 13 ta hujjat
+├── docs/                 # ✅ 14 ta hujjat
 ├── docker-compose.yml    # ✅ postgres+postgis, redis, minio, adminer
 │
 │   # keyingi bosqichlarda:

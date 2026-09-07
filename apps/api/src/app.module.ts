@@ -8,11 +8,19 @@ import { CommonModule } from '@/common/common.module';
 import { validateEnv, type Env } from '@/config/env.schema';
 import { DatabaseModule } from '@/infra/database/database.module';
 import { RedisModule } from '@/infra/redis/redis.module';
+import { StorageModule } from '@/infra/storage/storage.module';
+import { AddressesModule } from '@/modules/addresses/addresses.module';
 import { AuthModule } from '@/modules/auth/auth.module';
+import { DocumentsModule } from '@/modules/documents/documents.module';
+import { DriversModule } from '@/modules/drivers/drivers.module';
+import { GeoModule } from '@/modules/geo/geo.module';
 import { HealthModule } from '@/modules/health/health.module';
+import { LoadsModule } from '@/modules/loads/loads.module';
+import { MediaModule } from '@/modules/media/media.module';
 import { ReferenceModule } from '@/modules/reference/reference.module';
 import { SmsModule } from '@/modules/sms/sms.module';
 import { UsersModule } from '@/modules/users/users.module';
+import { VehiclesModule } from '@/modules/vehicles/vehicles.module';
 
 @Module({
   imports: [
@@ -61,15 +69,25 @@ import { UsersModule } from '@/modules/users/users.module';
       },
     }),
 
+    // Infratuzilma (global)
     DatabaseModule,
     RedisModule,
+    StorageModule,
     CommonModule,
 
+    // Domen modullari
     HealthModule,
     SmsModule,
     UsersModule,
     AuthModule,
     ReferenceModule,
+    GeoModule,
+    MediaModule,
+    DocumentsModule,
+    VehiclesModule,
+    DriversModule,
+    AddressesModule,
+    LoadsModule,
   ],
 })
 export class AppModule {}

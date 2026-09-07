@@ -56,6 +56,33 @@ export const envSchema = z
 
     // --- shifrlash ---
     FIELD_ENCRYPTION_KEY: z.string().optional().or(z.literal('')),
+
+    // --- S3 / MinIO ---
+    S3_ENDPOINT: z.string().url(),
+    S3_REGION: z.string().default('us-east-1'),
+    S3_BUCKET: z.string().min(3),
+    S3_ACCESS_KEY: z.string().min(1),
+    S3_SECRET_KEY: z.string().min(1),
+    S3_FORCE_PATH_STYLE: z
+      .enum(['true', 'false'])
+      .default('true')
+      .transform((v) => v === 'true'),
+    S3_PUBLIC_URL: z.string().url().optional().or(z.literal('')),
+    S3_UPLOAD_URL_TTL_SECONDS: z.coerce.number().int().min(60).max(3600).default(600),
+    S3_DOWNLOAD_URL_TTL_SECONDS: z.coerce.number().int().min(30).max(3600).default(300),
+    S3_MAX_UPLOAD_BYTES: z.coerce.number().int().min(1024).default(20 * 1024 * 1024),
+
+    // --- marshrut va geokoding ---
+    OSRM_BASE_URL: z.string().url().optional().or(z.literal('')),
+    GEOCODER_PROVIDER: z.enum(['nominatim', 'yandex']).default('nominatim'),
+    NOMINATIM_BASE_URL: z.string().url().default('https://nominatim.openstreetmap.org'),
+    YANDEX_GEOCODER_API_KEY: z.string().optional().or(z.literal('')),
+    GEO_HTTP_TIMEOUT_MS: z.coerce.number().int().min(1000).max(30_000).default(8_000),
+
+    // --- yuk e'lonlari ---
+    LOAD_DEFAULT_TTL_HOURS: z.coerce.number().int().min(1).max(720).default(72),
+    LOAD_MAX_ACTIVE_PER_SHIPPER: z.coerce.number().int().min(1).max(1000).default(20),
+    LOAD_FEED_PAGE_SIZE: z.coerce.number().int().min(5).max(100).default(20),
   })
   .superRefine((env, ctx) => {
     const isProd = env.NODE_ENV === 'production' || env.NODE_ENV === 'staging';
@@ -95,6 +122,22 @@ export const envSchema = z
         code: z.ZodIssueCode.custom,
         path: ['ESKIZ_EMAIL'],
         message: 'SMS_PROVIDER=eskiz uchun ESKIZ_EMAIL va ESKIZ_PASSWORD kerak.',
+      });
+    }
+    if (env.GEOCODER_PROVIDER === 'yandex' && !env.YANDEX_GEOCODER_API_KEY) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['YANDEX_GEOCODER_API_KEY'],
+        message: 'GEOCODER_PROVIDER=yandex uchun API kalit kerak.',
+      });
+    }
+    // Prodda masofa taxminan hisoblanishi mumkin emas: narx va ETA shunga bog'liq.
+    if (isProd && !env.OSRM_BASE_URL) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['OSRM_BASE_URL'],
+        message:
+          'Production uchun OSRM majburiy — aks holda masofa taxminiy hisoblanadi va narx notoʼgri chiqadi.',
       });
     }
   });
