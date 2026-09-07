@@ -318,4 +318,4 @@ har bir mutatsiya `audit_logs` ga yoziladi.
 2. Ruxsat etilmagan status o'tishi 409 qaytaradi.
 3. Bitta haydovchida ikkinchi faol buyurtma yaratib bo'lmaydi (parallel so'rovda ham).
 4. Offer qabul qilinganda qolganlari `REJECTED` bo'ladi (atomik).
-5. Telefon raqami `CONFIRMED` gacha API javobida maskalangan.
+5. Telefon raqami `ARRIVED_AT_PICKUP` gacha API javobida maskalangan.

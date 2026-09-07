@@ -292,6 +292,61 @@ Hodisa (order.confirmed, offer.received, load.matched, payment.done, …)
 
 - **Deep link:** `karvon://order/{id}` — push bosilganda to'g'ri ekran ochiladi.
 - **Prioritet:** `HIGH` (offer, status) → FCM `high_priority`, Android'da Doze rejimini yoradi.
+
+### Ekran yuqorisidan sizib chiquvchi bildirishnoma (heads-up)
+
+Chat xabari va buyurtma statusi **darhol ko'rinishi** kerak — foydalanuvchi
+ilovani ochib qarashini kutib bo'lmaydi. Ikki holat bor va ikkalasi ham
+hisobga olinadi:
+
+**1. Ilova YOPIQ yoki fonda — tizim bildirishnomasi**
+
+Android'da bildirishnoma ekran yuqorisidan "sizib chiqishi" (heads-up) uchun
+kanal muhimligi `IMPORTANCE_HIGH` bo'lishi shart — bu ilova o'rnatilganda bir
+marta yaratiladi va keyin o'zgarmaydi:
+
+```
+Kanal: karvon_messages   IMPORTANCE_HIGH   ovoz + vibratsiya   heads-up ✅
+Kanal: karvon_orders     IMPORTANCE_HIGH   ovoz               heads-up ✅
+Kanal: karvon_marketing  IMPORTANCE_LOW    ovozsiz            heads-up ❌
+```
+
+Serverdan FCM payload:
+
+```jsonc
+{
+  "android": {
+    "priority": "high",
+    "notification": { "channel_id": "karvon_messages", "sound": "default" }
+  },
+  "apns": {
+    "headers": { "apns-priority": "10", "apns-push-type": "alert" },
+    "payload": { "aps": { "sound": "default", "interruption-level": "time-sensitive" } }
+  },
+  "data": { "type": "chat.message", "orderId": "…", "deepLink": "karvon://order/…/chat" }
+}
+```
+
+iOS'da `interruption-level: time-sensitive` — "Focus" rejimi yoqilgan bo'lsa
+ham bildirishnoma o'tadi (chat va buyurtma statusi uchun asoslangan).
+
+**2. Ilova OCHIQ — in-app banner**
+
+Ilova old planda bo'lsa tizim bildirishnomasi ko'rinmaydi. Shuning uchun xabar
+**WebSocket orqali** ham keladi va Flutter ekranning yuqorisidan sirg'aluvchi
+banner chiqaradi (`Overlay` + `SlideTransition`, 4 soniya, bosilsa chatga o'tadi,
+yuqoriga surilsa yopiladi). Bu ikki kanal bir vaqtda kelsa — `dedupeKey`
+bo'yicha bittasi ko'rsatiladi.
+
+```
+Xabar yuborildi
+   ├─ WebSocket  → qabul qiluvchi ONLAYN bo'lsa   → in-app banner (darhol)
+   └─ FCM push   → OFLAYN yoki fonda bo'lsa       → heads-up bildirishnoma
+```
+
+Server tomonda qaror: qabul qiluvchining `order:{id}` room'ida faol soketi
+bormi. Bor bo'lsa — faqat WS, yo'q bo'lsa — push. Ikkalasi ham yuborilsa
+foydalanuvchi bitta xabarni ikki marta ko'radi.
 - **Retry:** FCM xatosi → exponential backoff (3 urinish). `UNREGISTERED` javobida
   device token o'chiriladi.
 - **Jim rejim:** 23:00–07:00 oralig'ida faqat faol buyurtma bo'yicha pushlar o'tadi.
@@ -351,8 +406,44 @@ CREDIT  PLATFORM_REVENUE     +10 000 000 tiyin
 - Fayl: mobil `POST /media/presign` → to'g'ridan-to'g'ri S3 ga yuklaydi →
   `attachment_key` bilan xabar yuboriladi. **Fayl API server orqali o'tmaydi.**
 - Xavfsizlik: chat faqat `ASSIGNED`+ statusdagi buyurtma bo'yicha ochiladi;
-  `CLOSED` dan keyin read-only. Telefon raqami regexi `CONFIRMED` gacha maskalanadi.
+  `CLOSED` dan keyin read-only.
 - Saqlash: 1 yil, keyin arxiv.
+
+### Kontakt ko'rinishi — asosiy biznes qoidasi
+
+> **Haydovchi va yuk beruvchi bir-birining telefon raqamini faqat haydovchi
+> yuk olish nuqtasiga yetib borgandan keyin ko'radi** (`ARRIVED_AT_PICKUP`).
+> Unga qadar butun muloqot platforma ichidagi chat orqali ketadi.
+
+| Bosqich | Chat | Olish kontakti | Yetkazish kontakti | Hamkor telefoni |
+|---|---|---|---|---|
+| `ASSIGNED` | ✅ ochiladi | maskalangan | maskalangan | maskalangan |
+| `CONFIRMED` | ✅ | maskalangan | maskalangan | maskalangan |
+| `EN_ROUTE_TO_PICKUP` | ✅ | maskalangan | maskalangan | maskalangan |
+| **`ARRIVED_AT_PICKUP`** | ✅ | **✅ ochiq** | maskalangan | **✅ ochiq** |
+| `LOADED` va keyin | ✅ | ✅ | **✅ ochiq** | ✅ |
+| `CLOSED` | read-only | ✅ | ✅ | ✅ |
+| `CANCELLED_*` | yopiq | ❌ | ❌ | ❌ |
+
+**Nega shunday:** raqam erta ochilsa, tomonlar platformani chetlab o'tib
+kelishib olishlari oson bo'ladi — komissiya ham, nizo himoyasi ham, tracking
+ham yo'qoladi. Yetib borish payti esa bitim amalda boshlangan nuqta: bu yerda
+chetlab o'tishning ma'nosi qolmaydi, aloqa esa haqiqatan zarur.
+
+**Yetkazish nuqtasidagi kontakt** ko'pincha uchinchi shaxs (qabul qiluvchi)
+bo'ladi va u yuk ortilgandan keyin ochiladi — haydovchi yo'lga chiqqach
+kelishi haqida ogohlantirishi kerak.
+
+**Favqulodda ochish.** Haydovchi manzilni topolmasligi yoki darvoza yopiq
+bo'lishi mumkin. Shuning uchun raqam yopiq bo'lgan bosqichlarda ilovada
+**"Bog'lana olmayapman"** tugmasi ko'rinadi (`emergencyRevealAvailable`).
+U sabab so'raydi, raqamni ochadi va hodisani `audit_logs` ga yozadi.
+Suiiste'mol qilinsa (bir haydovchi ko'p marta ishlatsa) — anti-fraud flag.
+
+Bu qoidalar **bitta joyda** yashaydi: `modules/orders/order-status.ts` →
+`contactVisibility(status)`. REST ham, WebSocket ham, mobil ilova ham
+shundan foydalanadi — aks holda "ilovada raqam ko'rinadi, serverda yo'q"
+kabi nomuvofiqlik muqarrar.
 
 ---
 

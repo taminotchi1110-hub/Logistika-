@@ -96,9 +96,9 @@ Belgilar: **M** = MVP (1-reliz), **V2** = 2-reliz (3–6 oy), **V3** = keyingi (
 | F-02 | Matn, rasm, hujjat | M |
 | F-03 | Audio xabar | V2 |
 | F-04 | O'qildi/yetkazildi belgisi, typing indicator | M |
-| F-05 | Telefon raqami buyurtma tasdiqlangunga qadar yashirin | M |
+| F-05 | Telefon raqami **haydovchi yuk olish nuqtasiga yetib borgunga qadar** yashirin | M |
 | F-06 | Ichki qo'ng'iroq (raqamni ko'rsatmasdan) — number masking | V3 |
-| F-07 | Push (FCM) + in-app bildirishnoma markazi | M |
+| F-07 | Push (FCM, heads-up) + in-app bildirishnoma markazi | M |
 | F-08 | SMS fallback (push yetib bormasa, kritik hodisalarda) | V2 |
 | F-09 | Bildirishnoma sozlamalari (kanal bo'yicha yoqish/o'chirish) | V2 |
 

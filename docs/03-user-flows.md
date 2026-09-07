@@ -134,10 +134,10 @@ stateDiagram-v2
 | 2 | `PUBLISHED` | Klient | E'lon qilindi | matching job navbatga |
 | 3 | `MATCHING` | Tizim | Haydovchi qidirilmoqda | top-20 ga push |
 | 4 | `OFFERS_RECEIVED` | Tizim | N ta taklif bor | klientga push |
-| 5 | `ASSIGNED` | Klient | Haydovchi tanlandi | boshqa offerlar rad, 5 daq taymer |
-| 6 | `CONFIRMED` | Haydovchi | Buyurtma tasdiqlandi | **telefon raqamlari ochiladi**, chat, GPS yoqiladi |
+| 5 | `ASSIGNED` | Klient | Haydovchi tanlandi | boshqa offerlar rad, 5 daq taymer, **CHAT OCHILADI** |
+| 6 | `CONFIRMED` | Haydovchi | Buyurtma tasdiqlandi | GPS kuzatuv yoqiladi (chat 5-bosqichda ochilgan) |
 | 7 | `EN_ROUTE_TO_PICKUP` | Haydovchi | Yo'lga chiqdi | tracking boshlanadi (10 s interval) |
-| 8 | `ARRIVED_AT_PICKUP` | Haydovchi/geofence | Yuk olish nuqtasida | klientga push |
+| 8 | `ARRIVED_AT_PICKUP` | Haydovchi/geofence | Yuk olish nuqtasida | klientga push, **TELEFON RAQAMLARI OCHILADI** |
 | 9 | `LOADED` | Haydovchi | Yukni oldi | POP foto majburiy |
 | 10 | `IN_TRANSIT` | Haydovchi | Yo'lda | ETA hisoblanadi |
 | 11 | `ARRIVED_AT_DELIVERY` | Haydovchi/geofence | Manzilga yaqinlashdi | klientga push |
