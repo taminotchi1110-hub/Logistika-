@@ -155,10 +155,7 @@ export class OtpService {
       .executeTakeFirst();
 
     if (!otp) {
-      throw AppError.badRequest(
-        ErrorCode.OTP_NOT_FOUND,
-        'Kod topilmadi. Yangi kod soʻrang.',
-      );
+      throw AppError.badRequest(ErrorCode.OTP_NOT_FOUND, 'Kod topilmadi. Yangi kod soʻrang.');
     }
 
     if (new Date(otp.expiresAt).getTime() <= Date.now()) {

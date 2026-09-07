@@ -42,7 +42,10 @@ export class CreateVehicleDto {
   @Max(new Date().getFullYear() + 1)
   year?: number;
 
-  @ApiProperty({ example: '01 A 123 BC', description: 'Har qanday formatda — server normallashtiradi' })
+  @ApiProperty({
+    example: '01 A 123 BC',
+    description: 'Har qanday formatda — server normallashtiradi',
+  })
   @Transform(({ value }) => (typeof value === 'string' ? (normalizePlate(value) ?? value) : value))
   @IsString()
   @Length(7, 16)

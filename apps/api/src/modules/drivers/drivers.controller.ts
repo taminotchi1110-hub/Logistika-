@@ -1,6 +1,31 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiProperty, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
-import { IsBoolean, IsIn, IsInt, IsLatitude, IsLongitude, IsOptional, Max, Min } from 'class-validator';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiProperty,
+  ApiPropertyOptional,
+  ApiTags,
+} from '@nestjs/swagger';
+import {
+  IsBoolean,
+  IsIn,
+  IsInt,
+  IsLatitude,
+  IsLongitude,
+  IsOptional,
+  Max,
+  Min,
+} from 'class-validator';
 
 import { CurrentUser, Roles, type AuthenticatedUser } from '@/common/decorators';
 import type { DriverAvailability } from '@/infra/database/database.types';

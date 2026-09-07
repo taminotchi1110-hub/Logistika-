@@ -10,12 +10,7 @@ import {
 } from '@/common/decorators';
 
 import { AuthService } from './auth.service';
-import {
-  CompleteProfileDto,
-  RefreshTokenDto,
-  RequestOtpDto,
-  VerifyOtpDto,
-} from './dto/auth.dto';
+import { CompleteProfileDto, RefreshTokenDto, RequestOtpDto, VerifyOtpDto } from './dto/auth.dto';
 import { TokenService } from './token.service';
 
 @ApiTags('auth')

@@ -146,7 +146,10 @@ export class DocumentsService {
       .where('deletedAt', 'is', null)
       .where((eb) =>
         eb.or([
-          eb.and([eb('ownerType', 'in', ['USER', 'DRIVER'] as OwnerType[]), eb('ownerId', '=', userId)]),
+          eb.and([
+            eb('ownerType', 'in', ['USER', 'DRIVER'] as OwnerType[]),
+            eb('ownerId', '=', userId),
+          ]),
           ...(vehicleIds.length > 0
             ? [eb.and([eb('ownerType', '=', 'VEHICLE'), eb('ownerId', 'in', vehicleIds)])]
             : []),

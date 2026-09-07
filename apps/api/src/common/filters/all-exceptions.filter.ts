@@ -79,7 +79,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
         status,
         body: {
           error: {
-            code: status === HttpStatus.BAD_REQUEST ? ErrorCode.VALIDATION_FAILED : `HTTP_${status}`,
+            code:
+              status === HttpStatus.BAD_REQUEST ? ErrorCode.VALIDATION_FAILED : `HTTP_${status}`,
             message: isFieldList ? 'Kiritilgan maʼlumot notoʻgʻri' : String(rawMessage),
             details: isFieldList ? { fields: rawMessage } : undefined,
             requestId,

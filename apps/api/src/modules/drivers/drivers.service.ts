@@ -158,9 +158,10 @@ export class DriversService {
       .where('driverId', '=', driverId)
       .where('fromRegionId', '=', input.fromRegionId);
 
-    const duplicate = await (input.toRegionId === undefined
-      ? baseQuery.where('toRegionId', 'is', null)
-      : baseQuery.where('toRegionId', '=', input.toRegionId)
+    const duplicate = await (
+      input.toRegionId === undefined
+        ? baseQuery.where('toRegionId', 'is', null)
+        : baseQuery.where('toRegionId', '=', input.toRegionId)
     ).executeTakeFirst();
 
     if (duplicate) {

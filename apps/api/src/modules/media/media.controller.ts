@@ -61,7 +61,11 @@ export class MediaController {
     }
 
     // PDF faqat hujjat uchun — chatga yoki avatarga PDF yuklashning maʼnosi yoʻq
-    if (dto.mimeType === 'application/pdf' && dto.purpose !== 'document' && dto.purpose !== 'load') {
+    if (
+      dto.mimeType === 'application/pdf' &&
+      dto.purpose !== 'document' &&
+      dto.purpose !== 'load'
+    ) {
       throw AppError.badRequest(
         ErrorCode.VALIDATION_FAILED,
         'PDF faqat hujjat va yuk uchun qabul qilinadi',

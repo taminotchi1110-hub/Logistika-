@@ -35,7 +35,7 @@ export const envSchema = z
     JWT_REFRESH_TTL_DAYS: z.coerce.number().int().min(1).max(365).default(30),
 
     // --- otp ---
-    OTP_PEPPER: z.string().min(16, 'OTP_PEPPER kamida 16 belgi bo\'lishi kerak'),
+    OTP_PEPPER: z.string().min(16, "OTP_PEPPER kamida 16 belgi bo'lishi kerak"),
     OTP_LENGTH: z.coerce.number().int().min(4).max(8).default(6),
     OTP_TTL_SECONDS: z.coerce.number().int().min(60).max(900).default(300),
     OTP_MAX_ATTEMPTS: z.coerce.number().int().min(3).max(10).default(5),
@@ -70,7 +70,11 @@ export const envSchema = z
     S3_PUBLIC_URL: z.string().url().optional().or(z.literal('')),
     S3_UPLOAD_URL_TTL_SECONDS: z.coerce.number().int().min(60).max(3600).default(600),
     S3_DOWNLOAD_URL_TTL_SECONDS: z.coerce.number().int().min(30).max(3600).default(300),
-    S3_MAX_UPLOAD_BYTES: z.coerce.number().int().min(1024).default(20 * 1024 * 1024),
+    S3_MAX_UPLOAD_BYTES: z.coerce
+      .number()
+      .int()
+      .min(1024)
+      .default(20 * 1024 * 1024),
 
     // --- marshrut va geokoding ---
     OSRM_BASE_URL: z.string().url().optional().or(z.literal('')),
@@ -100,14 +104,14 @@ export const envSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['SMS_PROVIDER'],
-        message: 'Production muhitida SMS_PROVIDER=console bo\'lishi mumkin emas.',
+        message: "Production muhitida SMS_PROVIDER=console bo'lishi mumkin emas.",
       });
     }
     if (isProd && env.OTP_EXPOSE_CODE_IN_DEV) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['OTP_EXPOSE_CODE_IN_DEV'],
-        message: 'OTP kodini javobda ochish production muhitida qat\'iyan taqiqlanadi.',
+        message: "OTP kodini javobda ochish production muhitida qat'iyan taqiqlanadi.",
       });
     }
     if (isProd && !env.FIELD_ENCRYPTION_KEY) {

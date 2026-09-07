@@ -731,7 +731,10 @@ export class LoadsService {
     }
   }
 
-  private cursorValueFor(view: LoadView, sort: NonNullable<LoadFeedQueryDto['sort']>): string | number {
+  private cursorValueFor(
+    view: LoadView,
+    sort: NonNullable<LoadFeedQueryDto['sort']>,
+  ): string | number {
     switch (sort) {
       case 'pickup_date':
         return view.pickup.from.toISOString();

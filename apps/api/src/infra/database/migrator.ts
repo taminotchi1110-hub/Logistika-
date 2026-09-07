@@ -28,7 +28,8 @@ loadEnv({ path: resolve(process.cwd(), '../../.env') });
 
 type Command = 'up' | 'seed' | 'status' | 'reset';
 
-const MIGRATIONS_DIR = process.env.DB_MIGRATIONS_DIR ?? resolve(process.cwd(), '../../db/migrations');
+const MIGRATIONS_DIR =
+  process.env.DB_MIGRATIONS_DIR ?? resolve(process.cwd(), '../../db/migrations');
 const SEEDS_DIR = process.env.DB_SEEDS_DIR ?? resolve(process.cwd(), '../../db/seeds');
 
 interface SqlFile {
@@ -59,7 +60,9 @@ function loadSqlFiles(dir: string): SqlFile[] {
 function requireDatabaseUrl(): string {
   const url = process.env.DATABASE_URL;
   if (!url) {
-    throw new Error('DATABASE_URL o\'rnatilmagan. `.env` faylini yarating (.env.example dan nusxa oling).');
+    throw new Error(
+      "DATABASE_URL o'rnatilmagan. `.env` faylini yarating (.env.example dan nusxa oling).",
+    );
   }
   return url;
 }
@@ -131,7 +134,11 @@ async function up(): Promise<void> {
       }
     }
 
-    console.log(count === 0 ? '\nBarcha migratsiyalar allaqachon qo\'llangan.' : `\n${count} ta migratsiya qo'llandi.`);
+    console.log(
+      count === 0
+        ? "\nBarcha migratsiyalar allaqachon qo'llangan."
+        : `\n${count} ta migratsiya qo'llandi.`,
+    );
   } finally {
     await client.end();
   }
@@ -193,7 +200,7 @@ async function reset(): Promise<void> {
   }
   const client = await connect();
   try {
-    console.warn('  public sxemasi o\'chirilmoqda …');
+    console.warn("  public sxemasi o'chirilmoqda …");
     await client.query('DROP SCHEMA public CASCADE; CREATE SCHEMA public;');
   } finally {
     await client.end();

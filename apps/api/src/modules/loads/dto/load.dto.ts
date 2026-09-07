@@ -25,7 +25,9 @@ import type { PaymentMethod } from '@/infra/database/database.types';
 const PAYMENT_METHODS: PaymentMethod[] = ['CASH', 'CARD', 'BANK_TRANSFER', 'ESCROW'];
 
 const NormalizePhone = (): PropertyDecorator =>
-  Transform(({ value }) => (typeof value === 'string' ? (normalizeUzPhone(value) ?? value) : value));
+  Transform(({ value }) =>
+    typeof value === 'string' ? (normalizeUzPhone(value) ?? value) : value,
+  );
 
 export class LoadPointDto {
   @ApiProperty({ example: 'Toshkent, Yunusobod, Amir Temur 108' })
@@ -92,7 +94,10 @@ export class CreateLoadDto {
   @Max(100_000)
   packagesCount?: number;
 
-  @ApiPropertyOptional({ example: 'palet', enum: ['palet', 'qop', 'quti', 'bochka', 'rulon', 'boshqa'] })
+  @ApiPropertyOptional({
+    example: 'palet',
+    enum: ['palet', 'qop', 'quti', 'bochka', 'rulon', 'boshqa'],
+  })
   @IsOptional()
   @IsIn(['palet', 'qop', 'quti', 'bochka', 'rulon', 'boshqa'])
   packageType?: string;

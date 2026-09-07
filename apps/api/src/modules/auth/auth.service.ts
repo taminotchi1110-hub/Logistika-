@@ -7,7 +7,12 @@ import { DatabaseService } from '@/infra/database/database.service';
 import type { LangCode } from '@/infra/database/database.types';
 import { UsersService, type PublicUserProfile } from '@/modules/users/users.service';
 
-import type { CompleteProfileDto, RefreshTokenDto, RequestOtpDto, VerifyOtpDto } from './dto/auth.dto';
+import type {
+  CompleteProfileDto,
+  RefreshTokenDto,
+  RequestOtpDto,
+  VerifyOtpDto,
+} from './dto/auth.dto';
 import { OtpService, type OtpRequestResult } from './otp.service';
 import { TokenService, type DeviceInfo } from './token.service';
 

@@ -1,0 +1,66 @@
+# --- Bog'liqliklar ---
+node_modules/
+.pnp
+.pnp.js
+
+# --- Build natijalari ---
+dist/
+build/
+out/
+*.tsbuildinfo
+.turbo/
+
+# --- Muhit o'zgaruvchilari (MAXFIY — hech qachon commit qilinmaydi) ---
+.env
+.env.local
+.env.*.local
+.env.development
+.env.staging
+.env.production
+!.env.example
+
+# --- Kalitlar va sertifikatlar ---
+*.pem
+*.key
+*.p12
+*.pfx
+!**/node_modules/**/*.pem
+
+# --- Loglar ---
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+logs/
+
+# --- Test va qamrov ---
+coverage/
+.nyc_output/
+
+# --- IDE ---
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.iml
+*.swp
+*.swo
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Flutter / mobil (keyingi bosqichlarda) ---
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+*.iws
+
+# --- Lokal ma'lumotlar ---
+/osrm/
+*.osm.pbf
+*.osrm*
+/tmp/
+/uploads/

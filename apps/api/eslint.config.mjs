@@ -18,6 +18,12 @@ export default [
     plugins: { '@typescript-eslint': tseslint },
     rules: {
       ...tseslint.configs.recommended.rules,
+      // TypeScript kompilyatori mavjud boʻlmagan identifikatorlarni oʻzi topadi
+      // va buni ancha aniqroq qiladi (global tiplar, modul chegaralari bilan).
+      // ESLint'ning `no-undef` qoidasi esa TS fayllarida `fetch`, `describe`
+      // kabi globallarni "topilmadi" deb notoʻgʻri belgilaydi —
+      // typescript-eslint uni oʻchirishni rasman tavsiya qiladi.
+      'no-undef': 'off',
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],

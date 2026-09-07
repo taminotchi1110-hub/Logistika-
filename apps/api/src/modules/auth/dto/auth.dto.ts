@@ -19,7 +19,9 @@ import { normalizeUzPhone } from '@/common/utils/phone.util';
  * servislar formatlash haqida o'ylamaydi.
  */
 const NormalizePhone = (): PropertyDecorator =>
-  Transform(({ value }) => (typeof value === 'string' ? (normalizeUzPhone(value) ?? value) : value));
+  Transform(({ value }) =>
+    typeof value === 'string' ? (normalizeUzPhone(value) ?? value) : value,
+  );
 
 export class DeviceDto {
   @ApiPropertyOptional({ example: 'a1b2c3d4-e5f6', description: 'Qurilmaning barqaror IDsi' })

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { sql } from 'kysely';
 
 import { AppError } from '@/common/errors/app.error';
@@ -16,8 +16,6 @@ export interface ResolvedRegion {
 
 @Injectable()
 export class GeoService {
-  private readonly logger = new Logger(GeoService.name);
-
   constructor(private readonly database: DatabaseService) {}
 
   /**

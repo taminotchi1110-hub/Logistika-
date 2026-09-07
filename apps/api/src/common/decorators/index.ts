@@ -29,9 +29,12 @@ export interface AuthenticatedUser {
   sessionId: string;
 }
 
+/**
+ * `id` bu yerda qayta eʼlon qilinmaydi: pino-http uni Express `Request`
+ * tipiga oʻzi qoʻshadi (`ReqId`). Takrorlash tiplar konfliktiga olib keladi.
+ */
 export interface RequestWithUser extends Request {
   user?: AuthenticatedUser;
-  id?: string;
 }
 
 /** Kontrollerda joriy foydalanuvchini olish: `@CurrentUser() user: AuthenticatedUser`. */

@@ -310,13 +310,7 @@ export interface DocumentsTable {
 
 // ---------------------------------------------------------------- yuk
 export type LoadStatus =
-  | 'DRAFT'
-  | 'PUBLISHED'
-  | 'MATCHING'
-  | 'OFFERS_RECEIVED'
-  | 'ASSIGNED'
-  | 'EXPIRED'
-  | 'CANCELLED';
+  'DRAFT' | 'PUBLISHED' | 'MATCHING' | 'OFFERS_RECEIVED' | 'ASSIGNED' | 'EXPIRED' | 'CANCELLED';
 
 export type PaymentMethod = 'CASH' | 'CARD' | 'BANK_TRANSFER' | 'ESCROW';
 

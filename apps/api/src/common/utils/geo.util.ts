@@ -28,8 +28,7 @@ export function haversineKm(from: Coordinates, to: Coordinates): number {
   const lat1 = toRadians(from.lat);
   const lat2 = toRadians(to.lat);
 
-  const a =
-    Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
+  const a = Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
 
   return 2 * EARTH_RADIUS_KM * Math.asin(Math.min(1, Math.sqrt(a)));
 }

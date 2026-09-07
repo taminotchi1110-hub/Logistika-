@@ -157,10 +157,7 @@ export class ReferenceService {
 
     // Versiya = mazmun hash'i. Mijoz shu qiymatni saqlaydi va keyingi safar
     // `?version=` bilan so'raydi — o'zgarmagan bo'lsa 304 oladi.
-    const version = createHash('sha256')
-      .update(JSON.stringify(payload))
-      .digest('hex')
-      .slice(0, 16);
+    const version = createHash('sha256').update(JSON.stringify(payload)).digest('hex').slice(0, 16);
 
     return { version, ...payload };
   }
