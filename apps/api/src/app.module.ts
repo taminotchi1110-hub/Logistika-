@@ -17,6 +17,8 @@ import { GeoModule } from '@/modules/geo/geo.module';
 import { HealthModule } from '@/modules/health/health.module';
 import { LoadsModule } from '@/modules/loads/loads.module';
 import { MediaModule } from '@/modules/media/media.module';
+import { NotificationsModule } from '@/modules/notifications/notifications.module';
+import { OrdersModule } from '@/modules/orders/orders.module';
 import { ReferenceModule } from '@/modules/reference/reference.module';
 import { SmsModule } from '@/modules/sms/sms.module';
 import { UsersModule } from '@/modules/users/users.module';
@@ -88,6 +90,8 @@ import { VehiclesModule } from '@/modules/vehicles/vehicles.module';
     DriversModule,
     AddressesModule,
     LoadsModule,
+    NotificationsModule,
+    OrdersModule,
   ],
 })
 export class AppModule {}

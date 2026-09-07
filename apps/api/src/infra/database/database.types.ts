@@ -371,6 +371,156 @@ export interface LoadsTable {
   // `pickup_geom` / `delivery_geom` — faqat xom SQL orqali (PostGIS)
 }
 
+// ---------------------------------------------------------------- takliflar
+export type OfferStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'WITHDRAWN' | 'EXPIRED';
+
+export interface OrderOffersTable {
+  id: Generated<string>;
+  loadId: string;
+  driverId: string;
+  vehicleId: string;
+  initiator: Generated<string>;
+  offeredPriceTiyin: string;
+  message: string | null;
+  status: Generated<OfferStatus>;
+  etaToPickupMin: number | null;
+  matchScore: string | null;
+  expiresAt: Date | string;
+  respondedAt: Date | null;
+  createdAt: CreatedAt;
+}
+
+// ---------------------------------------------------------------- buyurtma
+export type OrderStatusDb =
+  | 'ASSIGNED'
+  | 'CONFIRMED'
+  | 'EN_ROUTE_TO_PICKUP'
+  | 'ARRIVED_AT_PICKUP'
+  | 'LOADED'
+  | 'IN_TRANSIT'
+  | 'ARRIVED_AT_DELIVERY'
+  | 'DELIVERED'
+  | 'COMPLETED'
+  | 'CLOSED'
+  | 'DISPUTED'
+  | 'CANCELLED_BY_SHIPPER'
+  | 'CANCELLED_BY_DRIVER'
+  | 'CANCELLED_BY_ADMIN';
+
+export type PaymentStatus =
+  'CREATED' | 'PENDING' | 'HELD' | 'PAID' | 'FAILED' | 'REFUNDED' | 'CANCELLED';
+
+export interface OrdersTable {
+  id: Generated<string>;
+  publicNo: Generated<string>;
+  loadId: string;
+  offerId: string | null;
+  shipperId: string;
+  driverId: string;
+  vehicleId: string;
+  status: Generated<OrderStatusDb>;
+
+  priceTiyin: string;
+  commissionRate: string;
+  commissionTiyin: string;
+  driverPayoutTiyin: string;
+  paymentMethod: PaymentMethod;
+  paymentStatus: Generated<PaymentStatus>;
+
+  plannedDistanceKm: string | null;
+  actualDistanceKm: string | null;
+  plannedDurationMin: number | null;
+  etaAt: Date | null;
+
+  confirmedAt: Date | null;
+  startedAt: Date | null;
+  pickedUpAt: Date | null;
+  deliveredAt: Date | null;
+  completedAt: Date | null;
+  closedAt: Date | null;
+  cancelledAt: Date | null;
+  cancelReason: string | null;
+  cancelledBy: string | null;
+  penaltyTiyin: Generated<string>;
+
+  trackingToken: string | null;
+  createdAt: CreatedAt;
+  updatedAt: UpdatedAt;
+}
+
+export interface OrderStatusHistoryTable {
+  id: Generated<string>;
+  orderId: string;
+  fromStatus: OrderStatusDb | null;
+  toStatus: OrderStatusDb;
+  actorId: string | null;
+  actorRole: string | null;
+  note: string | null;
+  meta: Generated<Record<string, unknown> | null>;
+  createdAt: CreatedAt;
+  // `geom` — PostGIS, xom SQL orqali yoziladi
+}
+
+// ---------------------------------------------------------------- chat
+export type MessageType = 'TEXT' | 'IMAGE' | 'FILE' | 'AUDIO' | 'SYSTEM' | 'LOCATION';
+
+export interface ConversationsTable {
+  id: Generated<string>;
+  orderId: string | null;
+  loadId: string | null;
+  shipperId: string;
+  driverId: string;
+  isClosed: Generated<boolean>;
+  lastMessageAt: Date | null;
+  createdAt: CreatedAt;
+}
+
+export interface MessagesTable {
+  id: Generated<string>;
+  conversationId: string;
+  senderId: string | null;
+  type: Generated<MessageType>;
+  body: string | null;
+  attachmentKey: string | null;
+  attachmentName: string | null;
+  attachmentSize: number | null;
+  durationSec: number | null;
+  deliveredAt: Date | null;
+  readAt: Date | null;
+  createdAt: CreatedAt;
+  deletedAt: Date | null;
+}
+
+// ---------------------------------------------------------- bildirishnoma
+export type NotificationChannel = 'IN_APP' | 'PUSH' | 'SMS' | 'EMAIL';
+
+export interface NotificationsTable {
+  id: Generated<string>;
+  userId: string;
+  templateKey: string;
+  title: string;
+  body: string;
+  channel: Generated<NotificationChannel>;
+  entityType: string | null;
+  entityId: string | null;
+  deepLink: string | null;
+  data: Record<string, unknown> | null;
+  isRead: Generated<boolean>;
+  readAt: Date | null;
+  sentAt: Date | null;
+  deliveryStatus: string | null;
+  dedupeKey: string | null;
+  createdAt: CreatedAt;
+}
+
+export interface PlatformSettingsTable {
+  key: string;
+  value: unknown;
+  description: string | null;
+  updatedBy: string | null;
+  updatedAt: UpdatedAt;
+}
+
 // ------------------------------------------------------- narx statistikasi
 export interface RoutePriceStatsTable {
   id: Generated<string>;
@@ -407,7 +557,14 @@ export interface Database {
   savedAddresses: SavedAddressesTable;
   documents: DocumentsTable;
   loads: LoadsTable;
+  orderOffers: OrderOffersTable;
+  orders: OrdersTable;
+  orderStatusHistory: OrderStatusHistoryTable;
+  conversations: ConversationsTable;
+  messages: MessagesTable;
+  notifications: NotificationsTable;
   routePriceStats: RoutePriceStatsTable;
+  platformSettings: PlatformSettingsTable;
 }
 
 // Qulay aliaslar
@@ -431,3 +588,8 @@ export type NewLoad = Insertable<LoadsTable>;
 export type LoadUpdate = Updateable<LoadsTable>;
 
 export type SavedAddress = Selectable<SavedAddressesTable>;
+
+export type Offer = Selectable<OrderOffersTable>;
+export type Order = Selectable<OrdersTable>;
+export type Conversation = Selectable<ConversationsTable>;
+export type Message = Selectable<MessagesTable>;

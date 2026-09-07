@@ -21,6 +21,7 @@
     "db:seed": "npm run db:seed --workspace=@karvon/api",
     "db:reset": "npm run db:reset --workspace=@karvon/api",
     "smoke": "bash scripts/smoke-test.sh",
+    "smoke:orders": "bash scripts/smoke-test-orders.sh",
     "infra:up": "docker compose up -d",
     "infra:down": "docker compose down",
     "infra:logs": "docker compose logs -f",
