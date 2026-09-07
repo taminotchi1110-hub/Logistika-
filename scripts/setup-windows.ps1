@@ -116,7 +116,54 @@ foreach ($feature in $features) {
     }
 }
 
-# ------------------------------------------------------------ 4. Xulosa
+# -------------------------------------------- 4. Gipervizor ishga tushishi
+#
+# Komponentlar yoqilgan bo'lsa ham gipervizor ishlamasligi mumkin: yuklash
+# konfiguratsiyasida (BCD) `hypervisorlaunchtype` qiymati `off` bo'lsa,
+# Windows uni umuman ishga tushirmaydi. Buni ko'pincha o'yin anti-cheat
+# dasturlari, eski VMware/VirtualBox yoki "tezlashtiruvchi" skriptlar qiladi.
+#
+# Belgisi: barcha Hyper-V komponentlari YOQILGAN, lekin HypervisorPresent = False.
+
+Write-Step "Gipervizor yuklash rejimi tekshirilmoqda"
+
+$hypervisorRunning = (Get-CimInstance Win32_ComputerSystem).HypervisorPresent
+$bcd = (bcdedit /enum '{current}' | Out-String)
+$launchType = if ($bcd -match 'hypervisorlaunchtype\s+(\w+)') { $Matches[1].ToLower() } else { 'ko''rsatilmagan' }
+
+Write-Host "   HypervisorPresent:      $hypervisorRunning"
+Write-Host "   hypervisorlaunchtype:   $launchType"
+
+if ($hypervisorRunning) {
+    Write-Ok "Gipervizor ishlayapti"
+} elseif ($launchType -eq 'auto') {
+    Write-Warn "Rejim to'g'ri ('auto'), lekin gipervizor hali ishga tushmagan - qayta yuklash kerak"
+    $needRestart = $true
+} else {
+    Write-Host "   Rejim 'auto' ga o'zgartirilmoqda..." -ForegroundColor Gray
+    bcdedit /set hypervisorlaunchtype auto | Out-Null
+
+    if ($LASTEXITCODE -eq 0) {
+        Write-Ok "hypervisorlaunchtype = auto qilib qo'yildi"
+        $needRestart = $true
+    } else {
+        Write-Fail "bcdedit buyrug'i bajarilmadi (chiqish kodi $LASTEXITCODE)"
+    }
+}
+
+# Windows Hypervisor Platform - Docker'ning Hyper-V rejimi uchun asqotadi.
+# WSL2 rejimida majburiy emas, lekin yoqib qo'yish zarar qilmaydi.
+$whp = (Get-WindowsOptionalFeature -Online -FeatureName 'HypervisorPlatform').State
+if ($whp -ne 'Enabled') {
+    Write-Host "   Windows Hypervisor Platform - yoqilmoqda..." -ForegroundColor Gray
+    Enable-WindowsOptionalFeature -Online -FeatureName 'HypervisorPlatform' -All -NoRestart -WarningAction SilentlyContinue | Out-Null
+    Write-Ok "Windows Hypervisor Platform - yoqildi"
+    $needRestart = $true
+} else {
+    Write-Ok "Windows Hypervisor Platform - allaqachon yoqilgan"
+}
+
+# ------------------------------------------------------------ 5. Xulosa
 Write-Step "Natija"
 
 if ($needRestart) {
