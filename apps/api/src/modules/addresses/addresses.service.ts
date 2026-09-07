@@ -44,20 +44,21 @@ export class AddressesService {
 
   async list(userId: string): Promise<SavedAddressView[]> {
     // `geom` — PostGIS ustuni, shuning uchun butun soʻrov xom SQL'da.
+    // Tip camelCase'da: `CamelCasePlugin` natija ustunlarini oʻgiradi.
     const result = await sql<{
       id: string;
       label: string;
-      address_text: string;
+      addressText: string;
       lat: number;
       lng: number;
-      region_id: number | null;
-      region_name: string | null;
-      district_id: number | null;
-      contact_name: string | null;
-      contact_phone: string | null;
+      regionId: number | null;
+      regionName: string | null;
+      districtId: number | null;
+      contactName: string | null;
+      contactPhone: string | null;
       notes: string | null;
-      use_count: number;
-      created_at: Date;
+      useCount: number;
+      createdAt: Date;
     }>`
       SELECT sa.id, sa.label, sa.address_text,
              ST_Y(sa.geom::geometry) AS lat,
@@ -71,19 +72,10 @@ export class AddressesService {
     `.execute(this.database.db);
 
     return result.rows.map((row) => ({
-      id: row.id,
-      label: row.label,
-      addressText: row.address_text,
+      ...row,
       lat: Number(row.lat),
       lng: Number(row.lng),
-      regionId: row.region_id,
-      regionName: row.region_name,
-      districtId: row.district_id,
-      contactName: row.contact_name,
-      contactPhone: row.contact_phone,
-      notes: row.notes,
-      useCount: Number(row.use_count),
-      createdAt: row.created_at,
+      useCount: Number(row.useCount),
     }));
   }
 

@@ -15,6 +15,43 @@ Tekshirish:
 node -v && npm -v && docker --version
 ```
 
+## 13.1a. Docker'siz muqobil yo'l (Windows)
+
+Docker Desktop Windows'da WSL2/Hyper-V talab qiladi va ba'zi mashinalarda
+uni ishga tushirish uzoq davom etadi. Bunday holatda **Docker umuman shart emas** —
+bizga faqat PostgreSQL+PostGIS va Redis kerak, ikkalasi ham to'g'ridan-to'g'ri
+o'rnatiladi. Bu yo'l real sinovdan o'tgan.
+
+```powershell
+# Administrator PowerShell'da
+winget install PostgreSQL.PostgreSQL.16 --source winget
+```
+
+So'ng ikkita o'rnatuvchini yuklab, ishga tushiring:
+
+| Komponent | Manba |
+|---|---|
+| PostGIS 3.6 bundle | `download.osgeo.org/postgis/windows/pg16/` |
+| Memurai (Windows uchun Redis 7.2) | `dist.memurai.com` |
+
+> ⚠️ Memurai'ni `winget` orqali o'rnatmang — u MSI'ni izolyatsiyada ishga
+> tushiradi va `SFXCA: Failed to create temp directory (5)` xatosi chiqadi.
+> MSI'ni to'g'ridan-to'g'ri oching.
+
+Bazani tayyorlash (bir marta):
+
+```sql
+CREATE ROLE karvon LOGIN PASSWORD 'karvon_dev_password' SUPERUSER;
+CREATE DATABASE karvon OWNER karvon ENCODING 'UTF8';
+```
+
+`.env` dagi `DATABASE_URL` va `REDIS_URL` o'zgarishsiz qoladi — portlar bir xil
+(5432 va 6379). Shundan keyin `npm run db:migrate` va qolgani hujjatdagidek.
+
+**Farqi:** MinIO ishlamaydi, ya'ni fayl yuklash (`/media`, `/documents`)
+endpointlari ishlamaydi. Ular kerak bo'lganda MinIO'ni alohida `.exe` sifatida
+ishga tushirish mumkin — u administrator huquqi talab qilmaydi.
+
 ## 13.2. Birinchi ishga tushirish
 
 ```bash
@@ -128,6 +165,23 @@ apps/api/src/
 npm test                # unit — infratuzilma kerak emas
 npm run test:cov        # qamrov hisoboti
 npm run test:e2e        # e2e — infra:up + db:migrate + db:seed kerak
+npm run smoke           # uchdan-uchgacha: API ishlab turishi kerak
+```
+
+### `npm run smoke` — uchdan-uchgacha tekshiruv
+
+`scripts/smoke-test.sh` haqiqiy HTTP so'rovlar bilan **butun zanjirni**
+sinaydi va 44 ta tekshiruv bajaradi:
+
+```
+>> Spravochnik              14 viloyat, 13 transport turi, versiya hash
+>> Yuk beruvchi kirish      OTP, cooldown 429, noto'g'ri kod, replay himoyasi
+>> Profil                   401/AUTH_TOKEN_INVALID, GET /me
+>> Masofa va narx           328 km, viloyatlar aniqlandi, tarif tavsiyasi
+>> Yuk e'loni               yaratildi, masofa hisoblandi, sana validatsiyasi
+>> Haydovchi va transport   raqam normallashtirish, dublikat, quvvat chegarasi
+>> Verifikatsiya            missingSteps, DRIVER_NOT_VERIFIED
+>> Lenta                    yuk ko'rindi, TELEFON MASKALANGAN, filtrlar, rol
 ```
 
 E2E testlar aynan quyidagilarni tekshiradi:

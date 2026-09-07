@@ -47,11 +47,13 @@ export class GeoService {
   async resolveRegion(point: Coordinates): Promise<ResolvedRegion> {
     const geom = sql<string>`ST_SetSRID(ST_MakePoint(${point.lng}, ${point.lat}), 4326)::geography`;
 
-    const byBoundary = await sql<{
-      region_id: number;
-      region_code: string;
-      region_name_uz: string;
-    }>`
+    // DIQQAT: `CamelCasePlugin` xom SQL natijalarining ustun nomlarini ham
+    // camelCase'ga oʻgiradi. Ya'ni SQL'da `region_name_uz` deb nomlangan ustun
+    // JS'ga `regionNameUz` boʻlib keladi. Tiplar shunga mos yozilishi shart —
+    // aks holda qiymatlar jimgina `undefined` boʻlib qoladi.
+    type RegionRow = { regionId: number; regionCode: string; regionNameUz: string };
+
+    const byBoundary = await sql<RegionRow>`
       SELECT id AS region_id, code AS region_code, name_uz AS region_name_uz
       FROM regions
       WHERE boundary IS NOT NULL AND ST_Covers(boundary, ${geom})
@@ -61,7 +63,7 @@ export class GeoService {
     const region =
       byBoundary.rows[0] ??
       (
-        await sql<{ region_id: number; region_code: string; region_name_uz: string }>`
+        await sql<RegionRow>`
           SELECT id AS region_id, code AS region_code, name_uz AS region_name_uz
           FROM regions
           ORDER BY center_geom <-> ${geom}
@@ -74,21 +76,21 @@ export class GeoService {
     }
 
     const district = (
-      await sql<{ district_id: number; district_name_uz: string }>`
+      await sql<{ districtId: number; districtNameUz: string }>`
         SELECT id AS district_id, name_uz AS district_name_uz
         FROM districts
-        WHERE region_id = ${region.region_id} AND center_geom IS NOT NULL
+        WHERE region_id = ${region.regionId} AND center_geom IS NOT NULL
         ORDER BY center_geom <-> ${geom}
         LIMIT 1
       `.execute(this.database.db)
     ).rows[0];
 
     return {
-      regionId: region.region_id,
-      regionCode: region.region_code,
-      regionNameUz: region.region_name_uz,
-      districtId: district?.district_id ?? null,
-      districtNameUz: district?.district_name_uz ?? null,
+      regionId: region.regionId,
+      regionCode: region.regionCode,
+      regionNameUz: region.regionNameUz,
+      districtId: district?.districtId ?? null,
+      districtNameUz: district?.districtNameUz ?? null,
     };
   }
 

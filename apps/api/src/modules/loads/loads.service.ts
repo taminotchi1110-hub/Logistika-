@@ -88,63 +88,70 @@ export interface LoadView {
   distanceToPickupKm?: number;
 }
 
+/**
+ * Soʻrov natijasining shakli.
+ *
+ * DIQQAT: `CamelCasePlugin` yoqilgani uchun SQL'dagi `pickup_region_name`
+ * kabi ustunlar JS'ga `pickupRegionName` boʻlib keladi — SQL alias'lari
+ * snake_case boʻlsa ham. Shuning uchun bu yerda camelCase yoziladi.
+ */
 interface LoadRow {
   id: string;
-  public_no: string;
+  publicNo: string;
   status: LoadStatus;
   title: string;
   description: string | null;
-  category_id: number;
-  category_name: string | null;
-  weight_kg: number;
-  volume_m3: string | null;
-  packages_count: number | null;
-  package_type: string | null;
-  is_fragile: boolean;
-  temp_min_c: number | null;
-  temp_max_c: number | null;
-  pickup_address: string;
-  pickup_lat: number;
-  pickup_lng: number;
-  pickup_region_id: number;
-  pickup_region_name: string | null;
-  pickup_district_id: number | null;
-  pickup_contact_name: string | null;
-  pickup_contact_phone: string | null;
-  pickup_from: Date;
-  pickup_to: Date;
-  delivery_address: string;
-  delivery_lat: number;
-  delivery_lng: number;
-  delivery_region_id: number;
-  delivery_region_name: string | null;
-  delivery_district_id: number | null;
-  delivery_contact_name: string | null;
-  delivery_contact_phone: string | null;
-  delivery_by: Date | null;
-  distance_km: string | null;
-  duration_min: number | null;
-  route_polyline: string | null;
-  required_vehicle_type_ids: number[];
-  required_body_type_ids: number[];
-  special_requirement_ids: number[];
-  price_tiyin: string | null;
-  is_negotiable: boolean;
-  payment_method: string;
-  suggested_price_tiyin: string | null;
-  is_top: boolean;
-  view_count: number;
-  offer_count: number;
-  published_at: Date | null;
-  expires_at: Date | null;
-  created_at: Date;
-  shipper_id: string;
-  shipper_first_name: string | null;
-  shipper_last_name: string | null;
-  shipper_rating_avg: string;
-  shipper_rating_count: number;
-  shipper_completed_orders: number;
-  distance_to_pickup_m: number | null;
+  categoryId: number;
+  categoryName: string | null;
+  weightKg: number;
+  volumeM3: string | null;
+  packagesCount: number | null;
+  packageType: string | null;
+  isFragile: boolean;
+  tempMinC: number | null;
+  tempMaxC: number | null;
+  pickupAddress: string;
+  pickupLat: number;
+  pickupLng: number;
+  pickupRegionId: number;
+  pickupRegionName: string | null;
+  pickupDistrictId: number | null;
+  pickupContactName: string | null;
+  pickupContactPhone: string | null;
+  pickupFrom: Date;
+  pickupTo: Date;
+  deliveryAddress: string;
+  deliveryLat: number;
+  deliveryLng: number;
+  deliveryRegionId: number;
+  deliveryRegionName: string | null;
+  deliveryDistrictId: number | null;
+  deliveryContactName: string | null;
+  deliveryContactPhone: string | null;
+  deliveryBy: Date | null;
+  distanceKm: string | null;
+  durationMin: number | null;
+  routePolyline: string | null;
+  requiredVehicleTypeIds: number[];
+  requiredBodyTypeIds: number[];
+  specialRequirementIds: number[];
+  priceTiyin: string | null;
+  isNegotiable: boolean;
+  paymentMethod: string;
+  suggestedPriceTiyin: string | null;
+  isTop: boolean;
+  viewCount: number;
+  offerCount: number;
+  publishedAt: Date | null;
+  expiresAt: Date | null;
+  createdAt: Date;
+  shipperId: string;
+  shipperFirstName: string | null;
+  shipperLastName: string | null;
+  shipperRatingAvg: string;
+  shipperRatingCount: number;
+  shipperCompletedOrders: number;
+  distanceToPickupM: number | null;
 }
 
 /** Haydovchi lentasida koʻrinadigan statuslar. */
@@ -486,7 +493,7 @@ export class LoadsService {
     const row = rows[0];
     if (!row) throw AppError.notFound('Yuk topilmadi');
 
-    if (row.shipper_id === viewerId) {
+    if (row.shipperId === viewerId) {
       return this.toView(row, { revealContacts: true });
     }
     if (!FEED_STATUSES.includes(row.status)) {
@@ -839,78 +846,78 @@ export class LoadsService {
 
     return {
       id: row.id,
-      publicNo: String(row.public_no),
+      publicNo: String(row.publicNo),
       status: row.status,
       title: row.title,
       description: row.description,
-      categoryId: row.category_id,
-      categoryName: row.category_name,
-      weightKg: row.weight_kg,
-      volumeM3: row.volume_m3 === null ? null : Number(row.volume_m3),
-      packagesCount: row.packages_count,
-      packageType: row.package_type,
-      isFragile: row.is_fragile,
-      tempMinC: row.temp_min_c,
-      tempMaxC: row.temp_max_c,
+      categoryId: row.categoryId,
+      categoryName: row.categoryName,
+      weightKg: row.weightKg,
+      volumeM3: row.volumeM3 === null ? null : Number(row.volumeM3),
+      packagesCount: row.packagesCount,
+      packageType: row.packageType,
+      isFragile: row.isFragile,
+      tempMinC: row.tempMinC,
+      tempMaxC: row.tempMaxC,
 
       pickup: {
-        address: row.pickup_address,
-        lat: Number(row.pickup_lat),
-        lng: Number(row.pickup_lng),
-        regionId: row.pickup_region_id,
-        regionName: row.pickup_region_name,
-        districtId: row.pickup_district_id,
-        contactName: options.revealContacts ? row.pickup_contact_name : null,
-        contactPhone: hide(row.pickup_contact_phone),
-        from: row.pickup_from,
-        to: row.pickup_to,
+        address: row.pickupAddress,
+        lat: Number(row.pickupLat),
+        lng: Number(row.pickupLng),
+        regionId: row.pickupRegionId,
+        regionName: row.pickupRegionName,
+        districtId: row.pickupDistrictId,
+        contactName: options.revealContacts ? row.pickupContactName : null,
+        contactPhone: hide(row.pickupContactPhone),
+        from: row.pickupFrom,
+        to: row.pickupTo,
       },
       delivery: {
-        address: row.delivery_address,
-        lat: Number(row.delivery_lat),
-        lng: Number(row.delivery_lng),
-        regionId: row.delivery_region_id,
-        regionName: row.delivery_region_name,
-        districtId: row.delivery_district_id,
-        contactName: options.revealContacts ? row.delivery_contact_name : null,
-        contactPhone: hide(row.delivery_contact_phone),
-        by: row.delivery_by,
+        address: row.deliveryAddress,
+        lat: Number(row.deliveryLat),
+        lng: Number(row.deliveryLng),
+        regionId: row.deliveryRegionId,
+        regionName: row.deliveryRegionName,
+        districtId: row.deliveryDistrictId,
+        contactName: options.revealContacts ? row.deliveryContactName : null,
+        contactPhone: hide(row.deliveryContactPhone),
+        by: row.deliveryBy,
       },
 
-      distanceKm: row.distance_km === null ? null : Number(row.distance_km),
-      durationMin: row.duration_min,
-      routePolyline: row.route_polyline,
+      distanceKm: row.distanceKm === null ? null : Number(row.distanceKm),
+      durationMin: row.durationMin,
+      routePolyline: row.routePolyline,
 
-      requiredVehicleTypeIds: row.required_vehicle_type_ids ?? [],
-      requiredBodyTypeIds: row.required_body_type_ids ?? [],
-      specialRequirementIds: row.special_requirement_ids ?? [],
+      requiredVehicleTypeIds: row.requiredVehicleTypeIds ?? [],
+      requiredBodyTypeIds: row.requiredBodyTypeIds ?? [],
+      specialRequirementIds: row.specialRequirementIds ?? [],
 
-      priceTiyin: row.price_tiyin === null ? null : Number(row.price_tiyin),
-      isNegotiable: row.is_negotiable,
-      paymentMethod: row.payment_method,
+      priceTiyin: row.priceTiyin === null ? null : Number(row.priceTiyin),
+      isNegotiable: row.isNegotiable,
+      paymentMethod: row.paymentMethod,
       suggestedPriceTiyin:
-        row.suggested_price_tiyin === null ? null : Number(row.suggested_price_tiyin),
+        row.suggestedPriceTiyin === null ? null : Number(row.suggestedPriceTiyin),
 
-      isTop: row.is_top,
-      viewCount: row.view_count,
-      offerCount: row.offer_count,
-      publishedAt: row.published_at,
-      expiresAt: row.expires_at,
-      createdAt: row.created_at,
+      isTop: row.isTop,
+      viewCount: row.viewCount,
+      offerCount: row.offerCount,
+      publishedAt: row.publishedAt,
+      expiresAt: row.expiresAt,
+      createdAt: row.createdAt,
 
       shipper: {
-        id: row.shipper_id,
-        firstName: row.shipper_first_name,
-        lastName: row.shipper_last_name,
-        ratingAvg: Number(row.shipper_rating_avg),
-        ratingCount: row.shipper_rating_count,
-        completedOrders: row.shipper_completed_orders,
+        id: row.shipperId,
+        firstName: row.shipperFirstName,
+        lastName: row.shipperLastName,
+        ratingAvg: Number(row.shipperRatingAvg),
+        ratingCount: row.shipperRatingCount,
+        completedOrders: row.shipperCompletedOrders,
       },
 
       distanceToPickupKm:
-        row.distance_to_pickup_m === null
+        row.distanceToPickupM === null || row.distanceToPickupM === undefined
           ? undefined
-          : Math.round((Number(row.distance_to_pickup_m) / 1000) * 10) / 10,
+          : Math.round((Number(row.distanceToPickupM) / 1000) * 10) / 10,
     };
   }
 }
