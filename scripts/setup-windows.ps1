@@ -163,7 +163,62 @@ if ($whp -ne 'Enabled') {
     Write-Ok "Windows Hypervisor Platform - allaqachon yoqilgan"
 }
 
-# ------------------------------------------------------------ 5. Xulosa
+# ------------------------------- 5. Tiqilib qolgan servicing navbatini tuzatish
+#
+# Ba'zan komponent yoqiladi, lekin Windows uni qayta yuklashdan keyin ham
+# ro'yxatdan o'tkazmaydi: CBS RebootPending bayrog'i tushmaydi va WSL
+# "virtualizatsiya yoqilmagan" deb turaveradi.
+#
+# Bu holatda komponent ombori (component store) shikastlangan bo'lishi mumkin.
+# DISM RestoreHealth uni tekshirib tiklaydi.
+
+Write-Step "Windows servicing holati"
+
+$rebootPending = Test-Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending'
+Write-Host "   CBS RebootPending: $rebootPending"
+
+$realStates = Get-WindowsOptionalFeature -Online |
+    Where-Object { $_.FeatureName -in 'VirtualMachinePlatform','Microsoft-Windows-Subsystem-Linux','HypervisorPlatform' }
+
+foreach ($f in $realStates) {
+    $mark = if ($f.State -eq 'Enabled') { '[OK]  ' } else { '[!]   ' }
+    Write-Host "   $mark $($f.FeatureName) = $($f.State)"
+}
+
+$stuck = $realStates | Where-Object { $_.State -ne 'Enabled' }
+
+if ($rebootPending -and -not $stuck) {
+    Write-Warn "Komponentlar yoqilgan, lekin qayta yuklash bayrog'i tushmagan."
+    Write-Host "   Komponent ombori tekshirilmoqda (5-15 daqiqa olishi mumkin)..." -ForegroundColor Gray
+    Write-Host ""
+    dism.exe /online /cleanup-image /restorehealth
+    Write-Host ""
+
+    if ($LASTEXITCODE -eq 0) {
+        Write-Ok "Komponent ombori tekshirildi/tiklandi"
+        Write-Host "   Komponentlar qayta yoqilmoqda..." -ForegroundColor Gray
+        dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart | Out-Null
+        dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart | Out-Null
+        Write-Ok "Bajarildi"
+        $needRestart = $true
+    } else {
+        Write-Fail "DISM tiklab bo'lmadi (kod $LASTEXITCODE)"
+        Write-Host "     Windows Update orqali tizimni yangilash kerak bo'lishi mumkin." -ForegroundColor Yellow
+        Write-Host "     Yoki Docker'siz ishlash yo'liga o'ting - Claude'ga ayting." -ForegroundColor Yellow
+    }
+} elseif ($stuck) {
+    Write-Fail "Quyidagi komponentlar hali yoqilmagan:"
+    $stuck | ForEach-Object { Write-Host "     $($_.FeatureName) = $($_.State)" }
+    Write-Host "   Qayta yoqilmoqda..." -ForegroundColor Gray
+    foreach ($f in $stuck) {
+        dism.exe /online /enable-feature /featurename:$($f.FeatureName) /all /norestart | Out-Null
+    }
+    $needRestart = $true
+} else {
+    Write-Ok "Servicing navbati toza"
+}
+
+# ------------------------------------------------------------ 6. Xulosa
 Write-Step "Natija"
 
 if ($needRestart) {
