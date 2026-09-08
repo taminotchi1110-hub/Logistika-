@@ -1,0 +1,42 @@
+include: package:flutter_lints/flutter.yaml
+
+# Qoidalar TO'G'RILIKKA qaratilgan, uslubga emas.
+#
+# Uslub qoidalari (vergul, const, tirnoq) foydali, lekin ular
+# `flutter analyze` natijasini yuzlab ogohlantirish bilan to'ldiradi
+# va HAQIQIY muammolar ko'rinmay qoladi. Shuning uchun bu yerda
+# faqat nosozlikka olib keladigan qoidalar XATO darajasida.
+analyzer:
+  errors:
+    missing_required_param: error
+    missing_return: error
+    invalid_use_of_protected_member: error
+    unused_import: error
+    dead_code: error
+    # Kontekstni `await` dan keyin ishlatish — eng ko'p uchraydigan
+    # Flutter xatosi: widget o'chirilgan bo'lishi mumkin
+    use_build_context_synchronously: error
+
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+
+linter:
+  rules:
+    # --- to'g'rilik ---
+    avoid_dynamic_calls: true
+    avoid_slow_async_io: true
+    cancel_subscriptions: true
+    close_sinks: true
+    avoid_empty_else: true
+    no_duplicate_case_values: true
+    unrelated_type_equality_checks: true
+
+    # --- o'qilishi ---
+    prefer_single_quotes: true
+    sort_child_properties_last: true
+    slash_for_doc_comments: true
+
+    # Nisbiy importlar ishlatiladi (lib/ ichida), test'da package: —
+    # shuning uchun bu qoida o'chirilgan
+    always_use_package_imports: false

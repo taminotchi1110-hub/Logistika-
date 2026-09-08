@@ -64,3 +64,20 @@ desktop.ini
 *.osrm*
 /tmp/
 /uploads/
+
+# --- Flutter / Dart ---
+apps/mobile/.dart_tool/
+apps/mobile/.flutter-plugins
+apps/mobile/.flutter-plugins-dependencies
+apps/mobile/.packages
+apps/mobile/build/
+apps/mobile/pubspec.lock
+apps/mobile/android/
+apps/mobile/ios/
+apps/mobile/macos/
+apps/mobile/linux/
+apps/mobile/windows/
+apps/mobile/web/
+# Firebase konfiguratsiyasi — maxfiy emas, lekin loyihaga xos
+apps/mobile/android/app/google-services.json
+apps/mobile/ios/Runner/GoogleService-Info.plist

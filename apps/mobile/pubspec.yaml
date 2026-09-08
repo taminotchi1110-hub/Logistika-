@@ -1,0 +1,107 @@
+name: karvon
+description: KARVON — O'zbekiston uchun raqamli yuk almashinuv platformasi
+publish_to: none
+
+# Versiya: <semver>+<build>. Build raqami do'konga har yuklashda oshadi.
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.5.0 <4.0.0"
+  flutter: ">=3.24.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # --- holat boshqaruvi ---
+  # Riverpod: kod generatsiyasisiz ishlatiladi. `build_runner` qo'shilsa
+  # CI va lokal muhitda qo'shimcha qadam paydo bo'ladi; bu loyihada
+  # provayderlar qo'lda yoziladi — o'qish osonroq va qaramlik kamroq.
+  flutter_riverpod: ^2.5.1
+
+  # --- navigatsiya ---
+  # go_router: deep link (karvon://order/123) push bildirishnomalardan
+  # keladi va shu paketda tabiiy qo'llab-quvvatlanadi
+  go_router: ^14.2.7
+
+  # --- tarmoq ---
+  dio: ^5.7.0
+  # WebSocket — chat va jonli GPS uchun (backend Socket.IO ishlatadi)
+  socket_io_client: ^2.0.3+1
+
+  # --- saqlash ---
+  # Tokenlar FAQAT secure storage'da: Android Keystore / iOS Keychain.
+  # SharedPreferences oddiy XML — root qilingan qurilmada o'qiladi.
+  flutter_secure_storage: ^9.2.2
+  shared_preferences: ^2.3.2
+
+  # --- xarita ---
+  # flutter_map (OpenStreetMap): Google Maps API kaliti va billing
+  # hisobi talab qiladi, O'zbekistonda esa to'lov murakkab. OSM bepul
+  # va O'zbekiston yo'llari yaxshi chizilgan.
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+
+  # --- joylashuv ---
+  geolocator: ^13.0.1
+  permission_handler: ^11.3.1
+
+  # --- bildirishnomalar ---
+  firebase_core: ^3.6.0
+  firebase_messaging: ^15.1.3
+  # Ekran yuqorisidan sirg'aluvchi (heads-up) bildirishnoma uchun
+  # IMPORTANCE_HIGH kanali aynan shu paket orqali yaratiladi
+  flutter_local_notifications: ^17.2.3
+
+  # --- fayl va rasm ---
+  image_picker: ^1.1.2
+  cached_network_image: ^3.4.1
+
+  # --- foydali ---
+  intl: ^0.19.0
+  # Telefon raqami maskasi: +998 90 123 45 67
+  mask_text_input_formatter: ^2.9.0
+  # Qurilma ma'lumoti — sessiya ro'yxatida ko'rsatiladi
+  device_info_plus: ^10.1.2
+  package_info_plus: ^8.0.2
+  url_launcher: ^6.3.0
+  # Xatoliklarni kuzatish (keyingi bosqichda Sentry ulanadi)
+  logger: ^2.4.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  mocktail: ^1.0.4
+
+flutter:
+  uses-material-design: true
+  # generate: true — l10n .arb fayllari qoʻshilgach yoqiladi
+
+  # ASSETLAR VA SHRIFTLAR HOZIRCHA E'LON QILINMAGAN.
+  #
+  # Flutter e'lon qilingan, lekin mavjud bo'lmagan fayl uchun
+  # "flutter pub get" bosqichida yiqiladi. Shrift va rasmlar
+  # qo'shilganda quyidagi bo'limlar yoqiladi:
+  #
+  # assets:
+  #   - assets/images/
+  #   - assets/icons/
+  #
+  # fonts:
+  #   - family: Inter
+  #     fonts:
+  #       - asset: assets/fonts/Inter-Regular.ttf
+  #         weight: 400
+  #       - asset: assets/fonts/Inter-Medium.ttf
+  #         weight: 500
+  #       - asset: assets/fonts/Inter-SemiBold.ttf
+  #         weight: 600
+  #       - asset: assets/fonts/Inter-Bold.ttf
+  #         weight: 700
+  #
+  # Shrift qo'shilgach app_theme.dart dagi fontFamily ham yoqiladi.
+  # Hozircha tizim shrifti ishlatiladi (Android: Roboto, iOS: SF Pro) —
+  # ikkalasi ham lotin va kirill alifbosini qo'llab-quvvatlaydi.
