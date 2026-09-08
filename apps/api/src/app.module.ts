@@ -24,6 +24,7 @@ import { NotificationsModule } from '@/modules/notifications/notifications.modul
 import { OrdersModule } from '@/modules/orders/orders.module';
 import { ReferenceModule } from '@/modules/reference/reference.module';
 import { SmsModule } from '@/modules/sms/sms.module';
+import { TrackingModule } from '@/modules/tracking/tracking.module';
 import { UsersModule } from '@/modules/users/users.module';
 import { VehiclesModule } from '@/modules/vehicles/vehicles.module';
 
@@ -101,6 +102,7 @@ import { VehiclesModule } from '@/modules/vehicles/vehicles.module';
     OrdersModule,
     ChatModule,
     MatchingModule,
+    TrackingModule,
   ],
 })
 export class AppModule {}

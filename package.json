@@ -30,7 +30,8 @@
     "smoke:push": "node scripts/push-test.js",
     "smoke:all": "bash scripts/test-all.sh",
     "dev:reset-limits": "node scripts/reset-rate-limits.js",
-    "smoke:matching": "node scripts/matching-test.js"
+    "smoke:matching": "node scripts/matching-test.js",
+    "smoke:tracking": "node scripts/tracking-test.js"
   },
   "devDependencies": {
     "prettier": "^3.3.3"

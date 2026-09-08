@@ -109,20 +109,10 @@ export class DriversController {
     return this.drivers.setAvailability(user.id, dto.availability);
   }
 
-  @Post('location')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({
-    summary: 'Joriy joylashuvni yangilash',
-    description:
-      'Boʻsh holatdagi haydovchi uchun past chastotali yangilanish (2 daqiqada bir marta). ' +
-      'Faol buyurtma vaqtidagi kuzatuv WebSocket orqali ketadi.',
-  })
-  async updateLocation(
-    @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: UpdateLocationDto,
-  ): Promise<void> {
-    await this.drivers.updateLocation(user.id, dto);
-  }
+  // POST me/driver/location — TrackingController ga koʻchirildi.
+  // Sabab: ikkita endpoint bir xil marshrutga daʼvo qilardi va bir xil
+  // ishni bajarardi. Endi bitta joy: faol reys boʻlsa marshrut yoziladi,
+  // boʻlmasa faqat matching keshi yangilanadi (docs/16 §16.2).
 
   @Get('routes')
   @ApiOperation({ summary: 'Ishlash yoʻnalishlarim' })

@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { randomBytes } from 'node:crypto';
 import { sql } from 'kysely';
 
@@ -21,6 +22,7 @@ import {
   type ContactVisibility,
   type OrderStatus,
 } from './order-status';
+import { ORDER_STATUS_CHANGED, OrderStatusChangedEvent } from './order.events';
 
 export interface OrderView {
   id: string;
@@ -134,6 +136,7 @@ export class OrdersService {
     private readonly database: DatabaseService,
     private readonly settings: SettingsService,
     private readonly notifications: NotificationsService,
+    private readonly events: EventEmitter2,
   ) {}
 
   // =================================================================
@@ -402,6 +405,12 @@ export class OrdersService {
 
     this.logger.log({ orderId, from, to, actorRole }, 'Buyurtma holati oʻzgardi');
     await this.announceStatusChange(orderId, order, to);
+
+    // Kuzatuv moduli shu hodisada marshrutni arxivlaydi
+    this.events.emit(
+      ORDER_STATUS_CHANGED,
+      new OrderStatusChangedEvent(orderId, from, to, order.driverId, order.shipperId),
+    );
 
     return this.getForUser(orderId, userId);
   }

@@ -129,6 +129,8 @@ export interface DriverProfilesTable {
   rejectionReason: string | null;
   availability: Generated<DriverAvailability>;
   homeRegionId: number | null;
+  /** geography(Point,4326) — oxirgi joylashuv keshi (matching shundan foydalanadi). */
+  currentGeom: unknown;
   currentGeomAt: Date | null;
   acceptsIntercity: Generated<boolean>;
   acceptsInternational: Generated<boolean>;

@@ -1,6 +1,6 @@
 # KARVON — O'zbekiston uchun raqamli yuk almashinuv platformasi
 
-> **Holat:** 4-BOSQICH — takliflar, buyurtma, chat, WebSocket va push kodlandi
+> **Holat:** 4-BOSQICH — takliflar, buyurtma, chat, WebSocket, push, matching va GPS kuzatuv kodlandi
 > **Versiya:** 0.4.0 · **Sana:** 2026-09-08
 
 Yuk beruvchi (shipper) va haydovchi (carrier) ni real vaqtda bog'laydigan, GPS tracking,
@@ -26,8 +26,8 @@ Batafsil: [docs/13-backend.md](docs/13-backend.md)
 | 1 — Arxitektura, DB, user flow, UI/UX, roadmap | ✅ tayyor |
 | 2 — Sprint 0 + Auth (OTP, JWT, sessiyalar, spravochnik) | ✅ tayyor |
 | 3 — Transport, hujjatlar, geo servis, yuk e'loni va lenta | ✅ tayyor |
-| 4 — Takliflar, buyurtma, chat, WebSocket, bildirishnoma va push | ✅ tayyor |
-| 5 — Avtomatik matching (Match Score), GPS tracking, to'lovlar | ⏳ keyingi |
+| 4 — Takliflar, buyurtma, chat, realtime, push, **matching**, **GPS kuzatuv** | ✅ tayyor |
+| 5 — To'lovlar (Click/Payme), reyting, admin panel | ⏳ keyingi |
 
 ---
 
@@ -77,6 +77,7 @@ Batafsil: [docs/13-backend.md](docs/13-backend.md)
 | 13 | [docs/13-backend.md](docs/13-backend.md) | **Backend: ishga tushirish, kod xaritasi, testlar** |
 | 14 | [docs/14-loads-and-fleet.md](docs/14-loads-and-fleet.md) | **Transport, hujjatlar, geo servis, yuk e'loni** |
 | 15 | [docs/15-realtime-and-notifications.md](docs/15-realtime-and-notifications.md) | **Chat, WebSocket, bildirishnoma va push** |
+| 16 | [docs/16-matching-and-tracking.md](docs/16-matching-and-tracking.md) | **Avtomatik matching va jonli GPS kuzatuv** |
 | — | [db/migrations/0001_init.sql](db/migrations/0001_init.sql) | To'liq PostgreSQL DDL |
 | — | [db/seeds/0001_reference.sql](db/seeds/0001_reference.sql) | Spravochnik ma'lumotlari |
 

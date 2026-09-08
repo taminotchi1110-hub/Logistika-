@@ -16,6 +16,8 @@ import { AppError } from '@/common/errors/app.error';
 import { RedisService } from '@/infra/redis/redis.service';
 import { NotificationsService } from '@/modules/notifications/notifications.service';
 import { TokenService } from '@/modules/auth/token.service';
+import { TrackingService } from '@/modules/tracking/tracking.service';
+import type { LocationPoint } from '@/modules/tracking/tracking.service';
 
 import { ChatService, toWireMessage } from './chat.service';
 
@@ -52,6 +54,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     private readonly chat: ChatService,
     private readonly notifications: NotificationsService,
     private readonly redis: RedisService,
+    private readonly tracking: TrackingService,
   ) {}
 
   async afterInit(server: Server): Promise<void> {
@@ -69,6 +72,20 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         server.to(`user:${userId}`).emit('notification', JSON.parse(message));
       } catch (error) {
         this.logger.warn({ err: error, channel }, 'Bildirishnomani uzatib boʻlmadi');
+      }
+    });
+
+    // Joylashuv yangilanishlari — buyurtma xonasiga. Shu sxema tufayli
+    // `TrackingService` WebSocket haqida umuman bilmaydi va uni keyinchalik
+    // alohida servisga koʻchirish mumkin.
+    const trackSub = this.redis.client.duplicate();
+    await trackSub.psubscribe('track:order:*');
+    trackSub.on('pmessage', (_pattern, channel, message) => {
+      const orderId = channel.slice('track:order:'.length);
+      try {
+        server.to(`order:${orderId}`).emit('order:location', JSON.parse(message));
+      } catch (error) {
+        this.logger.warn({ err: error, channel }, 'Joylashuvni uzatib boʻlmadi');
       }
     });
 
@@ -219,15 +236,61 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     });
   }
 
-  /** Buyurtma kuzatuviga obuna — status va joylashuv yangilanishlari uchun. */
+  /**
+   * Buyurtma kuzatuviga obuna.
+   *
+   * Xonaga faqat buyurtma ishtirokchisi kira oladi — aks holda ID'ni
+   * bilgan har kim haydovchining joylashuvini kuzatishi mumkin bo'lardi.
+   */
   @SubscribeMessage('order:subscribe')
   async onOrderSubscribe(
     @ConnectedSocket() client: AuthedSocket,
     @MessageBody() body: { orderId?: string },
-  ): Promise<{ ok: boolean }> {
-    this.requireUser(client);
-    if (body?.orderId) await client.join(`order:${body.orderId}`);
+  ): Promise<{ ok: boolean; error?: string }> {
+    const userId = this.requireUser(client);
+    if (!body?.orderId) return { ok: false, error: 'orderId kerak' };
+
+    try {
+      await this.tracking.lastLocation(body.orderId, userId);
+    } catch (error) {
+      return { ok: false, error: error instanceof AppError ? error.code : 'ERROR' };
+    }
+
+    await client.join(`order:${body.orderId}`);
     return { ok: true };
+  }
+
+  /**
+   * Haydovchi joylashuvi.
+   *
+   * WebSocket asosiy yo'l: 10 soniyalik interval uchun HTTP so'rov
+   * ochish-yopish ortiqcha yuk. Aloqa uzilsa ilova buferga yig'adi va
+   * `POST /me/driver/location` orqali to'plam bilan yuboradi.
+   */
+  @SubscribeMessage('location:update')
+  async onLocation(
+    @ConnectedSocket() client: AuthedSocket,
+    @MessageBody() body: { points?: LocationPoint[]; lat?: number; lng?: number },
+  ): Promise<{ ok: boolean; error?: string; tracking?: boolean; etaMinutes?: number | null }> {
+    const userId = this.requireUser(client);
+
+    // Bitta nuqta ham, to'plam ham qabul qilinadi
+    const points =
+      body?.points ??
+      (typeof body?.lat === 'number' && typeof body?.lng === 'number'
+        ? [{ lat: body.lat, lng: body.lng }]
+        : []);
+
+    if (points.length === 0) return { ok: false, error: 'Nuqta yuborilmadi' };
+
+    try {
+      const result = await this.tracking.record(userId, points);
+      // `tracking: false` — reys yo'q, faqat matching keshi yangilandi.
+      // Ilova buni ko'rib GPS chastotasini pasaytiradi (batareya tejaladi).
+      return { ok: true, tracking: result.tracking, etaMinutes: result.live?.etaMinutes ?? null };
+    } catch (error) {
+      return { ok: false, error: error instanceof AppError ? error.code : 'ERROR' };
+    }
   }
 
   private requireUser(client: AuthedSocket): string {

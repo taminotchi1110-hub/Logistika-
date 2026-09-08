@@ -74,6 +74,41 @@ const TRANSITION_ACTORS: Partial<Record<OrderStatus, readonly ActorRole[]>> = {
   CANCELLED_BY_ADMIN: ['ADMIN'],
 };
 
+/**
+ * GPS kuzatuvi RUXSAT ETILGAN holatlar.
+ *
+ * MAXFIYLIK QOIDASI: haydovchining joylashuvi faqat u reysga chiqqanidan
+ * keyin yoziladi. `ASSIGNED` va `CONFIRMED` da hali kuzatuv yo'q —
+ * haydovchi buyurtmani olgani uni doimiy nazoratga qo'ymaydi.
+ * `DELIVERED` da kuzatuv to'xtaydi: yuk topshirilgan, haydovchining
+ * keyingi harakati mijozga aloqador emas.
+ *
+ * Bu chegara texnik emas, mahsulot qarori — shuning uchun bitta joyda
+ * turadi va testlar bilan mustahkamlangan.
+ */
+export const TRACKING_STATUSES: readonly OrderStatus[] = [
+  'EN_ROUTE_TO_PICKUP',
+  'ARRIVED_AT_PICKUP',
+  'LOADED',
+  'IN_TRANSIT',
+  'ARRIVED_AT_DELIVERY',
+];
+
+export function isTrackingAllowed(status: OrderStatus): boolean {
+  return TRACKING_STATUSES.includes(status);
+}
+
+/**
+ * Kuzatuvdagi keyingi nuqta: yuk ortilgunicha — olish manzili,
+ * keyin — yetkazish manzili. Mijozga ETA shu nuqtaga hisoblanadi.
+ */
+export function trackingTarget(status: OrderStatus): 'PICKUP' | 'DELIVERY' | null {
+  if (!isTrackingAllowed(status)) return null;
+  return status === 'EN_ROUTE_TO_PICKUP' || status === 'ARRIVED_AT_PICKUP'
+    ? 'PICKUP'
+    : 'DELIVERY';
+}
+
 /** Buyurtma hali tugamaganmi (haydovchi band hisoblanadi). */
 export const ACTIVE_STATUSES: readonly OrderStatus[] = [
   'CONFIRMED',
