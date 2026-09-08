@@ -59,8 +59,14 @@ abstract final class AppTheme {
       useMaterial3: true,
       colorScheme: base,
       scaffoldBackgroundColor: AppColors.background,
-      // fontFamily: 'Inter' — shrift fayllari qo'shilgach yoqiladi
-      // (pubspec.yaml dagi izohga qarang)
+
+      // SHRIFT ILOVAGA QO'SHILGAN, tizimnikiga tayanilmaydi.
+      //
+      // O'zbek lotin alifbosidagi `ʻ` (U+02BB) — oʻ va gʻ harflarida —
+      // har bir shriftda ham yo'q. Tekshirilgan: Flutter web
+      // CanvasKit'ning ichki to'plamida u yo'q va so'z kvadrat bilan
+      // chiziladi. Inter'da bor (assets/fonts/README.md).
+      fontFamily: 'Inter',
 
       // Status bar matni qorong'i — bizning fon ochiq rangda
       appBarTheme: const AppBarTheme(

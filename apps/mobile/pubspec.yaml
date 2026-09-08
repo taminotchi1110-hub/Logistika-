@@ -80,28 +80,19 @@ flutter:
   uses-material-design: true
   # generate: true — l10n .arb fayllari qoʻshilgach yoqiladi
 
-  # ASSETLAR VA SHRIFTLAR HOZIRCHA E'LON QILINMAGAN.
-  #
-  # Flutter e'lon qilingan, lekin mavjud bo'lmagan fayl uchun
-  # "flutter pub get" bosqichida yiqiladi. Shrift va rasmlar
-  # qo'shilganda quyidagi bo'limlar yoqiladi:
-  #
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Inter-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Inter-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Inter-Bold.ttf
+          weight: 700
+
+  # Rasm va ikonkalar qoʻshilgach yoqiladi:
   # assets:
   #   - assets/images/
   #   - assets/icons/
-  #
-  # fonts:
-  #   - family: Inter
-  #     fonts:
-  #       - asset: assets/fonts/Inter-Regular.ttf
-  #         weight: 400
-  #       - asset: assets/fonts/Inter-Medium.ttf
-  #         weight: 500
-  #       - asset: assets/fonts/Inter-SemiBold.ttf
-  #         weight: 600
-  #       - asset: assets/fonts/Inter-Bold.ttf
-  #         weight: 700
-  #
-  # Shrift qo'shilgach app_theme.dart dagi fontFamily ham yoqiladi.
-  # Hozircha tizim shrifti ishlatiladi (Android: Roboto, iOS: SF Pro) —
-  # ikkalasi ham lotin va kirill alifbosini qo'llab-quvvatlaydi.
