@@ -314,6 +314,22 @@ export class LoadFeedQueryDto {
   @Max(1000)
   maxDistanceKm?: number;
 
+  /**
+   * Holat guruhi — "mening yuklarim" roʻyxatidagi bandlar uchun.
+   *
+   * NEGA ANIQ STATUS EMAS, GURUH: mijozga `OFFERS_RECEIVED` va
+   * `MATCHING` orasidagi farq qiziq emas, unga "hali haydovchi
+   * topilmagan yuklarim" kerak. Guruh ichidagi statuslar kelajakda
+   * oʻzgarsa, mijoz ilovasini yangilash shart boʻlmaydi.
+   */
+  @ApiPropertyOptional({
+    enum: ['active', 'draft', 'completed', 'cancelled'],
+    description: 'active — eʼlonda yoki yoʻlda; cancelled — bekor qilingan va muddati oʻtgan',
+  })
+  @IsOptional()
+  @IsIn(['active', 'draft', 'completed', 'cancelled'])
+  status?: 'active' | 'draft' | 'completed' | 'cancelled';
+
   @ApiPropertyOptional({ example: 41.3111 })
   @IsOptional()
   @Type(() => Number)

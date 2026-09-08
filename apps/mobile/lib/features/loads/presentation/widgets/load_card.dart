@@ -23,6 +23,7 @@ class LoadCard extends StatelessWidget {
     required this.load,
     required this.onTap,
     this.showMatchScore = false,
+    this.showStatus = false,
     super.key,
   });
 
@@ -31,6 +32,13 @@ class LoadCard extends StatelessWidget {
 
   /// Match Score ko'rsatilsinmi — faqat lentada, "yuklarim" da emas.
   final bool showMatchScore;
+
+  /// Holat belgisi ko'rsatilsinmi — "yuklarim" da, lentada emas.
+  ///
+  /// Lentada barcha e'lonlar bir xil holatda (ochiq) va belgi faqat
+  /// joy egallaydi. O'z ro'yxatida esa aksincha: mijoz "haydovchi
+  /// topildimi?" degan savolga darhol javob olishi kerak.
+  final bool showStatus;
 
   @override
   Widget build(BuildContext context) {
@@ -46,13 +54,16 @@ class LoadCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // --- belgilar qatori ---
-              if (load.isUrgent || (showMatchScore && load.matchScore != null))
+              if (showStatus ||
+                  load.isUrgent ||
+                  (showMatchScore && load.matchScore != null))
                 Padding(
                   padding: const EdgeInsets.only(bottom: AppSpacing.md),
                   child: Wrap(
                     spacing: AppSpacing.sm,
                     runSpacing: AppSpacing.xs,
                     children: [
+                      if (showStatus) _StatusBadge(status: load.status),
                       if (load.isUrgent)
                         const _Badge(
                           label: 'Shoshilinch',
@@ -324,6 +335,61 @@ class _Detail extends StatelessWidget {
               ),
         ),
       ],
+    );
+  }
+}
+
+/// E'lon holati belgisi.
+///
+/// RANG MAʼNO TASHIYDI: mijoz ro'yxatni ko'z bilan skanerlaydi va
+/// matnni o'qimasdan turib "harakat kerakmi?" degan savolga javob
+/// oladi. Sariq — javob kutmoqda, ko'k — ish ketyapti, kulrang — tugagan.
+class _StatusBadge extends StatelessWidget {
+  const _StatusBadge({required this.status});
+
+  final LoadStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    final (color, background, icon) = switch (status) {
+      LoadStatus.draft => (
+          AppColors.gray500,
+          AppColors.gray100,
+          Icons.edit_note_rounded,
+        ),
+      // "Takliflar bor" — mijozdan harakat talab qiladigan yagona holat
+      LoadStatus.offersReceived => (
+          AppColors.warning,
+          AppColors.warningLight,
+          Icons.mark_email_unread_rounded,
+        ),
+      LoadStatus.published || LoadStatus.matching => (
+          AppColors.info,
+          AppColors.infoLight,
+          Icons.radar_rounded,
+        ),
+      LoadStatus.assigned || LoadStatus.inProgress => (
+          AppColors.primary,
+          AppColors.primaryLight,
+          Icons.local_shipping_rounded,
+        ),
+      LoadStatus.completed => (
+          AppColors.success,
+          AppColors.successLight,
+          Icons.check_circle_rounded,
+        ),
+      LoadStatus.cancelled || LoadStatus.expired => (
+          AppColors.gray500,
+          AppColors.gray100,
+          Icons.cancel_rounded,
+        ),
+    };
+
+    return _Badge(
+      label: status.label,
+      icon: icon,
+      color: color,
+      background: background,
     );
   }
 }

@@ -9,6 +9,7 @@ import '../../features/auth/presentation/phone_screen.dart';
 import '../../features/auth/presentation/profile_setup_screen.dart';
 import '../../features/home/presentation/home_shell.dart';
 import '../../features/home/presentation/splash_screen.dart';
+import '../../features/loads/presentation/create_load_screen.dart';
 import '../../features/loads/presentation/load_detail_screen.dart';
 import '../providers.dart';
 
@@ -67,6 +68,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/',
         builder: (context, state) => const HomeShell(),
         routes: [
+          // `load/new` `load/:id` DAN OLDIN turishi shart: aks holda
+          // "new" identifikator deb qabul qilinadi va tafsilot ekrani
+          // mavjud boʻlmagan yukni soʻraydi
+          GoRoute(
+            path: 'load/new',
+            builder: (context, state) => const CreateLoadScreen(),
+          ),
           // Push bildirishnomadagi karvon://load/<id> shu yerga keladi
           GoRoute(
             path: 'load/:id',

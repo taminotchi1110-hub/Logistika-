@@ -14,7 +14,7 @@ import {
 import { maskPhone } from '@/common/utils/phone.util';
 import type { Env } from '@/config/env.schema';
 import { DatabaseService } from '@/infra/database/database.service';
-import type { LoadStatus } from '@/infra/database/database.types';
+import type { LoadStatus, OrderStatusDb } from '@/infra/database/database.types';
 import { GeoService } from '@/modules/geo/geo.service';
 import { RoutingService } from '@/modules/geo/routing.service';
 
@@ -179,6 +179,31 @@ interface LoadRow {
 
 /** Haydovchi lentasida koʻrinadigan statuslar. */
 const FEED_STATUSES: LoadStatus[] = ['PUBLISHED', 'MATCHING', 'OFFERS_RECEIVED'];
+
+/**
+ * "Mening yuklarim" roʻyxatidagi bandlar.
+ *
+ * DIQQAT: eʼlonning holati `ASSIGNED` da TOʻXTAYDI — undan keyingi
+ * hayotni buyurtma boshqaradi. Shuning uchun "yakunlangan" bandi
+ * eʼlon statusidan emas, BUYURTMA statusidan kelib chiqadi.
+ *
+ * Natijani eʼlonga ham koʻchirib yozish mumkin edi, lekin u ikkinchi
+ * haqiqat manbaini yaratadi: bittasi yangilanmay qolsa, mijoz bir joyda
+ * "yoʻlda", boshqa joyda "yakunlangan" deb koʻradi.
+ */
+const FINISHED_ORDER_STATUSES: OrderStatusDb[] = ['COMPLETED', 'CLOSED'];
+const CANCELLED_ORDER_STATUSES: OrderStatusDb[] = [
+  'CANCELLED_BY_SHIPPER',
+  'CANCELLED_BY_DRIVER',
+  'CANCELLED_BY_ADMIN',
+];
+/** Eʼlon hali ish holatida sanaladigan statuslar. */
+const WORKING_LOAD_STATUSES: LoadStatus[] = [
+  'PUBLISHED',
+  'MATCHING',
+  'OFFERS_RECEIVED',
+  'ASSIGNED',
+];
 /** Tahrirlash mumkin boʻlgan statuslar. */
 const EDITABLE_STATUSES: LoadStatus[] = ['DRAFT', 'PUBLISHED'];
 
@@ -701,6 +726,12 @@ export class LoadsService {
     }
 
     if (query) {
+      // Holat bandi faqat oʻz roʻyxatida maʼnoga ega: lentada baribir
+      // faqat `FEED_STATUSES` koʻrinadi
+      if (params.shipperId && query.status) {
+        builder = builder.where(this.statusGroupCondition(query.status));
+      }
+
       if (query.fromRegionId) builder = builder.where('l.pickupRegionId', '=', query.fromRegionId);
       if (query.toRegionId) builder = builder.where('l.deliveryRegionId', '=', query.toRegionId);
       if (query.dateFrom) builder = builder.where('l.pickupTo', '>=', new Date(query.dateFrom));
@@ -780,6 +811,39 @@ export class LoadsService {
     if (params.limit) builder = builder.limit(params.limit);
 
     return (await builder.execute()) as unknown as LoadRow[];
+  }
+
+  /** "Mening yuklarim" bandi → SQL sharti. */
+  private statusGroupCondition(
+    group: NonNullable<LoadFeedQueryDto['status']>,
+  ): Expression<SqlBool> {
+    const orderIn = (statuses: OrderStatusDb[]) =>
+      sql<SqlBool>`EXISTS (
+        SELECT 1 FROM orders o
+         WHERE o.load_id = l.id AND o.status = ANY(${statuses}::order_status[])
+      )`;
+
+    switch (group) {
+      case 'draft':
+        return sql<SqlBool>`l.status = 'DRAFT'`;
+
+      case 'completed':
+        return orderIn(FINISHED_ORDER_STATUSES);
+
+      case 'cancelled':
+        return sql<SqlBool>`(
+          l.status IN ('CANCELLED', 'EXPIRED')
+          OR ${orderIn(CANCELLED_ORDER_STATUSES)}
+        )`;
+
+      default:
+        // Ish holatidagi eʼlon: buyurtmasi yakunlanmagan ham, bekor
+        // qilinmagan ham boʻlishi kerak
+        return sql<SqlBool>`(
+          l.status = ANY(${WORKING_LOAD_STATUSES}::load_status[])
+          AND NOT ${orderIn([...FINISHED_ORDER_STATUSES, ...CANCELLED_ORDER_STATUSES])}
+        )`;
+    }
   }
 
   /**

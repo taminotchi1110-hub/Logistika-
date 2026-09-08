@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../auth/domain/user.dart';
 import '../../loads/presentation/feed_screen.dart';
+import '../../loads/presentation/my_loads_screen.dart';
 import '../../../shared/widgets/app_states.dart';
 
 /// Asosiy ekran — pastki navigatsiya bilan.
@@ -93,11 +94,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           label: 'Yuklarim',
           icon: Icons.inventory_2_outlined,
           activeIcon: Icons.inventory_2_rounded,
-          builder: (_) => const _Placeholder(
-            title: 'Yuklarim',
-            message: 'Yuk eʼlonlari roʻyxati shu yerda boʻladi',
-            icon: Icons.inventory_2_outlined,
-          ),
+          builder: (_) => const MyLoadsScreen(),
         ),
         _Tab(
           label: 'Buyurtmalar',

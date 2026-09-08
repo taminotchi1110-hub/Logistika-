@@ -24,10 +24,24 @@ RND2=$(( (RANDOM % 900) + 100 ))
 # bular mavjud boʻlmagan operator kodlari va server ularni rad etadi.
 SHIPPER_PHONE="${SHIPPER_PHONE:-+99890${RND}${RND2}1}"
 DRIVER_PHONE="${DRIVER_PHONE:-+99893${RND}${RND2}2}"
-PLATE_A="01 a ${RND} bc"
-PLATE_A_NORM="01A${RND}BC"
-PLATE_B="01A${RND2}BC"
-PLATE_A_FMT="01 A ${RND} BC"
+# Davlat raqami TASODIFIY: hudud kodi va harflar ham o'zgaradi.
+# Ilgari faqat "01A<3 raqam>BC" ishlatilar edi — bu atigi 900 ta
+# variant va dev bazasi to'lgach test VEHICLE_PLATE_TAKEN bilan
+# yiqilardi. Endi variantlar soni ~1 mlrd.
+PLATE_LETTERS=ABCDEFGHIJKLMNOPQRSTUVXYZ
+rand_letter() { echo -n "${PLATE_LETTERS:$((RANDOM % ${#PLATE_LETTERS})):1}"; }
+
+REGION_CODE=$(( (RANDOM % 90) + 10 ))
+L1=$(rand_letter); L2=$(rand_letter); L3=$(rand_letter)
+L1_LOWER=$(echo "$L1" | tr 'A-Z' 'a-z')
+L2_LOWER=$(echo "$L2" | tr 'A-Z' 'a-z')
+L3_LOWER=$(echo "$L3" | tr 'A-Z' 'a-z')
+
+# Kichik harf va probel bilan — server normallashtirishi kerak
+PLATE_A="${REGION_CODE} ${L1_LOWER} ${RND} ${L2_LOWER}${L3_LOWER}"
+PLATE_A_NORM="${REGION_CODE}${L1}${RND}${L2}${L3}"
+PLATE_A_FMT="${REGION_CODE} ${L1} ${RND} ${L2}${L3}"
+PLATE_B="${REGION_CODE}${L1}${RND2}${L2}${L3}"
 
 pass=0; fail=0
 

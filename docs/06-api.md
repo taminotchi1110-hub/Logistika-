@@ -103,7 +103,7 @@ POST /v1/auth/otp/verify
 |---|---|---|
 | POST | `/loads` | Yuk yaratish (DRAFT yoki darhol PUBLISHED) |
 | GET | `/loads` | **Haydovchi lentasi** — filter + sort |
-| GET | `/loads/mine` | Klientning o'z yuklari |
+| GET | `/loads/mine` | Klientning o'z yuklari (`?status=active\|draft\|completed\|cancelled`) |
 | GET | `/loads/:id` | Batafsil (ko'rishlar soni +1) |
 | PATCH | `/loads/:id` | Tahrirlash (faqat `DRAFT`/`PUBLISHED`) |
 | POST | `/loads/:id/publish` | E'lon qilish → matching ishga tushadi |
@@ -129,6 +129,20 @@ hisoblagan moslik foizi (`0..100`) yoki `null` (hali hisoblanmagan). Mijoz
 `match_score` saralashi faqat lentada ishlaydi. Mijozning o'z yuklari
 (`/loads/mine`) uchun moslik tushunchasi yo'q — u yerda `created_at` ga
 qaytadi.
+
+**"Yuklarim" bandlari.** `status` aniq holat emas, **guruh** qabul qiladi:
+
+| Band | Nimani o'z ichiga oladi |
+|---|---|
+| `active` | `PUBLISHED`, `MATCHING`, `OFFERS_RECEIVED`, `ASSIGNED` — buyurtmasi hali yakunlanmagan va bekor qilinmagan |
+| `draft` | `DRAFT` |
+| `completed` | buyurtmasi `COMPLETED` yoki `CLOSED` |
+| `cancelled` | `CANCELLED`, `EXPIRED` yoki buyurtmasi bekor qilingan |
+
+E'lonning o'z holati **`ASSIGNED` da to'xtaydi** — undan keyingi hayotni
+buyurtma boshqaradi. Shuning uchun `completed` bandi e'lon statusidan emas,
+buyurtma statusidan aniqlanadi: natijani e'longa ham ko'chirib yozish ikkinchi
+haqiqat manbaini yaratardi.
 
 **Sahifalash (kursor).** Kursor **noaniq** (base64url) va u qaysi saralash
 bilan olingan bo'lsa, o'sha saralash bilan qaytarilishi kerak. Kursor ichida
