@@ -6,49 +6,11 @@ import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:karvon/core/api/api_client.dart';
 import 'package:karvon/core/api/api_exception.dart';
-import 'package:karvon/core/storage/token_storage.dart';
 import 'package:karvon/features/auth/data/auth_repository.dart';
 import 'package:karvon/features/auth/domain/user.dart';
 
-/// Xotiradagi token saqlagich.
-///
-/// Haqiqiy `TokenStorage` platforma kanallarini (Keystore/Keychain)
-/// ishlatadi va test muhitida ishlamaydi. Bu vorisda faqat xotira.
-class _MemoryTokenStorage extends TokenStorage {
-  String? _access;
-  String? _refresh;
-  String? _userId;
+import 'support/memory_token_storage.dart';
 
-  @override
-  Future<String?> readAccessToken() async => _access;
-
-  @override
-  Future<String?> readRefreshToken() async => _refresh;
-
-  @override
-  Future<String?> readUserId() async => _userId;
-
-  @override
-  Future<void> saveTokens({
-    required String accessToken,
-    required String refreshToken,
-    String? userId,
-  }) async {
-    _access = accessToken;
-    _refresh = refreshToken;
-    _userId = userId ?? _userId;
-  }
-
-  @override
-  Future<bool> hasSession() async => _refresh != null;
-
-  @override
-  Future<void> clear() async {
-    _access = null;
-    _refresh = null;
-    _userId = null;
-  }
-}
 
 /// HAQIQIY BACKEND bilan integratsiya testi.
 ///
@@ -83,11 +45,11 @@ void main() {
   // va u hech qachon kirishni to'xtatmasligi kerak.
 
   late ApiClient api;
-  late _MemoryTokenStorage storage;
+  late MemoryTokenStorage storage;
   late AuthRepository repository;
 
   setUp(() {
-    storage = _MemoryTokenStorage();
+    storage = MemoryTokenStorage();
     api = ApiClient(storage: storage);
     repository = AuthRepository(api: api, storage: storage);
   });

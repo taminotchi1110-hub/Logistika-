@@ -110,7 +110,20 @@ async function main() {
   const pg = new Client({ connectionString: PGURL });
   await pg.connect();
 
+  // Dev bazasi umumiy va oldingi yugurishlardan AYNAN shunday "ideal"
+  // haydovchilar qolgan: bir xil joylashuv, bir xil yoʻnalish, bir xil
+  // transport — demak bir xil ball. Top-20 ga kim tushishi tasodifga
+  // bogʻlanib qoladi va test goh oʻtib, goh yiqiladi. Shuning uchun eski
+  // test haydovchilarini nofaol qilamiz: bu yugurishda faqat hozir
+  // yaratilganlari qatnashadi.
+  const cleaned = await pg.query(
+    `UPDATE driver_profiles SET availability = 'OFFLINE'
+      WHERE availability = 'AVAILABLE'
+        AND user_id IN (SELECT id FROM users WHERE phone LIKE '+99899%')`,
+  );
+
   step('Nomzodlar tayyorlanmoqda');
+  ok('eski test haydovchilari nofaol qilindi', `${cleaned.rowCount} ta`);
 
   // Toshkentda, Samarqandga doimiy yoʻnalishi bor — eng yaxshi nomzod
   const best = await createDriver(pg, {
@@ -195,9 +208,25 @@ async function main() {
   // ------------------------------------------------------- hard filter
   step('Hard filter');
   const matches = await api(`/loads/${loadId}/matches`, {}, shipperToken);
-  const ids = matches.data.map((m) => m.driverId);
 
-  check('nomzodlar topildi', true, matches.data.length >= 3);
+  // MUHIM: API javobi TOP-20 bilan cheklangan. Hard filter esa BUTUN
+  // nomzodlar to'plamiga tegishli — u `load_matches` jadvalida turadi.
+  // Agar tekshiruv API ro'yxatiga qarasa, baza to'lgani sari "chiqarib
+  // tashlandi" degan tasdiqlar o'z-o'zidan o'tib ketaveradi: quvvati
+  // yetmaydigan haydovchi filtr buzilgan taqdirda ham 20-o'ringa
+  // tushmaydi. Shuning uchun to'liq to'plamni bazadan olamiz.
+  const persisted = await pg.query(
+    `SELECT driver_id, match_score::float8 AS score, rank
+       FROM load_matches WHERE load_id = $1 ORDER BY rank`,
+    [loadId],
+  );
+  const ids = persisted.rows.map((row) => row.driver_id);
+  const scores = new Map(persisted.rows.map((row) => [row.driver_id, row.score]));
+
+  // Oltita haydovchidan faqat ikkitasi hard filterdan oʻtadi: `ideal` va
+  // `yaqin`. Qolgani ataylab chiqarib tashlanadi (quvvat, verifikatsiya,
+  // holat, radius) — shuning uchun kutilgan son ANIQ 2.
+  check('nomzodlar topildi', 2, persisted.rows.length);
   check('ideal nomzod roʻyxatda', true, ids.includes(best.driverId));
   check('yaqin nomzod roʻyxatda', true, ids.includes(near.driverId));
   check('quvvati yetmaydigan CHIQARILDI (1800 kg < 4000 kg)', false, ids.includes(small.driverId));
@@ -206,8 +235,7 @@ async function main() {
 
   // ------------------------------------------------------- match score
   step('Match Score tartibi');
-  const rank = (driverId) => matches.data.findIndex((m) => m.driverId === driverId);
-  const scoreOf = (driverId) => matches.data.find((m) => m.driverId === driverId)?.score;
+  const scoreOf = (driverId) => scores.get(driverId);
 
   // Baza umumiy: oldingi testlardan bir xil ballga ega haydovchilar
   // qolishi mumkin. Shuning uchun aniq o'rinni emas, NISBIY faktni
@@ -235,6 +263,40 @@ async function main() {
   check('ball tarkibi saqlandi', true, typeof components.proximity === 'number');
   check('yoʻnalish toʻliq mos', 1, components.routeFit);
   check('ogʻirliklar versiyasi', 'v1', breakdown.rows[0].weights_version);
+
+  // ------------------------------------------------- lenta moslik bilan
+  //
+  // Matching hisoblagan ball haydovchining LENTASIGA chiqishi kerak —
+  // aks holda butun matching faqat push xabar uchun ishlagan bo'ladi.
+  step('Lenta moslik boʻyicha');
+  const feed = await api('/loads/feed?sort=match_score&limit=5', {}, best.token);
+  const feedItem = feed.data?.find((item) => item.id === loadId);
+
+  check('★ MOSLIK FOIZI LENTAGA CHIQDI', scoreOf(best.driverId), feedItem?.matchScore);
+  check('★ MOS YUK BIRINCHI OʻRINDA', loadId, feed.data?.[0]?.id);
+
+  const feedScores = feed.data.map((item) => item.matchScore ?? -1);
+  const sortedDesc = feedScores.every((value, index) =>
+    index === 0 ? true : feedScores[index - 1] >= value,
+  );
+  check('kamayish tartibida', true, sortedDesc);
+
+  // Kursor: ikkinchi sahifa birinchisini takrorlamasligi kerak.
+  // Moslik hisoblanmagan yuklar bir xil ballga ega — ular sana bo'yicha
+  // ajratilmasa, sahifalash aynan shu yerda buziladi.
+  if (feed.meta.hasMore) {
+    const next = await api(
+      `/loads/feed?sort=match_score&limit=5&cursor=${encodeURIComponent(feed.meta.nextCursor)}`,
+      {},
+      best.token,
+    );
+    const firstIds = new Set(feed.data.map((item) => item.id));
+    const repeated = next.data.filter((item) => firstIds.has(item.id));
+    check('★ KURSOR TAKRORLAMAYDI', 0, repeated.length);
+    check('ikkinchi sahifa balli pastroq', true, (next.data[0]?.matchScore ?? -1) <= feedScores.at(-1));
+  } else {
+    ok('kursor tekshiruvi', 'lentada bitta sahifa');
+  }
 
   // ------------------------------------------------------- bildirishnoma
   step('Top haydovchilarga bildirishnoma');
@@ -282,7 +344,7 @@ async function main() {
   // ------------------------------------------------------- qayta matching
   step('Qayta matching');
   const again = await api(`/loads/${loadId}/rematch`, { method: 'POST' }, shipperToken);
-  check('qayta ishga tushdi', true, again.data.candidates >= 3);
+  check('qayta ishga tushdi', 2, again.data.candidates);
 
   const notifiedAfter = await pg.query(
     `SELECT count(*)::int AS n FROM notifications

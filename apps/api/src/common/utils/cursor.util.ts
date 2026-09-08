@@ -18,8 +18,26 @@ import { ErrorCode } from '@/common/errors/error-codes';
 export interface CursorPayload {
   /** Tartiblash maydonining qiymati (sana ISO, son yoki matn). */
   v: string | number;
+  /**
+   * Ikkinchi darajali tartib qiymati (ixtiyoriy).
+   *
+   * Baʼzi saralashlarda `v` juda koʻp takrorlanadi — masalan moslik
+   * foizi hisoblanmagan yuklarda u bir xil boʻladi. Bunda ajratish
+   * uchun faqat `id` (UUID) qolsa, roʻyxat tasodifiy tartibda chiqadi.
+   * Shuning uchun ular sana boʻyicha ikkinchi kalit bilan ajratiladi.
+   */
+  v2?: string | number;
   /** Bir xil qiymatli qatorlarni ajratish uchun — har doim unikal. */
   id: string;
+  /**
+   * Birinchi darajali tartib bayrogʻi (ixtiyoriy).
+   *
+   * Lentada TOP eʼlonlar hamma narsadan yuqorida turadi. Agar kursor
+   * faqat `v` va `id` ni saqlasa, eski sanali TOP eʼlon 2-sahifada
+   * yana chiqib qoladi — chunki `created_at < kursor` sharti unga ham
+   * mos keladi. Shuning uchun keyset uch qismli: (top, qiymat, id).
+   */
+  t?: boolean;
 }
 
 export function encodeCursor(payload: CursorPayload): string {

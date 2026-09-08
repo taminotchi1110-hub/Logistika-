@@ -5,7 +5,12 @@ import { sql, type Expression, type SqlBool } from 'kysely';
 
 import { AppError } from '@/common/errors/app.error';
 import { ErrorCode } from '@/common/errors/error-codes';
-import { buildPage, decodeCursor, type PageResult } from '@/common/utils/cursor.util';
+import {
+  buildPage,
+  decodeCursor,
+  type CursorPayload,
+  type PageResult,
+} from '@/common/utils/cursor.util';
 import { maskPhone } from '@/common/utils/phone.util';
 import type { Env } from '@/config/env.schema';
 import { DatabaseService } from '@/infra/database/database.service';
@@ -93,6 +98,15 @@ export interface LoadView {
 
   /** Haydovchidan yuk olish nuqtasigacha (lenta soʻrovida lat/lng berilgan boʻlsa). */
   distanceToPickupKm?: number;
+
+  /**
+   * Moslik foizi (0..100) — matching shu haydovchi uchun hisoblagan boʻlsa.
+   *
+   * Faqat lentada toʻladi. `null` — matching hali bu juftlikni koʻrmagan
+   * (masalan eʼlon endi chiqqan yoki haydovchining tasdiqlangan transporti
+   * yoʻq); mijoz bunday holatda foizni koʻrsatmasligi kerak.
+   */
+  matchScore: number | null;
 }
 
 /**
@@ -159,12 +173,25 @@ interface LoadRow {
   shipperRatingCount: number;
   shipperCompletedOrders: number;
   distanceToPickupM: number | null;
+  /** NUMERIC(5,2) — `pg` uni satr qilib qaytaradi (aniqlik yoʻqolmasligi uchun). */
+  matchScore: string | null;
 }
 
 /** Haydovchi lentasida koʻrinadigan statuslar. */
 const FEED_STATUSES: LoadStatus[] = ['PUBLISHED', 'MATCHING', 'OFFERS_RECEIVED'];
 /** Tahrirlash mumkin boʻlgan statuslar. */
 const EDITABLE_STATUSES: LoadStatus[] = ['DRAFT', 'PUBLISHED'];
+
+/**
+ * Amaldagi TOP bayrogʻi.
+ *
+ * `is_top` ustuni oʻz-oʻzidan yetarli emas: TOP — pullik va **muddatli**
+ * xizmat. Muddati tugagach eʼlon oddiy eʼlonga aylanishi kerak, aks holda
+ * bir marta toʻlagan mijoz abadiy tepada qoladi. Shu ifoda ham tartiblashda,
+ * ham kursor shartida bir xil ishlatiladi — ikkalasi bir joydan olinmasa,
+ * sahifalash jimgina buziladi.
+ */
+const IS_TOP_NOW = sql<boolean>`(l.is_top AND (l.top_until IS NULL OR l.top_until > now()))`;
 
 @Injectable()
 export class LoadsService {
@@ -535,10 +562,13 @@ export class LoadsService {
     const limit = query.limit ?? this.defaultPageSize;
     const rows = await this.selectLoads({ shipperId, query, limit: limit + 1 });
 
+    // Kursor saralash bilan bir xil kalitdan qurilishi shart: ilgari bu
+    // yerda doim `created_at` ishlatilardi va mijoz narx boʻyicha
+    // saralasa 2-sahifa notoʻgʻri kelardi
     return buildPage(
       rows.map((row) => this.toView(row, { revealContacts: true })),
       limit,
-      (view) => ({ v: view.createdAt.toISOString(), id: view.id }),
+      (view) => this.cursorFor(view, query.sort ?? 'created_at'),
     );
   }
 
@@ -551,15 +581,21 @@ export class LoadsService {
    */
   async feed(driverId: string, query: LoadFeedQueryDto): Promise<PageResult<LoadView>> {
     const limit = query.limit ?? this.defaultPageSize;
-    const rows = await this.selectLoads({ query, limit: limit + 1, feedForDriverId: driverId });
+
+    // Lentaning standarti — MOSLIK, sana emas. Haydovchiga eng yangi
+    // eʼlon emas, unga eng mos eʼlon kerak: matchingning butun maʼnosi
+    // shu. Saralash bir joyda aniqlanadi va soʻrovga yoziladi — aks
+    // holda SQL bir tartibda, kursor esa boshqa tartibda qurilib qoladi.
+    const sort = query.sort ?? 'match_score';
+    const rows = await this.selectLoads({
+      query: { ...query, sort },
+      limit: limit + 1,
+      feedForDriverId: driverId,
+    });
 
     const views = rows.map((row) => this.toView(row, { revealContacts: false }));
-    const sort = query.sort ?? 'created_at';
 
-    return buildPage(views, limit, (view) => ({
-      v: this.cursorValueFor(view, sort),
-      id: view.id,
-    }));
+    return buildPage(views, limit, (view) => this.cursorFor(view, sort, driverId));
   }
 
   // ------------------------------------------------------------------ ichki
@@ -624,7 +660,7 @@ export class LoadsService {
         'l.isNegotiable as is_negotiable',
         'l.paymentMethod as payment_method',
         'l.suggestedPriceTiyin as suggested_price_tiyin',
-        'l.isTop as is_top',
+        IS_TOP_NOW.as('is_top'),
         'l.viewCount as view_count',
         'l.offerCount as offer_count',
         'l.publishedAt as published_at',
@@ -643,6 +679,14 @@ export class LoadsService {
         driverPoint
           ? sql<number>`ST_Distance(l.pickup_geom, ${driverPoint})`.as('distance_to_pickup_m')
           : sql<number | null>`NULL`.as('distance_to_pickup_m'),
+        // Moslik foizi — JOIN emas, korrelyatsion pastki soʻrov.
+        // `load_matches(load_id, driver_id)` unikal boʻlgani uchun u
+        // koʻpi bilan bitta qator qaytaradi va JOIN kabi natijani
+        // koʻpaytirib yubormaydi; ustun roʻyxati esa haydovchi bor-yoʻqligiga
+        // qarab oʻzgarmaydi (TypeScript uchun ham qulay).
+        params.feedForDriverId
+          ? this.matchScoreExpr(params.feedForDriverId).as('match_score')
+          : sql<string | null>`NULL`.as('match_score'),
       ]);
 
     if (params.loadId) builder = builder.where('l.id', '=', params.loadId);
@@ -694,18 +738,24 @@ export class LoadsService {
 
       const sort = query.sort ?? 'created_at';
 
-      // Keyset kursor: (tartib_qiymati, id) juftligi boʻyicha "keyingisi".
+      // Keyset kursor: (top, tartib_qiymati, id) uchligi boʻyicha "keyingisi".
       // Teng qiymatlarda id ajratadi — shuning uchun bir qator ikki marta chiqmaydi.
       if (query.cursor) {
-        builder = builder.where(this.cursorCondition(sort, query));
+        builder = builder.where(this.cursorCondition(sort, query, params.feedForDriverId));
       }
 
       // TOP eʼlonlar tepada — pullik xizmat, lekin faqat muddati ichida
-      builder = builder.orderBy(
-        sql`(l.is_top AND (l.top_until IS NULL OR l.top_until > now())) desc`,
-      );
+      builder = builder.orderBy(sql`${IS_TOP_NOW} desc`);
 
       switch (sort) {
+        case 'match_score':
+          // Moslik yoʻq eʼlonlar oxirida: hisoblanmagan foiz 0 dan ham
+          // yomonroq signal, uni tepaga chiqarish lentani buzadi.
+          builder = builder
+            .orderBy(sql`match_score desc nulls last`)
+            .orderBy('l.createdAt', 'desc')
+            .orderBy('l.id', 'desc');
+          break;
         case 'pickup_date':
           builder = builder.orderBy('l.pickupFrom', 'asc').orderBy('l.id', 'asc');
           break;
@@ -732,48 +782,98 @@ export class LoadsService {
     return (await builder.execute()) as unknown as LoadRow[];
   }
 
-  /** Kursor sharti — saralash turiga mos keladigan keyset qoidasi. */
+  /**
+   * Haydovchi uchun moslik foizi — korrelyatsion pastki soʻrov.
+   *
+   * Ayni ifoda ustun roʻyxatida ham, kursor shartida ham kerak. Ikki
+   * joyga alohida yozilsa, biri oʻzgarganda sahifalash jimgina buziladi —
+   * shuning uchun bitta manbadan olinadi.
+   */
+  private matchScoreExpr(driverId: string) {
+    return sql<string | null>`(
+      SELECT lm.match_score FROM load_matches lm
+       WHERE lm.load_id = l.id AND lm.driver_id = ${driverId}::uuid
+    )`;
+  }
+
+  /**
+   * Kursor sharti — saralash turiga mos keladigan keyset qoidasi.
+   *
+   * Har bir shart ORDER BY bilan **bir xil** ustunlar va **bir xil**
+   * yoʻnalishda boʻlishi shart. Birinchi kalit — hamma joyda TOP bayrogʻi
+   * (u ORDER BY da ham birinchi). Kamayish tartibidagi saralashlarda
+   * `(top, ...) < (...)`, oʻsish tartibidagilarida esa TOP teskari
+   * olinadi — `(NOT top, ...) > (...)` — chunki SQL qator solishtiruvi
+   * barcha ustunlar uchun bitta yoʻnalishni talab qiladi.
+   */
   private cursorCondition(
     sort: NonNullable<LoadFeedQueryDto['sort']>,
     query: LoadFeedQueryDto,
+    driverId?: string,
   ): Expression<SqlBool> {
     const cursor = decodeCursor(query.cursor!);
     const value = cursor.v;
+    const top = cursor.t ?? false;
 
     switch (sort) {
+      case 'match_score': {
+        // Haydovchisiz (masalan mijozning oʻz roʻyxati) moslik yoʻq —
+        // saralash `created_at` ga qaytadi, kursor ham shunga mos boʻlishi kerak.
+        // `v2` boʻlmasa kursor boshqa saralashdan kelgan — uni ham
+        // `created_at` deb oʻqiymiz, 500 xato qaytarishdan koʻra maʼqul.
+        if (!driverId || cursor.v2 === undefined) break;
+        return sql<SqlBool>`(${IS_TOP_NOW}, coalesce(${this.matchScoreExpr(driverId)}, -1), l.created_at, l.id)
+          < (${top}::boolean, ${value}::numeric, ${cursor.v2}::timestamptz, ${cursor.id}::uuid)`;
+      }
       case 'pickup_date':
-        return sql<SqlBool>`(l.pickup_from, l.id) > (${value}::timestamptz, ${cursor.id}::uuid)`;
+        return sql<SqlBool>`(NOT ${IS_TOP_NOW}, l.pickup_from, l.id)
+          > (NOT ${top}::boolean, ${value}::timestamptz, ${cursor.id}::uuid)`;
       case 'price_desc':
-        return sql<SqlBool>`(coalesce(l.price_tiyin, 0), l.id) < (${value}::bigint, ${cursor.id}::uuid)`;
+        return sql<SqlBool>`(${IS_TOP_NOW}, coalesce(l.price_tiyin, 0), l.id)
+          < (${top}::boolean, ${value}::bigint, ${cursor.id}::uuid)`;
       case 'price_asc':
-        return sql<SqlBool>`(coalesce(l.price_tiyin, 0), l.id) > (${value}::bigint, ${cursor.id}::uuid)`;
+        return sql<SqlBool>`(NOT ${IS_TOP_NOW}, coalesce(l.price_tiyin, 0), l.id)
+          > (NOT ${top}::boolean, ${value}::bigint, ${cursor.id}::uuid)`;
       case 'distance_asc':
         return sql<SqlBool>`(
+          NOT ${IS_TOP_NOW},
           ST_Distance(
             l.pickup_geom,
             ST_SetSRID(ST_MakePoint(${query.lng ?? 0}, ${query.lat ?? 0}), 4326)::geography
           ), l.id
-        ) > (${value}::double precision, ${cursor.id}::uuid)`;
+        ) > (NOT ${top}::boolean, ${value}::double precision, ${cursor.id}::uuid)`;
       default:
-        return sql<SqlBool>`(l.created_at, l.id) < (${value}::timestamptz, ${cursor.id}::uuid)`;
+        break;
     }
+
+    return sql<SqlBool>`(${IS_TOP_NOW}, l.created_at, l.id)
+      < (${top}::boolean, ${value}::timestamptz, ${cursor.id}::uuid)`;
   }
 
-  private cursorValueFor(
+  /** Oxirgi qator uchun kursor — `cursorCondition` kutayotgan shaklda. */
+  private cursorFor(
     view: LoadView,
     sort: NonNullable<LoadFeedQueryDto['sort']>,
-  ): string | number {
+    driverId?: string,
+  ): CursorPayload {
+    const base = { id: view.id, t: view.isTop };
+
     switch (sort) {
+      case 'match_score':
+        if (!driverId) break;
+        return { ...base, v: view.matchScore ?? -1, v2: view.createdAt.toISOString() };
       case 'pickup_date':
-        return view.pickup.from.toISOString();
+        return { ...base, v: view.pickup.from.toISOString() };
       case 'price_desc':
       case 'price_asc':
-        return view.priceTiyin ?? 0;
+        return { ...base, v: view.priceTiyin ?? 0 };
       case 'distance_asc':
-        return Math.round((view.distanceToPickupKm ?? 0) * 1000);
+        return { ...base, v: Math.round((view.distanceToPickupKm ?? 0) * 1000) };
       default:
-        return view.createdAt.toISOString();
+        break;
     }
+
+    return { ...base, v: view.createdAt.toISOString() };
   }
 
   private validateTimeWindow(from: string, to: string, deliveryBy?: string): void {
@@ -939,6 +1039,9 @@ export class LoadsService {
         row.distanceToPickupM === null || row.distanceToPickupM === undefined
           ? undefined
           : Math.round((Number(row.distanceToPickupM) / 1000) * 10) / 10,
+
+      matchScore:
+        row.matchScore === null || row.matchScore === undefined ? null : Number(row.matchScore),
     };
   }
 }

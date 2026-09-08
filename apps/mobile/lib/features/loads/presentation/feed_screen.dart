@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/providers.dart';
@@ -263,12 +264,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
         return LoadCard(
           load: load,
           showMatchScore: true,
-          onTap: () {
-            // Tafsilotlar ekrani keyingi bosqichda
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('${load.publicNo} — tafsilotlar tayyorlanmoqda')),
-            );
-          },
+          onTap: () => context.push('/load/${load.id}'),
         );
       },
     );

@@ -9,6 +9,7 @@ import '../../features/auth/presentation/phone_screen.dart';
 import '../../features/auth/presentation/profile_setup_screen.dart';
 import '../../features/home/presentation/home_shell.dart';
 import '../../features/home/presentation/splash_screen.dart';
+import '../../features/loads/presentation/load_detail_screen.dart';
 import '../providers.dart';
 
 /// Navigatsiya.
@@ -65,6 +66,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/',
         builder: (context, state) => const HomeShell(),
+        routes: [
+          // Push bildirishnomadagi karvon://load/<id> shu yerga keladi
+          GoRoute(
+            path: 'load/:id',
+            builder: (context, state) =>
+                LoadDetailScreen(loadId: state.pathParameters['id']!),
+          ),
+        ],
       ),
     ],
 

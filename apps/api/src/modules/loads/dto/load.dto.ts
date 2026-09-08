@@ -326,13 +326,25 @@ export class LoadFeedQueryDto {
   @IsLongitude()
   lng?: number;
 
+  /**
+   * `match_score` — faqat haydovchi lentasida maʼnoga ega: yuklar
+   * matching hisoblagan moslik foizi boʻyicha tartiblanadi. Boshqa
+   * roʻyxatlarda (masalan mijozning oʻz yuklari) moslik yoʻq, shuning
+   * uchun u yerda `created_at` ga qaytadi.
+   */
   @ApiPropertyOptional({
-    enum: ['created_at', 'price_desc', 'price_asc', 'pickup_date', 'distance_asc'],
+    enum: ['match_score', 'created_at', 'price_desc', 'price_asc', 'pickup_date', 'distance_asc'],
     default: 'created_at',
   })
   @IsOptional()
-  @IsIn(['created_at', 'price_desc', 'price_asc', 'pickup_date', 'distance_asc'])
-  sort?: 'created_at' | 'price_desc' | 'price_asc' | 'pickup_date' | 'distance_asc';
+  @IsIn(['match_score', 'created_at', 'price_desc', 'price_asc', 'pickup_date', 'distance_asc'])
+  sort?:
+    | 'match_score'
+    | 'created_at'
+    | 'price_desc'
+    | 'price_asc'
+    | 'pickup_date'
+    | 'distance_asc';
 
   @ApiPropertyOptional()
   @IsOptional()

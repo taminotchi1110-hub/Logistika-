@@ -116,11 +116,24 @@ POST /v1/auth/otp/verify
 
 **Lenta filtri:**
 ```
-GET /v1/loads?fromRegionId=1&toRegionId=8&dateFrom=2026-09-06&dateTo=2026-09-08
+GET /v1/loads/feed?fromRegionId=1&toRegionId=8&dateFrom=2026-09-06&dateTo=2026-09-08
    &minWeightKg=1000&maxWeightKg=20000&vehicleTypeIds=5,6&bodyTypeIds=1
    &minPriceTiyin=100000000&maxDistanceKm=50&sort=match_score&cursor=&limit=20
 ```
-`sort`: `match_score` (default) · `created_at` · `price_desc` · `distance_asc` · `pickup_date`
+`sort`: `match_score` (default) · `created_at` · `price_desc` · `price_asc` · `distance_asc` · `pickup_date`
+
+Har bir yuk `matchScore` maydonini qaytaradi — matching shu haydovchi uchun
+hisoblagan moslik foizi (`0..100`) yoki `null` (hali hisoblanmagan). Mijoz
+`null` bo'lganda foizni ko'rsatmasligi kerak.
+
+`match_score` saralashi faqat lentada ishlaydi. Mijozning o'z yuklari
+(`/loads/mine`) uchun moslik tushunchasi yo'q — u yerda `created_at` ga
+qaytadi.
+
+**Sahifalash (kursor).** Kursor **noaniq** (base64url) va u qaysi saralash
+bilan olingan bo'lsa, o'sha saralash bilan qaytarilishi kerak. Kursor ichida
+TOP bayrog'i ham saqlanadi: TOP e'lonlar hamma narsadan yuqorida turgani
+uchun, keyset uni hisobga olmasa, eski sanali TOP e'lon 2-sahifada takrorlanadi.
 
 ## 6.6. Takliflar (`/offers`)
 
