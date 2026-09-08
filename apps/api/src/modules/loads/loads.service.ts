@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { sql, type Expression, type SqlBool } from 'kysely';
 
 import { AppError } from '@/common/errors/app.error';
@@ -13,6 +14,12 @@ import { GeoService } from '@/modules/geo/geo.service';
 import { RoutingService } from '@/modules/geo/routing.service';
 
 import type { CreateLoadDto, LoadFeedQueryDto, UpdateLoadDto } from './dto/load.dto';
+import {
+  LOAD_PUBLISHED,
+  LOAD_VIEWED,
+  LoadPublishedEvent,
+  LoadViewedEvent,
+} from './load.events';
 import { PricingService, type PriceSuggestion } from './pricing.service';
 
 export interface LoadView {
@@ -170,6 +177,7 @@ export class LoadsService {
     private readonly geo: GeoService,
     private readonly routing: RoutingService,
     private readonly pricing: PricingService,
+    private readonly events: EventEmitter2,
     @Inject(ConfigService) config: ConfigService<Env, true>,
   ) {
     this.maxActivePerShipper = config.get('LOAD_MAX_ACTIVE_PER_SHIPPER', { infer: true });
@@ -302,6 +310,13 @@ export class LoadsService {
       'Yuk yaratildi',
     );
 
+    // `publishNow` — eng koʻp ishlatiladigan yoʻl (klient odatda qoralama
+    // saqlamaydi). Matching hodisasi shu yerda ham chiqarilishi shart,
+    // aks holda eʼlonlarning aksariyati matchingsiz qolib ketadi.
+    if (publishNow) {
+      this.events.emit(LOAD_PUBLISHED, new LoadPublishedEvent(id, shipperId));
+    }
+
     return this.getOwnLoad(shipperId, id);
   }
 
@@ -335,7 +350,10 @@ export class LoadsService {
       .execute();
 
     this.logger.log({ loadId, shipperId }, 'Yuk eʼlon qilindi');
-    // 4-bosqichda shu yerdan matching job navbatga qoʻyiladi
+
+    // Matching hodisa orqali ishga tushadi — javob uni kutib turmaydi
+    this.events.emit(LOAD_PUBLISHED, new LoadPublishedEvent(loadId, shipperId));
+
     return this.getOwnLoad(shipperId, loadId);
   }
 
@@ -506,6 +524,9 @@ export class LoadsService {
       .set((eb) => ({ viewCount: eb('viewCount', '+', 1) }))
       .where('id', '=', loadId)
       .execute();
+
+    // Matching natijasida `viewed_at` belgilanadi (kelajakdagi ML uchun label)
+    this.events.emit(LOAD_VIEWED, new LoadViewedEvent(loadId, viewerId));
 
     return this.toView(row, { revealContacts: false });
   }

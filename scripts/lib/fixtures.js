@@ -27,10 +27,27 @@ async function api(path, options = {}, token) {
 
 async function login(phone, role) {
   const otp = await api('/auth/otp/request', { method: 'POST', body: JSON.stringify({ phone }) });
+
+  if (!otp.data) {
+    // Eng ko'p uchraydigan holat — kunlik OTP limiti. Xatoni tushunarli
+    // qilamiz, aks holda "Cannot read properties of undefined" chiqadi.
+    const code = otp.error?.code ?? 'NOMAʼLUM';
+    const hint =
+      code === 'OTP_TOO_MANY_REQUESTS'
+        ? ' — `node scripts/reset-rate-limits.js` ni ishga tushiring'
+        : '';
+    throw new Error(`OTP olinmadi (${code})${hint}`);
+  }
+
   const verified = await api('/auth/otp/verify', {
     method: 'POST',
     body: JSON.stringify({ phone, code: otp.data.devCode }),
   });
+
+  if (!verified.data) {
+    throw new Error(`Kirish amalga oshmadi (${verified.error?.code ?? 'NOMAʼLUM'})`);
+  }
+
   const token = verified.data.accessToken;
   await api(
     '/auth/profile',

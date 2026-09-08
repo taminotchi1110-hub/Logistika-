@@ -198,3 +198,46 @@ statistik shaklda qoladi.
 6. **Maxsus talablar:** Gruzchik, Gidrobort, Ramp, Temperatura rejimi, Plomba, GPS-nazorat.
 7. **Tarif rejalari:** FREE, DRIVER_PREMIUM, SHIPPER_PREMIUM, CORP_BASIC, CORP_PRO.
 8. **Admin rollar:** SUPER_ADMIN, MODERATOR, SUPPORT, FINANCE, ANALYST.
+
+## 5.7. Kysely `CamelCasePlugin` va JSONB — muhim ogohlantirish
+
+`CamelCasePlugin` faqat ustun nomlarini emas, **JSONB qiymati ichidagi
+kalitlarni ham** camelCase ga o'giradi. Bu hujjatlarda yaqqol yozilmagan
+va real xatoga olib keldi.
+
+Bazada:
+
+```sql
+SELECT value FROM platform_settings WHERE key = 'matching.weights';
+-- {"proximity": 0.28, "route_fit": 0.20, ...}
+```
+
+Ilovada:
+
+```ts
+const weights = await settings.getJson('matching.weights', DEFAULT_WEIGHTS);
+Object.keys(weights); // ['proximity', 'routeFit', ...]  ← route_fit YO'Q
+weights.route_fit;    // undefined
+```
+
+**Oqibati:** `components.routeFit * weights.route_fit` → `NaN`,
+og'irliklar yig'indisi `NaN`, normalizatsiya 0 qaytardi va **barcha
+Match Score ballari 0 bo'lib qoldi**. Kod xato bermadi, testlar
+"ball 0..100 oralig'ida" deb o'tdi — nosozlik faqat uchidan-uchiga
+testda ko'rindi.
+
+### Qoidalar
+
+1. **JSONB ichida ham camelCase saqlaymiz.** Shunda baza, admin paneli
+   va ilova bir xil kalitlarni ko'radi (migratsiya `0002`).
+2. **Tashqi sozlamaga ishonmaymiz.** Og'irliklar `resolveWeights()` dan
+   o'tadi: yetishmagan yoki noto'g'ri turdagi kalit standart qiymat
+   bilan almashtiriladi. Bitta noto'g'ri kalit butun matchingni
+   o'chirib qo'ymasligi kerak.
+3. **Xom SQL natijalari ham camelCase bo'ladi** — `sql<T>` bilan yozilgan
+   so'rovda ham interfeys camelCase e'lon qilinadi (bu ilgari
+   `geo.service.ts` da xatoga olib kelgan).
+
+Bu xulosa ikki marta qimmatga tushdi: birinchi marta xom SQL ustunlarida,
+ikkinchi marta JSONB ichida. Yangi JSONB ustun qo'shishda shu bo'limni
+eslang.

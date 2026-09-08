@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { randomUUID } from 'node:crypto';
 import { resolve } from 'node:path';
 import { LoggerModule } from 'nestjs-pino';
@@ -16,6 +17,7 @@ import { DriversModule } from '@/modules/drivers/drivers.module';
 import { GeoModule } from '@/modules/geo/geo.module';
 import { HealthModule } from '@/modules/health/health.module';
 import { LoadsModule } from '@/modules/loads/loads.module';
+import { MatchingModule } from '@/modules/matching/matching.module';
 import { MediaModule } from '@/modules/media/media.module';
 import { ChatModule } from '@/modules/chat/chat.module';
 import { NotificationsModule } from '@/modules/notifications/notifications.module';
@@ -34,6 +36,10 @@ import { VehiclesModule } from '@/modules/vehicles/vehicles.module';
       validate: validateEnv,
       cache: true,
     }),
+
+    // Modullar orasidagi tsiklik bogʻlanishni oldini oladi: yuk eʼlon
+    // qilinganda matching hodisa orqali ishga tushadi (loads/load.events.ts)
+    EventEmitterModule.forRoot(),
 
     LoggerModule.forRootAsync({
       inject: [ConfigService],
@@ -94,6 +100,7 @@ import { VehiclesModule } from '@/modules/vehicles/vehicles.module';
     NotificationsModule,
     OrdersModule,
     ChatModule,
+    MatchingModule,
   ],
 })
 export class AppModule {}

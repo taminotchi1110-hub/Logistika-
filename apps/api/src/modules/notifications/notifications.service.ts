@@ -21,7 +21,8 @@ export type NotificationType =
   | 'order.status'
   | 'order.cancelled'
   | 'chat.message'
-  | 'contacts.revealed';
+  | 'contacts.revealed'
+  | 'load.matched';
 
 export interface NotifyInput {
   userId: string;
@@ -49,6 +50,8 @@ const CHANNEL_BY_TYPE: Record<NotificationType, 'karvon_messages' | 'karvon_orde
   'order.cancelled': 'karvon_orders',
   'chat.message': 'karvon_messages',
   'contacts.revealed': 'karvon_orders',
+  // Yangi yuk taklifi — buyurtma kanalida, chunki bu ish taklifi
+  'load.matched': 'karvon_orders',
 };
 
 @Injectable()

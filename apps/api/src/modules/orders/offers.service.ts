@@ -1,10 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { AppError } from '@/common/errors/app.error';
 import { ErrorCode } from '@/common/errors/error-codes';
 import { SettingsService } from '@/common/services/settings.service';
 import { DatabaseService } from '@/infra/database/database.service';
 import { DriversService } from '@/modules/drivers/drivers.service';
+import { OFFER_CREATED, OfferCreatedEvent } from '@/modules/loads/load.events';
 import { NotificationsService } from '@/modules/notifications/notifications.service';
 import { VehiclesService } from '@/modules/vehicles/vehicles.service';
 
@@ -38,6 +40,7 @@ export class OffersService {
     private readonly vehicles: VehiclesService,
     private readonly settings: SettingsService,
     private readonly notifications: NotificationsService,
+    private readonly events: EventEmitter2,
   ) {}
 
   /**
@@ -184,6 +187,10 @@ export class OffersService {
     });
 
     this.logger.log({ offerId: inserted.id, loadId, driverId }, 'Taklif yuborildi');
+
+    // Matching sifatini oʻlchash uchun belgi (ML label)
+    this.events.emit(OFFER_CREATED, new OfferCreatedEvent(loadId, driverId));
+
     return this.getById(inserted.id);
   }
 

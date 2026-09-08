@@ -27,6 +27,7 @@ run "1. Asosiy oqim (auth, park, hujjatlar, yuklar)" bash scripts/smoke-test.sh
 run "2. Takliflar, buyurtma va kontakt ko'rinishi" bash scripts/smoke-test-orders.sh
 run "3. WebSocket: chat va bildirishnoma banneri" node scripts/ws-test.js
 run "4. Oflayn push navbati" node scripts/push-test.js
+run "5. Avtomatik matching (Match Score)" node scripts/matching-test.js
 
 echo ""
 if [ "$FAILED" -eq 0 ]; then

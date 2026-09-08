@@ -538,6 +538,54 @@ export interface RoutePriceStatsTable {
 }
 
 // ---------------------------------------------------------------- DB
+
+// ------------------------------------------------------------ matching
+export interface LoadMatchesTable {
+  id: Generated<string>;
+  loadId: string;
+  driverId: string;
+  vehicleId: string | null;
+  /** NUMERIC(5,2) — 0.00 .. 100.00, string sifatida keladi (aniqlik yo'qolmasin). */
+  matchScore: string;
+  scoreBreakdown: string;
+  distanceToPickupKm: string | null;
+  weightsVersion: Generated<string>;
+  rank: number;
+  notifiedAt: Date | null;
+  viewedAt: Date | null;
+  offeredAt: Date | null;
+  createdAt: CreatedAt;
+}
+
+// ------------------------------------------------------------ tracking
+export interface DriverLocationsTable {
+  id: Generated<string>;
+  driverId: string;
+  orderId: string | null;
+  /** geography(Point,4326) — xom SQL orqali yoziladi va o'qiladi. */
+  geom: unknown;
+  speedKmh: string | null;
+  headingDeg: number | null;
+  accuracyM: string | null;
+  altitudeM: string | null;
+  batteryPct: number | null;
+  isMock: Generated<boolean>;
+  recordedAt: Date | string;
+  createdAt: CreatedAt;
+}
+
+export interface OrderTracksTable {
+  orderId: string;
+  polyline: string;
+  pointsCount: number;
+  distanceKm: string;
+  durationMin: number;
+  avgSpeedKmh: string | null;
+  maxSpeedKmh: string | null;
+  stopsCount: number | null;
+  createdAt: CreatedAt;
+}
+
 export interface Database {
   users: UsersTable;
   otpRequests: OtpRequestsTable;
@@ -563,6 +611,9 @@ export interface Database {
   conversations: ConversationsTable;
   messages: MessagesTable;
   notifications: NotificationsTable;
+  loadMatches: LoadMatchesTable;
+  driverLocations: DriverLocationsTable;
+  orderTracks: OrderTracksTable;
   routePriceStats: RoutePriceStatsTable;
   platformSettings: PlatformSettingsTable;
 }
