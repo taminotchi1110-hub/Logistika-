@@ -7,6 +7,8 @@ import '../../features/auth/presentation/blocked_screen.dart';
 import '../../features/auth/presentation/otp_screen.dart';
 import '../../features/auth/presentation/phone_screen.dart';
 import '../../features/auth/presentation/profile_setup_screen.dart';
+import '../../features/chat/domain/conversation.dart';
+import '../../features/chat/presentation/chat_screen.dart';
 import '../../features/home/presentation/home_shell.dart';
 import '../../features/home/presentation/splash_screen.dart';
 import '../../features/loads/presentation/create_load_screen.dart';
@@ -87,6 +89,21 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: 'order/:id',
             builder: (context, state) =>
                 OrderDetailScreen(orderId: state.pathParameters['id']!),
+          ),
+          // Suhbat. `extra` — roʻyxatdan kelgan `Conversation`: sarlavha
+          // va yoʻnalishni darhol koʻrsatish uchun. Push bildirishnomadan
+          // kelinsa `extra` boʻlmaydi va ekran ularsiz ochiladi
+          GoRoute(
+            path: 'chat/:id',
+            builder: (context, state) {
+              final conversation = state.extra as Conversation?;
+              return ChatScreen(
+                conversationId: state.pathParameters['id']!,
+                title: conversation?.counterpartyName,
+                subtitle: conversation?.order?.route,
+                canWrite: conversation?.canWrite ?? true,
+              );
+            },
           ),
         ],
       ),

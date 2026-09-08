@@ -4,11 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/app_states.dart';
 import '../../auth/domain/user.dart';
+import '../../chat/presentation/conversations_screen.dart';
 import '../../loads/presentation/feed_screen.dart';
 import '../../loads/presentation/my_loads_screen.dart';
 import '../../orders/presentation/orders_screen.dart';
-import '../../../shared/widgets/app_states.dart';
 
 /// Asosiy ekran — pastki navigatsiya bilan.
 ///
@@ -107,11 +108,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           label: 'Xabarlar',
           icon: Icons.chat_bubble_outline_rounded,
           activeIcon: Icons.chat_bubble_rounded,
-          builder: (_) => const _Placeholder(
-            title: 'Xabarlar',
-            message: 'Haydovchilar bilan suhbatlar',
-            icon: Icons.chat_bubble_outline_rounded,
-          ),
+          builder: (_) => const ConversationsScreen(),
         ),
         _Tab(
           label: 'Profil',
@@ -140,11 +137,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           label: 'Xabarlar',
           icon: Icons.chat_bubble_outline_rounded,
           activeIcon: Icons.chat_bubble_rounded,
-          builder: (_) => const _Placeholder(
-            title: 'Xabarlar',
-            message: 'Yuk beruvchilar bilan suhbatlar',
-            icon: Icons.chat_bubble_outline_rounded,
-          ),
+          builder: (_) => const ConversationsScreen(),
         ),
         _Tab(
           label: 'Profil',
@@ -167,27 +160,6 @@ class _Tab {
   final IconData icon;
   final IconData activeIcon;
   final WidgetBuilder builder;
-}
-
-/// Vaqtinchalik ekran — keyingi bosqichlarda almashtiriladi.
-class _Placeholder extends StatelessWidget {
-  const _Placeholder({
-    required this.title,
-    required this.message,
-    required this.icon,
-  });
-
-  final String title;
-  final String message;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: EmptyState(title: title, message: message, icon: icon),
-    );
-  }
 }
 
 /// Profil — hozircha asosiy ma'lumot va chiqish.

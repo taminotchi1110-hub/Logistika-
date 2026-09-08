@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/api/api_exception.dart';
@@ -651,11 +652,11 @@ class _CounterpartyBlock extends StatelessWidget {
                 child: AppButton(
                   label: 'Xabar',
                   icon: Icons.chat_bubble_rounded,
+                  // Chat buyurtma qabul qilinganda ochiladi va telefon
+                  // ochilgunicha yagona muloqot yoʻli boʻladi
                   onPressed: order.conversationId == null
                       ? null
-                      : () => ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Chat ekrani tayyorlanmoqda')),
-                          ),
+                      : () => context.push('/chat/${order.conversationId}'),
                 ),
               ),
             ],

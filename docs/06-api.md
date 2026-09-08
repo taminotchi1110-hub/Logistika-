@@ -238,10 +238,20 @@ Asosiy oqim **WebSocket** orqali (quyida), REST faqat fallback va batch sync uch
 
 | Metod | Yo'l | Tavsif |
 |---|---|---|
-| GET | `/conversations` | Suhbatlar ro'yxati (oxirgi xabar bilan) |
+| GET | `/conversations` | Suhbatlar ro'yxati (oxirgi xabar, o'qilmaganlar soni, reys ma'lumoti) |
 | GET | `/conversations/:id/messages` | Xabarlar (cursor) |
 | POST | `/conversations/:id/messages` | Xabar yuborish (REST fallback) |
 | POST | `/conversations/:id/read` | O'qildi deb belgilash |
+
+Suhbat elementi `order` obyektini ham qaytaradi — reys raqami, holati, yuk nomi
+va yo'nalish. Busiz bir foydalanuvchi bilan bir nechta reys bo'lganda ro'yxatda
+bir xil ismli qatorlar ko'rinadi va qaysi suhbat qaysi reysga tegishli ekanini
+aniqlab bo'lmaydi.
+
+`isMine` **faqat REST javobida** bo'ladi. WebSocket broadcast'ida u YO'Q:
+bitta payload xonadagi ikkala tomonga ketadi va ko'ruvchiga bog'liq maydon
+unda bo'lishi mumkin emas. Mijoz uni `senderId` bilan solishtirib hisoblaydi
+(bir marta yo'l qo'yilgan xato — `docs/15` §15.2).
 
 ## 6.10. Media (`/media`)
 

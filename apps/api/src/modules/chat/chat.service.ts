@@ -7,7 +7,11 @@ import { DatabaseService } from '@/infra/database/database.service';
 import type { MessageType } from '@/infra/database/database.types';
 import { StorageService } from '@/infra/storage/storage.service';
 import { NotificationsService } from '@/modules/notifications/notifications.service';
-import { contactVisibility, type OrderStatus } from '@/modules/orders/order-status';
+import {
+  STATUS_LABEL_UZ,
+  contactVisibility,
+  type OrderStatus,
+} from '@/modules/orders/order-status';
 
 export interface MessageView {
   id: string;
@@ -35,6 +39,23 @@ export interface ConversationView {
   unreadCount: number;
   /** Chat yozish mumkinmi (buyurtma holatiga bog'liq). */
   canWrite: boolean;
+
+  /**
+   * Qaysi yuk haqida ketyapti.
+   *
+   * NEGA KERAK: haydovchida bir vaqtda bir nechta suhbat boʻlishi
+   * mumkin va ular hammasi bir xil koʻrinardi — "Test User", "Test
+   * User", "Test User". Yoʻnalish va yuk nomi boʻlmasa foydalanuvchi
+   * qaysi suhbat qaysi reysga tegishli ekanini bilmaydi.
+   */
+  order: {
+    publicNo: string;
+    status: OrderStatus;
+    statusLabel: string;
+    loadTitle: string;
+    pickup: string;
+    delivery: string;
+  } | null;
 }
 
 export interface ConversationAccess {
@@ -213,10 +234,22 @@ export class ChatService {
   }
 
   /** Foydalanuvchining barcha suhbatlari. */
+  /**
+   * Suhbatlar roʻyxati.
+   *
+   * NEGA UCHTA SOʻROV (har bir suhbat uchun emas): ilgari oxirgi xabar
+   * va oʻqilmaganlar soni har bir qator uchun alohida soʻralardi —
+   * 20 ta suhbatda 41 ta soʻrov. Bu ekran ilovada eng koʻp
+   * ochiladiganlardan biri, shuning uchun soʻrovlar soni suhbatlar
+   * soniga BOGʻLIQ BOʻLMASLIGI kerak.
+   */
   async listConversations(userId: string): Promise<ConversationView[]> {
     const rows = await this.database.db
       .selectFrom('conversations as c')
       .leftJoin('orders as o', 'o.id', 'c.orderId')
+      .leftJoin('loads as l', 'l.id', 'o.loadId')
+      .leftJoin('regions as pr', 'pr.id', 'l.pickupRegionId')
+      .leftJoin('regions as dr', 'dr.id', 'l.deliveryRegionId')
       .innerJoin('users as s', 's.id', 'c.shipperId')
       .innerJoin('users as d', 'd.id', 'c.driverId')
       .select([
@@ -227,6 +260,12 @@ export class ChatService {
         'c.isClosed',
         'c.lastMessageAt',
         'o.status',
+        'o.publicNo as orderPublicNo',
+        'l.title as loadTitle',
+        'l.pickupAddress',
+        'l.deliveryAddress',
+        'pr.nameUz as pickupRegionName',
+        'dr.nameUz as deliveryRegionName',
         's.firstName as shipperFirstName',
         's.lastName as shipperLastName',
         'd.firstName as driverFirstName',
@@ -236,43 +275,73 @@ export class ChatService {
       .orderBy('c.lastMessageAt', 'desc')
       .execute();
 
-    return Promise.all(
-      rows.map(async (row) => {
-        const viewerIsShipper = row.shipperId === userId;
+    if (rows.length === 0) return [];
 
-        const [last, unread] = await Promise.all([
-          this.database.db
-            .selectFrom('messages')
-            .select(['body', 'type', 'createdAt'])
-            .where('conversationId', '=', row.id)
-            .where('deletedAt', 'is', null)
-            .orderBy('createdAt', 'desc')
-            .executeTakeFirst(),
-          this.database.db
-            .selectFrom('messages')
-            .select((eb) => eb.fn.countAll<string>().as('count'))
-            .where('conversationId', '=', row.id)
-            .where('senderId', '!=', userId)
-            .where('readAt', 'is', null)
-            .executeTakeFirst(),
-        ]);
+    const conversationIds = rows.map((row) => row.id);
 
-        return {
-          id: row.id,
-          orderId: row.orderId,
-          counterparty: {
-            id: viewerIsShipper ? row.driverId : row.shipperId,
-            firstName: viewerIsShipper ? row.driverFirstName : row.shipperFirstName,
-            lastName: viewerIsShipper ? row.driverLastName : row.shipperLastName,
-          },
-          lastMessage: last ?? null,
-          unreadCount: Number(unread?.count ?? 0),
-          canWrite: row.status
-            ? contactVisibility(row.status as OrderStatus).chatEnabled && !row.isClosed
-            : !row.isClosed,
-        };
-      }),
+    const [lastMessages, unreadCounts] = await Promise.all([
+      // `DISTINCT ON` — har bir suhbatdan bitta, eng yangi xabar
+      this.database.db
+        .selectFrom('messages')
+        .select(['conversationId', 'body', 'type', 'createdAt'])
+        .distinctOn('conversationId')
+        .where('conversationId', 'in', conversationIds)
+        .where('deletedAt', 'is', null)
+        .orderBy('conversationId')
+        .orderBy('createdAt', 'desc')
+        .execute(),
+      this.database.db
+        .selectFrom('messages')
+        .select((eb) => ['conversationId', eb.fn.countAll<string>().as('count')])
+        .where('conversationId', 'in', conversationIds)
+        .where('senderId', '!=', userId)
+        .where('readAt', 'is', null)
+        .groupBy('conversationId')
+        .execute(),
+    ]);
+
+    const lastByConversation = new Map(
+      lastMessages.map((message) => [message.conversationId, message]),
     );
+    const unreadByConversation = new Map(
+      unreadCounts.map((row) => [row.conversationId, Number(row.count)]),
+    );
+
+    return rows.map((row) => {
+      const viewerIsShipper = row.shipperId === userId;
+      const last = lastByConversation.get(row.id);
+      const status = row.status as OrderStatus | null;
+
+      return {
+        id: row.id,
+        orderId: row.orderId,
+        counterparty: {
+          id: viewerIsShipper ? row.driverId : row.shipperId,
+          firstName: viewerIsShipper ? row.driverFirstName : row.shipperFirstName,
+          lastName: viewerIsShipper ? row.driverLastName : row.shipperLastName,
+        },
+        lastMessage: last
+          ? { body: last.body, type: last.type, createdAt: last.createdAt }
+          : null,
+        unreadCount: unreadByConversation.get(row.id) ?? 0,
+        canWrite: status
+          ? contactVisibility(status).chatEnabled && !row.isClosed
+          : !row.isClosed,
+        order:
+          status === null || row.orderPublicNo === null
+            ? null
+            : {
+                publicNo: String(row.orderPublicNo),
+                status,
+                statusLabel: STATUS_LABEL_UZ[status],
+                loadTitle: row.loadTitle ?? '',
+                // Viloyat nomi qisqaroq va roʻyxatda oʻqish osonroq;
+                // boʻlmasa manzilning birinchi qismiga qaytamiz
+                pickup: row.pickupRegionName ?? firstPart(row.pickupAddress),
+                delivery: row.deliveryRegionName ?? firstPart(row.deliveryAddress),
+              },
+      };
+    });
   }
 
   /** Oʻqilgan deb belgilaydi — hamkorga "oʻqildi" belgisi ketadi. */
@@ -337,4 +406,11 @@ export class ChatService {
 export function toWireMessage(view: MessageView): WireMessage {
   const { isMine: _isMine, ...wire } = view;
   return wire;
+}
+
+/** Manzilning birinchi qismi — roʻyxatda toʻliq manzil juda uzun. */
+function firstPart(address: string | null): string {
+  if (!address) return '';
+  const head = address.split(',')[0]?.trim() ?? '';
+  return head.length > 0 ? head : address;
 }
