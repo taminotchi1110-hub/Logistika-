@@ -26,7 +26,10 @@ const PAYMENT_METHODS: PaymentMethod[] = ['CASH', 'CARD', 'BANK_TRANSFER', 'ESCR
 
 const NormalizePhone = (): PropertyDecorator =>
   Transform(({ value }) =>
-    typeof value === 'string' ? (normalizeUzPhone(value) ?? value) : value,
+    // Rad etilgan raqam BO'SH SATR bo'ladi — asl qiymat emas.
+    // Sabab auth.dto.ts dagi bilan bir xil: noto'g'ri raqam jimgina
+    // saqlanib qolmasligi kerak.
+    typeof value === 'string' ? (normalizeUzPhone(value) ?? '') : value,
   );
 
 export class LoadPointDto {

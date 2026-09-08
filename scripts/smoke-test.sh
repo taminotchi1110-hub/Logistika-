@@ -19,8 +19,11 @@ API="${API:-http://localhost:3000/v1}"
 # CI'da bunday test foydasiz.
 RND=$(( (RANDOM % 900) + 100 ))
 RND2=$(( (RANDOM % 900) + 100 ))
-SHIPPER_PHONE="${SHIPPER_PHONE:-+9989${RND}${RND2}11}"
-DRIVER_PHONE="${DRIVER_PHONE:-+9989${RND}${RND2}22}"
+# Prefiks ANIQ berilgan (90 va 93 — Beeline va Ucell).
+# Ilgari "9${RND}" ishlatilar edi va tasodifan 92/96 chiqib qolardi —
+# bular mavjud boʻlmagan operator kodlari va server ularni rad etadi.
+SHIPPER_PHONE="${SHIPPER_PHONE:-+99890${RND}${RND2}1}"
+DRIVER_PHONE="${DRIVER_PHONE:-+99893${RND}${RND2}2}"
 PLATE_A="01 a ${RND} bc"
 PLATE_A_NORM="01A${RND}BC"
 PLATE_B="01A${RND2}BC"

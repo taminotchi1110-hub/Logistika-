@@ -20,6 +20,8 @@ analyzer:
   exclude:
     - "**/*.g.dart"
     - "**/*.freezed.dart"
+    - build/**
+    - web/**
 
 linter:
   rules:

@@ -324,20 +324,20 @@ class _FeedSkeleton extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(color: AppColors.border),
         ),
-        child: Column(
+        child: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                const Expanded(child: SkeletonBox(height: 20)),
-                const SizedBox(width: AppSpacing.lg),
+                Expanded(child: SkeletonBox(height: 20)),
+                SizedBox(width: AppSpacing.lg),
                 SkeletonBox(height: 20, width: 80),
               ],
             ),
-            const SizedBox(height: AppSpacing.sm),
-            const SkeletonBox(height: 14, width: 160),
-            const SizedBox(height: AppSpacing.lg),
-            const SkeletonBox(height: 14),
+            SizedBox(height: AppSpacing.sm),
+            SkeletonBox(height: 14, width: 160),
+            SizedBox(height: AppSpacing.lg),
+            SkeletonBox(height: 14),
           ],
         ),
       ),

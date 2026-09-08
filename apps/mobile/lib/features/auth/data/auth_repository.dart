@@ -116,31 +116,56 @@ class AuthRepository {
 
   /// Qurilma ma'lumoti — sessiyalar ro'yxatida ko'rsatiladi
   /// ("Samsung Galaxy A54, 8 sentyabr").
+  ///
+  /// HECH QANDAY XATO KIRISHNI TO'XTATMASLIGI KERAK.
+  ///
+  /// Bu ma'lumot qulaylik uchun: foydalanuvchi o'z sessiyalarini
+  /// tanishi oson bo'lsin. Agar platforma kanali javob bermasa
+  /// (eski qurilma, cheklangan muhit, plagin yangilanishi), kirish
+  /// baribir ishlashi shart. Ilgari `PackageInfo.fromPlatform()`
+  /// `try` blokidan TASHQARIDA edi va uning yiqilishi butun kirish
+  /// oqimini to'xtatardi.
   Future<Map<String, dynamic>> _deviceInfo() async {
-    final package = await PackageInfo.fromPlatform();
-    final plugin = DeviceInfoPlugin();
+    final version = await _appVersion();
 
     try {
-      final android = await plugin.androidInfo;
+      final android = await DeviceInfoPlugin().androidInfo;
       return {
         'platform': 'android',
-        'appVersion': package.version,
+        'appVersion': version,
         'deviceId': android.id,
         'model': '${android.manufacturer} ${android.model}',
       };
     } catch (_) {
-      // iOS yoki noma'lum platforma
-      try {
-        final ios = await plugin.iosInfo;
-        return {
-          'platform': 'ios',
-          'appVersion': package.version,
-          'deviceId': ios.identifierForVendor ?? 'unknown',
-          'model': ios.utsname.machine,
-        };
-      } catch (_) {
-        return {'platform': 'unknown', 'appVersion': package.version};
-      }
+      // Android emas — iOS'ni sinab ko'ramiz
+    }
+
+    try {
+      final ios = await DeviceInfoPlugin().iosInfo;
+      return {
+        'platform': 'ios',
+        'appVersion': version,
+        'deviceId': ios.identifierForVendor ?? 'unknown',
+        'model': ios.utsname.machine,
+      };
+    } catch (_) {
+      // Noma'lum platforma yoki kanal mavjud emas
+    }
+
+    // `platform` UMUMAN YUBORILMAYDI.
+    //
+    // Backend uni `android | ios | web` deb cheklaydi va `'unknown'`
+    // validatsiyadan o'tmaydi — ya'ni qurilmani aniqlab bo'lmagan
+    // holatda KIRISH BUTUNLAY ISHLAMAY QOLARDI. Maydon ixtiyoriy,
+    // shuning uchun uni tashlab yuborish to'g'ri yechim.
+    return {'appVersion': version};
+  }
+
+  Future<String> _appVersion() async {
+    try {
+      return (await PackageInfo.fromPlatform()).version;
+    } catch (_) {
+      return 'unknown';
     }
   }
 }

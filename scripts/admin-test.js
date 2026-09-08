@@ -16,7 +16,7 @@
 const { authenticator } = require('otplib');
 const { Client } = require('pg');
 
-const { API, api, login, createOrderFixture } = require('./lib/fixtures');
+const { API, api, login, createOrderFixture, randomPlate } = require('./lib/fixtures');
 
 const PGURL =
   process.env.PGURL || 'postgresql://karvon:karvon_dev_password@localhost:5432/karvon';
@@ -166,7 +166,7 @@ async function main() {
         bodyTypeId: 1,
         brand: 'MAN',
         model: 'TGX',
-        plateNumber: `90A${Math.floor(Math.random() * 900 + 100)}ZZ`,
+        plateNumber: randomPlate(),
         capacityKg: 5000,
         volumeM3: 25,
       }),

@@ -10,11 +10,17 @@ library;
 /// Ro'yxat foydalanuvchi xatosini ERTA ushlash uchun: `+998 12 ...`
 /// (Toshkent shahar raqami) SMS qabul qila olmaydi va OTP hech qachon
 /// kelmaydi. Buni serverga bormasdan aytish yaxshiroq.
+/// MUHIM: bu ro'yxat backend'dagi `UZ_MOBILE_PREFIXES` bilan AYNAN
+/// mos bo'lishi kerak (apps/api/src/common/utils/phone.util.ts).
+/// Farq bo'lsa foydalanuvchi ikki xil natija oladi: ilova raqamni
+/// rad etadi, server esa qabul qilardi (yoki aksincha).
 const uzbekMobilePrefixes = {
+  '20', // Uzmobile (yangi)
   '33', // Humans
-  '55', // Uztelecom (Perfectum)
+  '50', // Perfectum / Uzmobile
+  '55', // Uzmobile
   '77', // Uztelecom
-  '88', // Ucell (yangi)
+  '88', // Humans / Uzmobile
   '90', // Beeline
   '91', // Beeline
   '93', // Ucell
@@ -100,11 +106,14 @@ String? operatorName(String phone) {
   final prefix = normalized.substring(4, 6);
   return switch (prefix) {
     '90' || '91' => 'Beeline',
-    '93' || '94' || '88' => 'Ucell',
+    '93' || '94' => 'Ucell',
+    '88' => 'Humans',
     '97' => 'Mobiuz',
     '95' || '98' || '99' => 'Uzmobile',
     '33' => 'Humans',
-    '55' || '77' => 'Uztelecom',
+    '55' || '20' => 'Uzmobile',
+    '50' => 'Perfectum',
+    '77' => 'Uztelecom',
     _ => null,
   };
 }

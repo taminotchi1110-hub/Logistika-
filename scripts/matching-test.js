@@ -13,7 +13,7 @@
  */
 const { Client } = require('pg');
 
-const { api, login } = require('./lib/fixtures');
+const { api, login, randomPlate } = require('./lib/fixtures');
 
 const PGURL =
   process.env.PGURL || 'postgresql://karvon:karvon_dev_password@localhost:5432/karvon';
@@ -56,7 +56,7 @@ async function createDriver(pg, options) {
         bodyTypeId: 1,
         brand: 'Isuzu',
         model: 'NPR',
-        plateNumber: `${10 + Math.floor(Math.random() * 80)}A${Math.floor(Math.random() * 900 + 100)}XY`,
+        plateNumber: randomPlate(),
         capacityKg: options.capacityKg,
         volumeM3: options.volumeM3 ?? 25,
       }),

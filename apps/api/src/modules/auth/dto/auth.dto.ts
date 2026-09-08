@@ -17,10 +17,19 @@ import { normalizeUzPhone } from '@/common/utils/phone.util';
  * Telefon raqamini DTO darajasidayoq E.164 ga keltiramiz.
  * Shundan keyin butun ilova bo'ylab raqam faqat bitta ko'rinishda yuradi —
  * servislar formatlash haqida o'ylamaydi.
+ *
+ * NORMALIZATSIYA RAD ETSA — BO'SH SATR, asl qiymat EMAS.
+ *
+ * Ilgari bu yerda `?? value` turardi va rad etilgan raqam asl holida
+ * o'tib ketardi. Keyingi `@Matches` esa faqat SHAKLNI tekshiradi
+ * (+998 va 9 ta raqam), operator prefiksini emas — natijada
+ * `+998 71 …` (Toshkent shahar raqami) validatsiyadan o'tib ketardi.
+ * Platforma SMS yuborar va PUL TO'LAR edi, kod esa hech qachon yetib
+ * bormasdi: shahar raqami SMS qabul qila olmaydi.
  */
 const NormalizePhone = (): PropertyDecorator =>
   Transform(({ value }) =>
-    typeof value === 'string' ? (normalizeUzPhone(value) ?? value) : value,
+    typeof value === 'string' ? (normalizeUzPhone(value) ?? '') : value,
   );
 
 export class DeviceDto {

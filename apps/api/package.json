@@ -19,7 +19,11 @@
     "db:seed": "ts-node -r tsconfig-paths/register src/infra/database/migrator.ts seed",
     "db:status": "ts-node -r tsconfig-paths/register src/infra/database/migrator.ts status",
     "db:reset": "ts-node -r tsconfig-paths/register src/infra/database/migrator.ts reset",
-    "admin:create": "ts-node -r tsconfig-paths/register src/scripts/create-admin.ts"
+    "admin:create": "ts-node -r tsconfig-paths/register src/scripts/create-admin.ts",
+    "mobile:analyze": "cd apps/mobile && flutter analyze",
+    "mobile:test": "cd apps/mobile && flutter test",
+    "mobile:test:api": "cd apps/mobile && flutter test test_integration --dart-define=API_BASE_URL=http://localhost:3000/v1",
+    "mobile:run": "cd apps/mobile && flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000/v1 --dart-define=WS_URL=http://10.0.2.2:3000"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.670.0",

@@ -61,6 +61,22 @@ async function login(phone, role) {
  * To'liq oqim: ikki foydalanuvchi → mashina → hujjatlar → yuk → taklif →
  * qabul. Natijada buyurtma ASSIGNED holatida va chat ochiq bo'ladi.
  */
+/**
+ * Tasodifiy davlat raqami: "01A123BC" koʻrinishida.
+ *
+ * NEGA KENG DIAPAZON: avval faqat "01A" + 3 raqam + "CD" ishlatilardi —
+ * atigi 900 ta variant. Testlar koʻp marta ishga tushgach toʻqnashuv
+ * muqarrar boʻldi va VEHICLE_PLATE_TAKEN bilan yiqila boshladi.
+ * Endi ~54 mln variant.
+ */
+function randomPlate() {
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVXYZ';
+  const pick = () => letters[Math.floor(Math.random() * letters.length)];
+  const region = String(Math.floor(Math.random() * 90) + 10);
+  const digits = String(Math.floor(Math.random() * 900) + 100);
+  return `${region}${pick()}${digits}${pick()}${pick()}`;
+}
+
 async function createOrderFixture(options = {}) {
   const rnd = Math.floor(Math.random() * 900000 + 100000);
   const shipperPhone = `+99897${rnd}1`;
@@ -81,7 +97,7 @@ async function createOrderFixture(options = {}) {
         bodyTypeId: 1,
         brand: 'Isuzu',
         model: 'NPR',
-        plateNumber: `01A${Math.floor(Math.random() * 900 + 100)}CD`,
+        plateNumber: randomPlate(),
         capacityKg: 5000,
         volumeM3: 25,
       }),
@@ -170,4 +186,4 @@ async function createOrderFixture(options = {}) {
   };
 }
 
-module.exports = { API, WS, PGURL, api, login, createOrderFixture };
+module.exports = { API, WS, PGURL, api, login, createOrderFixture, randomPlate };

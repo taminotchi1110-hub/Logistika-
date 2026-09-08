@@ -145,7 +145,7 @@ abstract final class AppTheme {
         errorMaxLines: 2,
       ),
 
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: AppColors.surface,
         elevation: 0,
         margin: EdgeInsets.zero,

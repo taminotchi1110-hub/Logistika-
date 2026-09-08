@@ -15,16 +15,19 @@ import 'storage/token_storage.dart';
 
 final tokenStorageProvider = Provider<TokenStorage>((ref) => TokenStorage());
 
+/// HALQA BOG'LANISH BO'LMASLIGI UCHUN: bu provayder `authStateProvider`
+/// ga MUROJAAT QILMAYDI.
+///
+/// Ilgari `onSessionExpired` shu yerda o'rnatilgan edi va zanjir
+/// halqaga aylanardi: apiClient → authState → authRepository → apiClient.
+/// Ishga tushishda muammo bermasa ham, Dart tur chiqarishni bajara
+/// olmasdi va butun zanjir `dynamic` bo'lib qolardi — natijada
+/// kompilyator xatolarni umuman ushlamas edi.
+///
+/// Endi bog'lanish bir tomonlama: `AuthNotifier` o'zi mijozga
+/// obuna bo'ladi.
 final apiClientProvider = Provider<ApiClient>((ref) {
-  final client = ApiClient(storage: ref.watch(tokenStorageProvider));
-
-  // Sessiya tugaganda holatni tozalaymiz — router avtomatik login
-  // ekraniga yo'naltiradi
-  client.onSessionExpired = () {
-    ref.read(authStateProvider.notifier).onSessionExpired();
-  };
-
-  return client;
+  return ApiClient(storage: ref.watch(tokenStorageProvider));
 });
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
@@ -69,7 +72,12 @@ class AuthState {
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {
-  AuthNotifier(this._repository, this._storage) : super(const AuthState.unknown());
+  AuthNotifier(this._repository, this._storage, ApiClient api)
+      : super(const AuthState.unknown()) {
+    // Sessiya butunlay tugaganda (refresh ham yordam bermadi) mijoz
+    // shu callback'ni chaqiradi va router login ekraniga yo'naltiradi
+    api.onSessionExpired = onSessionExpired;
+  }
 
   final AuthRepository _repository;
   final TokenStorage _storage;
@@ -152,6 +160,7 @@ final authStateProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier(
     ref.watch(authRepositoryProvider),
     ref.watch(tokenStorageProvider),
+    ref.watch(apiClientProvider),
   );
 });
 

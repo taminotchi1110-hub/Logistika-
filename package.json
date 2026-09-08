@@ -35,7 +35,10 @@
     "smoke:payments": "node scripts/payments-test.js",
     "admin:create": "npm run admin:create --workspace=@karvon/api --",
     "smoke:ratings": "node scripts/ratings-test.js",
-    "smoke:admin": "node scripts/admin-test.js"
+    "smoke:admin": "node scripts/admin-test.js",
+    "mobile:analyze": "cd apps/mobile && flutter analyze",
+    "mobile:test": "cd apps/mobile && flutter test",
+    "mobile:test:api": "cd apps/mobile && flutter test test_integration --dart-define=API_BASE_URL=http://localhost:3000/v1"
   },
   "devDependencies": {
     "prettier": "^3.3.3"
