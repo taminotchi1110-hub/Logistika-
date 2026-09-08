@@ -22,14 +22,17 @@ export type NotificationType =
   | 'order.cancelled'
   | 'chat.message'
   | 'contacts.revealed'
-  | 'load.matched';
+  | 'load.matched'
+  | 'payment.received'
+  | 'payout.processed'
+  | 'rating.received';
 
 export interface NotifyInput {
   userId: string;
   type: NotificationType;
   title: string;
   body: string;
-  entityType?: 'ORDER' | 'LOAD' | 'OFFER' | 'CONVERSATION';
+  entityType?: 'ORDER' | 'LOAD' | 'OFFER' | 'CONVERSATION' | 'PAYMENT' | 'RATING';
   entityId?: string;
   deepLink?: string;
   data?: Record<string, unknown>;
@@ -52,6 +55,9 @@ const CHANNEL_BY_TYPE: Record<NotificationType, 'karvon_messages' | 'karvon_orde
   'contacts.revealed': 'karvon_orders',
   // Yangi yuk taklifi — buyurtma kanalida, chunki bu ish taklifi
   'load.matched': 'karvon_orders',
+  'payment.received': 'karvon_orders',
+  'payout.processed': 'karvon_orders',
+  'rating.received': 'karvon_orders',
 };
 
 @Injectable()

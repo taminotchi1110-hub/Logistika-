@@ -10,6 +10,8 @@ import { Logger as PinoLogger } from 'nestjs-pino';
 
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { Reflector } from '@nestjs/core';
+
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import type { Env } from './config/env.schema';
 
@@ -71,7 +73,8 @@ async function bootstrap(): Promise<void> {
     }),
   );
 
-  app.useGlobalInterceptors(new ResponseInterceptor());
+  // Reflector orqali — interceptor @RawResponse() metadatasini oʻqiydi
+  app.useGlobalInterceptors(new ResponseInterceptor(app.get(Reflector)));
   app.useGlobalFilters(new AllExceptionsFilter());
 
   // ---- OpenAPI ----

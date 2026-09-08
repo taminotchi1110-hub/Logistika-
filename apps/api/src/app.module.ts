@@ -22,6 +22,7 @@ import { MediaModule } from '@/modules/media/media.module';
 import { ChatModule } from '@/modules/chat/chat.module';
 import { NotificationsModule } from '@/modules/notifications/notifications.module';
 import { OrdersModule } from '@/modules/orders/orders.module';
+import { PaymentsModule } from '@/modules/payments/payments.module';
 import { ReferenceModule } from '@/modules/reference/reference.module';
 import { SmsModule } from '@/modules/sms/sms.module';
 import { TrackingModule } from '@/modules/tracking/tracking.module';
@@ -103,6 +104,7 @@ import { VehiclesModule } from '@/modules/vehicles/vehicles.module';
     ChatModule,
     MatchingModule,
     TrackingModule,
+    PaymentsModule,
   ],
 })
 export class AppModule {}

@@ -4,8 +4,10 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AppError } from '@/common/errors/app.error';
 import { ErrorCode } from '@/common/errors/error-codes';
 import { SettingsService } from '@/common/services/settings.service';
+import { formatSoum } from '@/common/utils/money.util';
 import { DatabaseService } from '@/infra/database/database.service';
 import { DriversService } from '@/modules/drivers/drivers.service';
+import { EscrowService } from '@/modules/payments/escrow.service';
 import { OFFER_CREATED, OfferCreatedEvent } from '@/modules/loads/load.events';
 import { NotificationsService } from '@/modules/notifications/notifications.service';
 import { VehiclesService } from '@/modules/vehicles/vehicles.service';
@@ -40,6 +42,7 @@ export class OffersService {
     private readonly vehicles: VehiclesService,
     private readonly settings: SettingsService,
     private readonly notifications: NotificationsService,
+    private readonly escrow: EscrowService,
     private readonly events: EventEmitter2,
   ) {}
 
@@ -61,6 +64,18 @@ export class OffersService {
         ErrorCode.DRIVER_NOT_VERIFIED,
         'Taklif yuborish uchun verifikatsiyani yakunlang',
         { missingSteps: readiness.missingSteps },
+      );
+    }
+
+    // Naqd buyurtmalarda komissiya haydovchi hamyonidan yechiladi va u
+    // manfiyga tushadi. Kredit limitiga yetgan haydovchi avval qarzini
+    // yopishi kerak — aks holda bu cheksiz kredit boʻlib qolardi.
+    const wallet = await this.escrow.canDriverTakeOrders(driverId);
+    if (!wallet.allowed) {
+      throw AppError.conflict(
+        ErrorCode.WALLET_INSUFFICIENT_FUNDS,
+        `Hamyon qarzi limitdan oshdi. Toʻlash kerak: ${formatSoum(wallet.debtToPayTiyin)}`,
+        { debtToPayTiyin: wallet.debtToPayTiyin, balanceTiyin: wallet.balanceTiyin },
       );
     }
 

@@ -61,7 +61,7 @@ async function login(phone, role) {
  * To'liq oqim: ikki foydalanuvchi → mashina → hujjatlar → yuk → taklif →
  * qabul. Natijada buyurtma ASSIGNED holatida va chat ochiq bo'ladi.
  */
-async function createOrderFixture() {
+async function createOrderFixture(options = {}) {
   const rnd = Math.floor(Math.random() * 900000 + 100000);
   const shipperPhone = `+99897${rnd}1`;
   const driverPhone = `+99899${rnd}2`;
@@ -125,12 +125,15 @@ async function createOrderFixture() {
         delivery: { address: 'Samarqand, Registon', lat: 39.6542, lng: 66.9597 },
         pickupFrom: new Date(Date.now() + 3600e3).toISOString(),
         pickupTo: new Date(Date.now() + 6 * 3600e3).toISOString(),
-        priceTiyin: 200000000,
+        priceTiyin: options.priceTiyin ?? 200000000,
+        paymentMethod: options.paymentMethod ?? 'CASH',
         publishNow: true,
       }),
     },
     shipperToken,
   );
+
+  if (options.beforeOffer) await options.beforeOffer({ shipperToken, driverToken, loadId: load.data.id });
 
   const offer = await api(
     `/loads/${load.data.id}/offers`,
@@ -139,6 +142,10 @@ async function createOrderFixture() {
   );
 
   const order = await api(`/offers/${offer.data.id}/accept`, { method: 'POST' }, shipperToken);
+
+  if (!order.data && !options.allowFailure) {
+    throw new Error(`buyurtma yaratilmadi: ${JSON.stringify(order.error)}`);
+  }
 
   return {
     pg,
@@ -150,8 +157,10 @@ async function createOrderFixture() {
     driverPhone,
     vehicleId: vehicle.data.id,
     loadId: load.data.id,
-    orderId: order.data.id,
-    conversationId: order.data.conversationId,
+    orderId: order.data?.id ?? null,
+    conversationId: order.data?.conversationId ?? null,
+    offerId: offer.data.id,
+    acceptError: order.error ?? null,
   };
 }
 

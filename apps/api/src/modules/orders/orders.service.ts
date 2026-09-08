@@ -10,6 +10,7 @@ import { maskPhone } from '@/common/utils/phone.util';
 import { DatabaseService } from '@/infra/database/database.service';
 import type { OrderStatusDb } from '@/infra/database/database.types';
 import { NotificationsService } from '@/modules/notifications/notifications.service';
+import { EscrowService } from '@/modules/payments/escrow.service';
 
 import {
   ACTIVE_STATUSES,
@@ -136,6 +137,7 @@ export class OrdersService {
     private readonly database: DatabaseService,
     private readonly settings: SettingsService,
     private readonly notifications: NotificationsService,
+    private readonly escrow: EscrowService,
     private readonly events: EventEmitter2,
   ) {}
 
@@ -282,6 +284,22 @@ export class OrdersService {
 
     this.logger.log({ orderId, offerId, shipperId }, 'Buyurtma yaratildi');
 
+    // ESCROW sxemasida pul darhol bloklanadi. Mablagʻ yetmasa buyurtma
+    // BEKOR QILINADI: haydovchi behuda yoʻlga chiqmasligi kerak.
+    // Naqd sxemada bu qadam oʻtkazib yuboriladi.
+    try {
+      await this.escrow.hold({
+        orderId,
+        shipperId,
+        priceTiyin: price,
+        paymentMethod: offer.paymentMethod,
+      });
+    } catch (error) {
+      await this.rollbackOrder(orderId, offer.loadId, offerId);
+      this.logger.warn({ orderId, err: error }, 'Escrow bloklanmadi — buyurtma bekor qilindi');
+      throw error;
+    }
+
     await this.notifications.notify({
       userId: offer.driverId,
       type: 'offer.accepted',
@@ -293,6 +311,31 @@ export class OrdersService {
     });
 
     return this.getForUser(orderId, shipperId);
+  }
+
+  /**
+   * Escrow bloklanmagan buyurtmani orqaga qaytaradi.
+   *
+   * Yuk yana `PUBLISHED` boʻladi va taklif `PENDING` ga qaytadi —
+   * haydovchi uni qayta yubormasligi kerak, mijoz esa hamyonini
+   * toʻldirib yana qabul qila oladi.
+   */
+  private async rollbackOrder(orderId: string, loadId: string, offerId: string): Promise<void> {
+    await this.database.db.transaction().execute(async (trx) => {
+      await trx.deleteFrom('orderStatusHistory').where('orderId', '=', orderId).execute();
+      await trx.deleteFrom('conversations').where('orderId', '=', orderId).execute();
+      await trx.deleteFrom('orders').where('id', '=', orderId).execute();
+      await trx
+        .updateTable('loads')
+        .set({ status: 'OFFERS_RECEIVED' })
+        .where('id', '=', loadId)
+        .execute();
+      await trx
+        .updateTable('orderOffers')
+        .set({ status: 'PENDING', respondedAt: null })
+        .where('id', '=', offerId)
+        .execute();
+    });
   }
 
   // =================================================================

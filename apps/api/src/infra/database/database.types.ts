@@ -523,6 +523,168 @@ export interface PlatformSettingsTable {
   updatedAt: UpdatedAt;
 }
 
+// =====================================================================
+//  MOLIYA
+// =====================================================================
+//
+//  PUL — HAR DOIM `bigint` TIYINDA, TypeScript'da `string`.
+//  `pg` drayveri INT8 ni string qilib qaytarishga sozlangan
+//  (database.service.ts): JavaScript'ning `number` turi 2^53 dan katta
+//  butun sonni aniq saqlay olmaydi. 1 so'm = 100 tiyin.
+
+export type LedgerAccountType =
+  | 'USER_WALLET'
+  | 'ESCROW'
+  | 'PLATFORM_REVENUE'
+  | 'PSP_CLEARING'
+  | 'PAYOUT_PAYABLE'
+  | 'BONUS';
+
+// PaymentStatus yuqorida (buyurtma bo'limida) e'lon qilingan
+
+export type PspProvider = 'PAYME' | 'CLICK' | 'UZUM' | 'BANK' | 'MANUAL';
+
+export interface LedgerAccountsTable {
+  id: Generated<string>;
+  type: LedgerAccountType;
+  userId: string | null;
+  currency: Generated<string>;
+  balanceTiyin: Generated<string>;
+  creditLimitTiyin: Generated<string>;
+  isLocked: Generated<boolean>;
+  createdAt: CreatedAt;
+  updatedAt: Generated<Date>;
+}
+
+export interface LedgerEntriesTable {
+  id: Generated<string>;
+  transactionId: string;
+  accountId: string;
+  amountTiyin: string;
+  balanceAfterTiyin: string;
+  entryType: string;
+  orderId: string | null;
+  paymentId: string | null;
+  description: string | null;
+  meta: unknown | null;
+  createdAt: CreatedAt;
+}
+
+export interface PaymentsTable {
+  id: Generated<string>;
+  userId: string;
+  orderId: string | null;
+  provider: PspProvider;
+  providerTxnId: string | null;
+  idempotencyKey: string;
+  purpose: string;
+  amountTiyin: string;
+  feeTiyin: Generated<string>;
+  status: Generated<PaymentStatus>;
+  rawRequest: unknown | null;
+  rawCallback: unknown | null;
+  errorCode: string | null;
+  errorMessage: string | null;
+  paidAt: Date | null;
+  createdAt: CreatedAt;
+  updatedAt: Generated<Date>;
+}
+
+export interface PayoutsTable {
+  id: Generated<string>;
+  driverId: string;
+  orderId: string | null;
+  amountTiyin: string;
+  method: string;
+  cardToken: string | null;
+  cardMask: string | null;
+  status: Generated<PaymentStatus>;
+  provider: PspProvider | null;
+  providerTxnId: string | null;
+  requestedAt: Generated<Date>;
+  processedAt: Date | null;
+  failureReason: string | null;
+}
+
+// ------------------------------------------------------------- reyting
+export type RatingDirection = 'SHIPPER_TO_DRIVER' | 'DRIVER_TO_SHIPPER';
+
+export interface RatingsTable {
+  id: Generated<string>;
+  orderId: string;
+  raterId: string;
+  ratedId: string;
+  direction: RatingDirection;
+  score: number;
+  punctuality: number | null;
+  communication: number | null;
+  cargoCondition: number | null;
+  reliability: number | null;
+  comment: string | null;
+  isVisible: Generated<boolean>;
+  isModerated: Generated<boolean>;
+  moderatedBy: string | null;
+  createdAt: CreatedAt;
+}
+
+export type ComplaintStatus = 'OPEN' | 'IN_REVIEW' | 'RESOLVED' | 'REJECTED' | 'ESCALATED';
+
+export interface ComplaintsTable {
+  id: Generated<string>;
+  reporterId: string;
+  reportedId: string | null;
+  orderId: string | null;
+  category: string;
+  subject: string;
+  description: string;
+  attachments: unknown | null;
+  status: Generated<ComplaintStatus>;
+  priority: Generated<number>;
+  assignedTo: string | null;
+  resolution: string | null;
+  resolvedAt: Date | null;
+  createdAt: CreatedAt;
+}
+
+// --------------------------------------------------------------- admin
+export interface AdminRolesTable {
+  id: Generated<number>;
+  code: string;
+  name: string;
+  permissions: Generated<unknown>;
+}
+
+export interface AdminUsersTable {
+  id: Generated<string>;
+  email: string;
+  passwordHash: string;
+  fullName: string;
+  roleId: number;
+  phone: string | null;
+  totpSecretEnc: Buffer | null;
+  isActive: Generated<boolean>;
+  lastLoginAt: Date | null;
+  lastLoginIp: string | null;
+  failedAttempts: Generated<number>;
+  lockedUntil: Date | null;
+  createdAt: CreatedAt;
+  updatedAt: Generated<Date>;
+}
+
+export interface AuditLogsTable {
+  id: Generated<string>;
+  adminId: string | null;
+  userId: string | null;
+  action: string;
+  entityType: string | null;
+  entityId: string | null;
+  before: unknown | null;
+  after: unknown | null;
+  ip: string | null;
+  userAgent: string | null;
+  createdAt: CreatedAt;
+}
+
 // ------------------------------------------------------- narx statistikasi
 export interface RoutePriceStatsTable {
   id: Generated<string>;
@@ -616,6 +778,15 @@ export interface Database {
   loadMatches: LoadMatchesTable;
   driverLocations: DriverLocationsTable;
   orderTracks: OrderTracksTable;
+  ledgerAccounts: LedgerAccountsTable;
+  ledgerEntries: LedgerEntriesTable;
+  payments: PaymentsTable;
+  payouts: PayoutsTable;
+  ratings: RatingsTable;
+  complaints: ComplaintsTable;
+  adminRoles: AdminRolesTable;
+  adminUsers: AdminUsersTable;
+  auditLogs: AuditLogsTable;
   routePriceStats: RoutePriceStatsTable;
   platformSettings: PlatformSettingsTable;
 }

@@ -15,6 +15,18 @@ export const IS_PUBLIC_KEY = 'isPublic';
  */
 export const Public = (): MethodDecorator & ClassDecorator => SetMetadata(IS_PUBLIC_KEY, true);
 
+/**
+ * Javobni { data, meta } qobigʻiga OʻRAMASLIK.
+ *
+ * NEGA KERAK: toʻlov tizimlari (Click, Payme) javobning aynan oʻz
+ * formatini kutadi. Qobiq qoʻshilsa ular javobni tushunmaydi va
+ * toʻlovni muvaffaqiyatsiz deb belgilaydi — pul yechilgan boʻlsa ham.
+ * Bu tashqi protokol talabi, shuning uchun istisno aniq belgilanadi.
+ */
+export const RAW_RESPONSE_KEY = 'rawResponse';
+export const RawResponse = (): MethodDecorator & ClassDecorator =>
+  SetMetadata(RAW_RESPONSE_KEY, true);
+
 export const ROLES_KEY = 'requiredRoles';
 
 /** Endpointga faqat koʻrsatilgan rollar kira oladi. `BOTH` har ikkalasiga mos keladi. */

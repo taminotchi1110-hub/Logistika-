@@ -82,6 +82,19 @@ export const envSchema = z
     FCM_CLIENT_EMAIL: z.string().optional().or(z.literal('')),
     FCM_PRIVATE_KEY: z.string().optional().or(z.literal('')),
 
+    // --- to'lov tizimlari ---
+    //
+    // Kalitlar bo'sh bo'lsa PSP webhook'lari 503 qaytaradi va to'lov
+    // sahifasiga havola generatsiya qilinmaydi. Dev muhitida to'lov
+    // `POST /payments/:id/simulate-paid` bilan tasdiqlanadi.
+    CLICK_SERVICE_ID: z.string().optional().or(z.literal('')),
+    CLICK_MERCHANT_ID: z.string().optional().or(z.literal('')),
+    CLICK_SECRET_KEY: z.string().optional().or(z.literal('')),
+    PAYME_MERCHANT_ID: z.string().optional().or(z.literal('')),
+    PAYME_MERCHANT_KEY: z.string().optional().or(z.literal('')),
+    /** Dev'da to'lovni qo'lda tasdiqlash endpointi yoqilganmi. */
+    PAYMENTS_ALLOW_SIMULATION: z.coerce.boolean().default(false),
+
     // --- marshrut va geokoding ---
     OSRM_BASE_URL: z.string().url().optional().or(z.literal('')),
     GEOCODER_PROVIDER: z.enum(['nominatim', 'yandex']).default('nominatim'),
