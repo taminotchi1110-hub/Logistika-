@@ -174,16 +174,16 @@ export class OrdersService {
     }
     if (offer.offerStatus !== 'PENDING') {
       throw AppError.conflict(
-        ErrorCode.VALIDATION_FAILED,
+        ErrorCode.OFFER_ALREADY_HANDLED,
         `Taklif holati: ${offer.offerStatus}. Faqat kutilayotgan taklifni qabul qilish mumkin.`,
       );
     }
     if (new Date(offer.expiresAt).getTime() <= Date.now()) {
-      throw AppError.conflict(ErrorCode.VALIDATION_FAILED, 'Taklif muddati tugagan');
+      throw AppError.conflict(ErrorCode.OFFER_EXPIRED, 'Taklif muddati tugagan');
     }
     if (!['PUBLISHED', 'MATCHING', 'OFFERS_RECEIVED'].includes(offer.loadStatus)) {
       throw AppError.conflict(
-        ErrorCode.VALIDATION_FAILED,
+        ErrorCode.LOAD_NOT_ACCEPTING_OFFERS,
         `Yuk holati: ${offer.loadStatus}. Bu yukka buyurtma tuzib boʻlmaydi.`,
       );
     }
@@ -206,7 +206,7 @@ export class OrdersService {
         .executeTakeFirst();
 
       if (!load || !['PUBLISHED', 'MATCHING', 'OFFERS_RECEIVED'].includes(load.status)) {
-        throw AppError.conflict(ErrorCode.VALIDATION_FAILED, 'Yuk allaqachon band');
+        throw AppError.conflict(ErrorCode.LOAD_ALREADY_ASSIGNED, 'Yuk allaqachon band');
       }
 
       const created = await trx
@@ -329,9 +329,13 @@ export class OrdersService {
 
     const check = validateTransition(from, to, actorRole);
     if (!check.ok) {
+      // Ikki xil sabab — ikki xil kod: mobil ilova birinchisida "bu amal
+      // hozir mumkin emas", ikkinchisida "buni hamkoringiz bajaradi" deb
+      // ko'rsatadi. Bitta umumiy kod bilan ularni ajratib bo'lmasdi.
+      const invalid = check.reason === 'INVALID_TRANSITION';
       throw AppError.conflict(
-        ErrorCode.VALIDATION_FAILED,
-        check.reason === 'INVALID_TRANSITION'
+        invalid ? ErrorCode.ORDER_INVALID_TRANSITION : ErrorCode.ORDER_ACTOR_NOT_ALLOWED,
+        invalid
           ? `Buyurtma holatini ${from} dan ${to} ga oʻzgartirib boʻlmaydi`
           : `Bu amalni ${actorRole} bajara olmaydi`,
         { from, to, actorRole, reason: check.reason },
@@ -430,7 +434,7 @@ export class OrdersService {
 
     if (!current.emergencyRevealAvailable) {
       throw AppError.conflict(
-        ErrorCode.VALIDATION_FAILED,
+        ErrorCode.ORDER_CONTACTS_ALREADY_VISIBLE,
         current.counterpartyPhone
           ? 'Telefon raqamlari allaqachon ochiq'
           : 'Bu holatda kontakt ochib boʻlmaydi',

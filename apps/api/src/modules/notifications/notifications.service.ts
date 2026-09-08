@@ -100,7 +100,15 @@ export class NotificationsService {
       return;
     }
 
-    // 2. Tarixga yozamiz (bildirishnomalar markazi uchun)
+    // 2. Foydalanuvchi ayni damda ulanganmi — kanal shunga qarab tanlanadi
+    const online = await this.isOnline(input.userId);
+
+    // 3. Tarixga yozamiz (bildirishnomalar markazi uchun).
+    //
+    // `channel` — HAQIQIY yetkazish yo'li, "rejalashtirilgani" emas. Bu
+    // ustun keyinchalik hisobot uchun kerak bo'ladi: qancha bildirishnoma
+    // push orqali ketdi (FCM xarajati) va qanchasi ilova ochiqligida
+    // bannerda ko'rindi. Doim 'IN_APP' yozilsa bu ma'lumot yo'qoladi.
     if (!input.transient) {
       try {
         await this.database.db
@@ -110,7 +118,7 @@ export class NotificationsService {
             templateKey: input.type,
             title: input.title,
             body: input.body,
-            channel: 'IN_APP',
+            channel: online ? 'IN_APP' : 'PUSH',
             entityType: input.entityType ?? null,
             entityId: input.entityId ?? null,
             deepLink: input.deepLink ?? null,
@@ -127,9 +135,10 @@ export class NotificationsService {
       }
     }
 
-    // 2. Onlayn bo'lsa — realtime banner, aks holda push
-    const online = await this.isOnline(input.userId);
-
+    // 4. Onlayn bo'lsa — realtime banner, aks holda push.
+    //
+    // Ikkalasi ham yuborilmaydi: aks holda ilova ochiq turgan foydalanuvchi
+    // bitta xabarni ikki marta ko'radi (banner + tizim bildirishnomasi).
     await this.redis.client.publish(
       `notify:user:${input.userId}`,
       JSON.stringify({ ...payload, delivery: online ? 'realtime' : 'push' }),

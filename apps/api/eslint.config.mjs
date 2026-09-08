@@ -26,7 +26,13 @@ export default [
       'no-undef': 'off',
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-floating-promises': 'error',
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      // `ignoreRestSiblings` — maydonni ataylab olib tashlash uchun:
+      //   const { isMine: _isMine, ...wire } = view;
+      // Bu TypeScript'da "maydonsiz nusxa" olishning standart usuli.
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', ignoreRestSiblings: true },
+      ],
       '@typescript-eslint/explicit-member-accessibility': ['error', { accessibility: 'no-public' }],
       // Xom SQL faqat ataylab yoziladi — code review'da alohida tasdiqlanadi
       'no-console': ['error', { allow: ['warn', 'error'] }],

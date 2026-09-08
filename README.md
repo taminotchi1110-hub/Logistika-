@@ -1,7 +1,7 @@
 # KARVON — O'zbekiston uchun raqamli yuk almashinuv platformasi
 
-> **Holat:** 3-BOSQICH — transport, hujjatlar, geo servis, yuk e'loni va haydovchi lentasi kodlandi
-> **Versiya:** 0.3.0 · **Sana:** 2026-09-05
+> **Holat:** 4-BOSQICH — takliflar, buyurtma, chat, WebSocket va push kodlandi
+> **Versiya:** 0.4.0 · **Sana:** 2026-09-08
 
 Yuk beruvchi (shipper) va haydovchi (carrier) ni real vaqtda bog'laydigan, GPS tracking,
 avtomatik matching, escrow to'lov va reyting tizimiga ega marketplace platforma.
@@ -26,7 +26,8 @@ Batafsil: [docs/13-backend.md](docs/13-backend.md)
 | 1 — Arxitektura, DB, user flow, UI/UX, roadmap | ✅ tayyor |
 | 2 — Sprint 0 + Auth (OTP, JWT, sessiyalar, spravochnik) | ✅ tayyor |
 | 3 — Transport, hujjatlar, geo servis, yuk e'loni va lenta | ✅ tayyor |
-| 4 — Matching, takliflar, buyurtma, WebSocket, push | ⏳ keyingi |
+| 4 — Takliflar, buyurtma, chat, WebSocket, bildirishnoma va push | ✅ tayyor |
+| 5 — Avtomatik matching (Match Score), GPS tracking, to'lovlar | ⏳ keyingi |
 
 ---
 
@@ -75,6 +76,7 @@ Batafsil: [docs/13-backend.md](docs/13-backend.md)
 | 12 | [docs/12-uz-integrations.md](docs/12-uz-integrations.md) | Click/Payme/SMS/soliq/xarita integratsiyalari |
 | 13 | [docs/13-backend.md](docs/13-backend.md) | **Backend: ishga tushirish, kod xaritasi, testlar** |
 | 14 | [docs/14-loads-and-fleet.md](docs/14-loads-and-fleet.md) | **Transport, hujjatlar, geo servis, yuk e'loni** |
+| 15 | [docs/15-realtime-and-notifications.md](docs/15-realtime-and-notifications.md) | **Chat, WebSocket, bildirishnoma va push** |
 | — | [db/migrations/0001_init.sql](db/migrations/0001_init.sql) | To'liq PostgreSQL DDL |
 | — | [db/seeds/0001_reference.sql](db/seeds/0001_reference.sql) | Spravochnik ma'lumotlari |
 
@@ -85,7 +87,7 @@ Batafsil: [docs/13-backend.md](docs/13-backend.md)
 ```
 karvon/
 ├── apps/
-│   └── api/              # ✅ NestJS core API (REST; WebSocket 4-bosqichda)
+│   └── api/              # ✅ NestJS core API (REST + WebSocket)
 │       ├── src/
 │       │   ├── config/           # env validatsiya (zod), JWT kalitlari
 │       │   ├── common/           # xatolar, filter, interceptor, guard, util

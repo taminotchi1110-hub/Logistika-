@@ -13,12 +13,38 @@
 set -u
 
 API="${API:-http://localhost:3000/v1}"
-SHIPPER_PHONE="${SHIPPER_PHONE:-+998901112233}"
-DRIVER_PHONE="${DRIVER_PHONE:-+998902223344}"
+
+# Har ishga tushirishda YANGI raqam va davlat raqami: test qayta-qayta
+# ishlashi kerak. Qat'iy qiymatlar bilan u faqat bo'sh bazada o'tardi —
+# CI'da bunday test foydasiz.
+RND=$(( (RANDOM % 900) + 100 ))
+RND2=$(( (RANDOM % 900) + 100 ))
+SHIPPER_PHONE="${SHIPPER_PHONE:-+9989${RND}${RND2}11}"
+DRIVER_PHONE="${DRIVER_PHONE:-+9989${RND}${RND2}22}"
+PLATE_A="01 a ${RND} bc"
+PLATE_A_NORM="01A${RND}BC"
+PLATE_B="01A${RND2}BC"
+PLATE_A_FMT="01 A ${RND} BC"
 
 pass=0; fail=0
 
 # JSON'dan qiymat olish (node orqali — jq har doim ham bo'lmaydi)
+# Ro'yxatdan ID bo'yicha elementni topib, maydonini chiqaradi.
+#
+# NEGA KERAK: lenta — global ro'yxat, unda boshqa testlar qoldirgan
+# e'lonlar ham bo'ladi. "data.0" ga bog'lanish yoki "uzunlik = 1" deb
+# tekshirish shu sababli ishonchsiz. Biz aynan o'z e'lonimizni qidiramiz.
+jfind() { node -e "
+let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{
+  try {
+    const o=JSON.parse(s);
+    const item=(o.data||[]).find(x=>x.id===process.argv[1]);
+    if(!item){process.stdout.write('TOPILMADI');return;}
+    const v=process.argv[2]?process.argv[2].split('.').reduce((a,k)=>a?.[k],item):item.id;
+    process.stdout.write(v===undefined||v===null?'':String(v));
+  } catch { process.stdout.write(''); }
+});" "$1" "${2:-}"; }
+
 jget() { node -e "
 let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{
   try { const o=JSON.parse(s); const v=process.argv[1].split('.').reduce((a,k)=>a?.[k],o);
@@ -127,7 +153,7 @@ BADDATE=$(curl -s -X POST "$API/loads" -H "Authorization: Bearer $SH_TOKEN" \
     \"pickup\":{\"address\":\"Toshkent, Chilonzor\",\"lat\":41.28,\"lng\":69.20},
     \"delivery\":{\"address\":\"Samarqand markaz\",\"lat\":39.65,\"lng\":66.96},
     \"pickupFrom\":\"$PAST\",\"pickupTo\":\"$PAST\",\"priceTiyin\":100000 }")
-check "o'tib ketgan sana rad etildi" "VALIDATION_FAILED" "$(echo "$BADDATE" | jget 'error.code')"
+check "o'tib ketgan sana rad etildi" "LOAD_PICKUP_TIME_PASSED" "$(echo "$BADDATE" | jget 'error.code')"
 
 # Sxemada yo'q maydon
 MASS=$(curl -s -X POST "$API/auth/otp/request" -H 'Content-Type: application/json' \
@@ -151,22 +177,22 @@ curl -s -X POST "$API/auth/profile" -H "Authorization: Bearer $DR_TOKEN" \
 VEH=$(curl -s -X POST "$API/vehicles" -H "Authorization: Bearer $DR_TOKEN" \
   -H 'Content-Type: application/json' -d '{
     "vehicleTypeId":4,"bodyTypeId":1,"brand":"Isuzu","model":"NPR 75",
-    "year":2019,"plateNumber":"01 a 123 bc","capacityKg":5000,"volumeM3":25.5 }')
+    "year":2019,"plateNumber":"'"$PLATE_A"'","capacityKg":5000,"volumeM3":25.5 }')
 checkne "transport qo'shildi" "$(echo "$VEH" | jget 'data.id')"
-check "davlat raqami normallashtirildi" "01A123BC" "$(echo "$VEH" | jget 'data.plateNumber')"
-check "ko'rsatish formati" "01 A 123 BC" "$(echo "$VEH" | jget 'data.plateFormatted')"
+check "davlat raqami normallashtirildi" "$PLATE_A_NORM" "$(echo "$VEH" | jget 'data.plateNumber')"
+check "ko'rsatish formati" "$PLATE_A_FMT" "$(echo "$VEH" | jget 'data.plateFormatted')"
 check "birinchi transport asosiy" "true" "$(echo "$VEH" | jget 'data.isPrimary')"
 
 DUP=$(curl -s -X POST "$API/vehicles" -H "Authorization: Bearer $DR_TOKEN" \
   -H 'Content-Type: application/json' -d '{
     "vehicleTypeId":4,"bodyTypeId":1,"brand":"Isuzu","model":"NPR",
-    "plateNumber":"01A123BC","capacityKg":5000,"volumeM3":25 }')
-check "takroriy davlat raqami rad etildi" "VALIDATION_FAILED" "$(echo "$DUP" | jget 'error.code')"
+    "plateNumber":"'"$PLATE_A_NORM"'","capacityKg":5000,"volumeM3":25 }')
+check "takroriy davlat raqami rad etildi" "VEHICLE_PLATE_TAKEN" "$(echo "$DUP" | jget 'error.code')"
 
 OVER=$(curl -s -X POST "$API/vehicles" -H "Authorization: Bearer $DR_TOKEN" \
   -H 'Content-Type: application/json' -d '{
     "vehicleTypeId":1,"bodyTypeId":1,"brand":"Damas","model":"DL",
-    "plateNumber":"01A999BC","capacityKg":20000,"volumeM3":3 }')
+    "plateNumber":"'"$PLATE_B"'","capacityKg":20000,"volumeM3":3 }')
 check "Damas uchun 20t quvvat rad etildi" "VALIDATION_FAILED" "$(echo "$OVER" | jget 'error.code')"
 
 step "Haydovchi — verifikatsiya tayyorligi"
@@ -186,13 +212,13 @@ check "yo'nalish qo'shildi" "1" "$(echo "$ROUTE" | jget 'data.length')"
 # ------------------------------------------------------------ lenta
 step "Haydovchi lentasi"
 FEED=$(curl -s "$API/loads/feed?lat=41.3111&lng=69.2797" -H "Authorization: Bearer $DR_TOKEN")
-check "lentada yuk ko'rindi" "1" "$(echo "$FEED" | jget 'data.length')"
-check "telefon MASKALANGAN" "+998 90 *** ** 33" "$(echo "$FEED" | jget 'data.0.pickup.contactPhone')"
-checkne "olish nuqtasigacha masofa" "$(echo "$FEED" | jget 'data.0.distanceToPickupKm')"
+check "lentada aynan bizning yuk ko'rindi" "$LOAD_ID" "$(echo "$FEED" | jfind "$LOAD_ID")"
+check "telefon MASKALANGAN" "+998 90 *** ** 33" "$(echo "$FEED" | jfind "$LOAD_ID" 'pickup.contactPhone')"
+checkne "olish nuqtasigacha masofa" "$(echo "$FEED" | jfind "$LOAD_ID" 'distanceToPickupKm')"
 
 FILT=$(curl -s "$API/loads/feed?fromRegionId=1&toRegionId=3&minWeightKg=1000&maxWeightKg=20000&vehicleTypeIds=4" \
        -H "Authorization: Bearer $DR_TOKEN")
-check "filter bo'yicha topildi" "1" "$(echo "$FILT" | jget 'data.length')"
+check "filter bo'yicha topildi" "$LOAD_ID" "$(echo "$FILT" | jfind "$LOAD_ID")"
 
 NOMATCH=$(curl -s "$API/loads/feed?fromRegionId=5&toRegionId=6" -H "Authorization: Bearer $DR_TOKEN")
 check "mos kelmaydigan filter bo'sh" "0" "$(echo "$NOMATCH" | jget 'data.length')"

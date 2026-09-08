@@ -154,6 +154,38 @@ export class UsersService {
     return updated;
   }
 
+  /**
+   * Push uchun qurilmani qayd etadi.
+   *
+   * Bitta qurilma — bitta yozuv (deviceId boʻyicha). FCM tokeni ilova qayta
+   * oʻrnatilganda yoki tizim uni yangilaganda oʻzgaradi, shuning uchun har
+   * ochilishda yangilanadi.
+   */
+  async registerDevice(
+    userId: string,
+    input: { fcmToken: string; deviceId: string; platform: string },
+  ): Promise<{ registered: boolean }> {
+    await this.database.db
+      .insertInto('devices')
+      .values({
+        userId,
+        fcmToken: input.fcmToken,
+        deviceId: input.deviceId,
+        platform: input.platform,
+        isActive: true,
+      })
+      .onConflict((oc) =>
+        oc.columns(['userId', 'deviceId']).doUpdateSet({
+          fcmToken: input.fcmToken,
+          platform: input.platform,
+          isActive: true,
+        }),
+      )
+      .execute();
+
+    return { registered: true };
+  }
+
   async updateLastSeen(userId: string): Promise<void> {
     await this.database.db
       .updateTable('users')

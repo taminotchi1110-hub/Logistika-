@@ -247,7 +247,7 @@ export class LoadsService {
     // Narx ham, "kelishuv asosida" ham boʻlmasa haydovchi nimaga tayanadi?
     if (!dto.priceTiyin && !dto.isNegotiable) {
       throw AppError.badRequest(
-        ErrorCode.VALIDATION_FAILED,
+        ErrorCode.LOAD_PRICE_REQUIRED,
         'Narxni koʻrsating yoki "kelishuv asosida" belgisini qoʻying',
       );
     }
@@ -317,13 +317,13 @@ export class LoadsService {
 
     if (load.status !== 'DRAFT') {
       throw AppError.conflict(
-        ErrorCode.VALIDATION_FAILED,
+        ErrorCode.LOAD_NOT_PUBLISHABLE,
         `Faqat qoralamani eʼlon qilish mumkin. Joriy holat: ${load.status}`,
       );
     }
     if (new Date(load.pickupTo).getTime() <= Date.now()) {
       throw AppError.unprocessable(
-        ErrorCode.VALIDATION_FAILED,
+        ErrorCode.LOAD_PICKUP_TIME_PASSED,
         'Yuklash vaqti oʻtib ketgan. Sanani yangilang.',
       );
     }
@@ -351,7 +351,7 @@ export class LoadsService {
 
     if (!EDITABLE_STATUSES.includes(load.status)) {
       throw AppError.conflict(
-        ErrorCode.VALIDATION_FAILED,
+        ErrorCode.LOAD_NOT_EDITABLE,
         `Bu holatdagi yukni tahrirlab boʻlmaydi: ${load.status}`,
       );
     }
@@ -452,12 +452,12 @@ export class LoadsService {
       // Buyurtma tuzilgach bekor qilish jarima siyosatiga tobe —
       // u buyurtma modulida (4-bosqich) hal qilinadi
       throw AppError.conflict(
-        ErrorCode.VALIDATION_FAILED,
+        ErrorCode.LOAD_HAS_ORDER,
         'Buyurtma tuzilgan. Bekor qilish buyurtma orqali amalga oshiriladi.',
       );
     }
     if (load.status === 'CANCELLED' || load.status === 'EXPIRED') {
-      throw AppError.conflict(ErrorCode.VALIDATION_FAILED, 'Yuk allaqachon yopilgan');
+      throw AppError.conflict(ErrorCode.LOAD_ALREADY_CLOSED, 'Yuk allaqachon yopilgan');
     }
 
     await this.database.db
@@ -764,19 +764,19 @@ export class LoadsService {
     }
     if (pickupTo < pickupFrom) {
       throw AppError.badRequest(
-        ErrorCode.VALIDATION_FAILED,
+        ErrorCode.LOAD_TIME_WINDOW_INVALID,
         'Yuklash oynasining tugashi boshlanishidan oldin boʻlishi mumkin emas',
       );
     }
     // 15 daqiqa zaxira: mijoz formani toʻldirayotganda vaqt oʻtib ketishi mumkin
     if (pickupTo < Date.now() - 15 * 60 * 1000) {
-      throw AppError.badRequest(ErrorCode.VALIDATION_FAILED, 'Yuklash vaqti oʻtib ketgan');
+      throw AppError.badRequest(ErrorCode.LOAD_PICKUP_TIME_PASSED, 'Yuklash vaqti oʻtib ketgan');
     }
     if (deliveryBy) {
       const by = new Date(deliveryBy).getTime();
       if (Number.isNaN(by) || by < pickupFrom) {
         throw AppError.badRequest(
-          ErrorCode.VALIDATION_FAILED,
+          ErrorCode.LOAD_TIME_WINDOW_INVALID,
           'Yetkazish muddati yuklash vaqtidan oldin boʻlishi mumkin emas',
         );
       }
@@ -794,7 +794,7 @@ export class LoadsService {
 
     if (active.length >= this.maxActivePerShipper) {
       throw AppError.conflict(
-        ErrorCode.VALIDATION_FAILED,
+        ErrorCode.LOAD_ACTIVE_LIMIT_REACHED,
         `Bir vaqtda ${this.maxActivePerShipper} tadan koʻp faol eʼlon boʻlishi mumkin emas. Eskilarini yoping yoki korporativ tarifga oʻting.`,
       );
     }
@@ -810,7 +810,7 @@ export class LoadsService {
       .executeTakeFirst();
 
     if (!category) {
-      throw AppError.badRequest(ErrorCode.VALIDATION_FAILED, 'Yuk kategoriyasi topilmadi');
+      throw AppError.badRequest(ErrorCode.REFERENCE_NOT_FOUND, 'Yuk kategoriyasi topilmadi');
     }
 
     if (dto.requiredVehicleTypeIds?.length) {
@@ -822,7 +822,7 @@ export class LoadsService {
         .execute();
 
       if (found.length !== new Set(dto.requiredVehicleTypeIds).size) {
-        throw AppError.badRequest(ErrorCode.VALIDATION_FAILED, 'Transport turi topilmadi');
+        throw AppError.badRequest(ErrorCode.REFERENCE_NOT_FOUND, 'Transport turi topilmadi');
       }
     }
 
@@ -835,7 +835,7 @@ export class LoadsService {
         .execute();
 
       if (found.length !== new Set(dto.requiredBodyTypeIds).size) {
-        throw AppError.badRequest(ErrorCode.VALIDATION_FAILED, 'Kuzov turi topilmadi');
+        throw AppError.badRequest(ErrorCode.REFERENCE_NOT_FOUND, 'Kuzov turi topilmadi');
       }
     }
   }

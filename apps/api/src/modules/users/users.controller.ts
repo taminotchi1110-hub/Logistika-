@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Put } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
 import { IsIn, IsOptional, IsString, Length, MaxLength } from 'class-validator';
 
@@ -32,10 +32,38 @@ export class UpdateProfileDto {
   avatarKey?: string;
 }
 
+export class RegisterDeviceDto {
+  @ApiPropertyOptional({ description: 'FCM push tokeni' })
+  @IsString()
+  @MaxLength(4096)
+  fcmToken!: string;
+
+  @ApiPropertyOptional({ example: 'a1b2c3d4' })
+  @IsString()
+  @MaxLength(128)
+  deviceId!: string;
+
+  @ApiPropertyOptional({ enum: ['android', 'ios', 'web'] })
+  @IsIn(['android', 'ios', 'web'])
+  platform!: string;
+}
+
 @ApiTags('users')
 @Controller()
 export class UsersController {
   constructor(private readonly users: UsersService) {}
+
+  @Put('me/devices')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Qurilmani push uchun roʻyxatdan oʻtkazish',
+    description:
+      'Ilova har ochilganda chaqiradi — FCM tokeni oʻzgarishi mumkin. ' +
+      'Bir qurilma bitta yozuv (deviceId boʻyicha yangilanadi).',
+  })
+  registerDevice(@CurrentUser() current: AuthenticatedUser, @Body() dto: RegisterDeviceDto) {
+    return this.users.registerDevice(current.id, dto);
+  }
 
   @Get('me')
   @ApiBearerAuth()

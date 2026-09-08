@@ -103,7 +103,7 @@ check "taklif narxi" "230000000" "$(echo "$OFFER" | jget 'data.offeredPriceTiyin
 
 DUP=$(curl -s -X POST "$API/loads/$LOAD_ID/offers" -H "Authorization: Bearer $DR_TOKEN" \
   -H 'Content-Type: application/json' -d "{\"vehicleId\":\"$VEH_ID\"}")
-check "ikkinchi taklif rad etildi" "VALIDATION_FAILED" "$(echo "$DUP" | jget 'error.code')"
+check "ikkinchi taklif rad etildi" "OFFER_DUPLICATE" "$(echo "$DUP" | jget 'error.code')"
 
 LOWBALL=$(curl -s -X POST "$API/loads/$LOAD_ID/offers" -H "Authorization: Bearer $DR_TOKEN" \
   -H 'Content-Type: application/json' -d "{\"vehicleId\":\"$VEH_ID\",\"offeredPriceTiyin\":10000000}")
@@ -142,11 +142,11 @@ check "CONFIRMED — telefon HALI YOPIQ" "false" "$(echo "$CONF" | jget 'data.vi
 
 WRONG=$(curl -s -X POST "$API/orders/$ORDER_ID/status" -H "Authorization: Bearer $SH_TOKEN" \
   -H 'Content-Type: application/json' -d '{"status":"EN_ROUTE_TO_PICKUP"}')
-check "klient haydovchi nomidan status qo'ya olmaydi" "VALIDATION_FAILED" "$(echo "$WRONG" | jget 'error.code')"
+check "klient haydovchi nomidan status qo'ya olmaydi" "ORDER_ACTOR_NOT_ALLOWED" "$(echo "$WRONG" | jget 'error.code')"
 
 SKIP=$(curl -s -X POST "$API/orders/$ORDER_ID/status" -H "Authorization: Bearer $DR_TOKEN" \
   -H 'Content-Type: application/json' -d '{"status":"DELIVERED"}')
-check "bosqichni o'tkazib yuborib bo'lmaydi" "VALIDATION_FAILED" "$(echo "$SKIP" | jget 'error.code')"
+check "bosqichni o'tkazib yuborib bo'lmaydi" "ORDER_INVALID_TRANSITION" "$(echo "$SKIP" | jget 'error.code')"
 
 ENROUTE=$(curl -s -X POST "$API/orders/$ORDER_ID/status" -H "Authorization: Bearer $DR_TOKEN" \
   -H 'Content-Type: application/json' -d '{"status":"EN_ROUTE_TO_PICKUP","lat":41.31,"lng":69.27}')

@@ -76,6 +76,12 @@ export const envSchema = z
       .min(1024)
       .default(20 * 1024 * 1024),
 
+    // --- Firebase Cloud Messaging (push) ---
+    // Bo'sh qoldirilsa push faqat logga yoziladi (dev rejim)
+    FCM_PROJECT_ID: z.string().optional().or(z.literal('')),
+    FCM_CLIENT_EMAIL: z.string().optional().or(z.literal('')),
+    FCM_PRIVATE_KEY: z.string().optional().or(z.literal('')),
+
     // --- marshrut va geokoding ---
     OSRM_BASE_URL: z.string().url().optional().or(z.literal('')),
     GEOCODER_PROVIDER: z.enum(['nominatim', 'yandex']).default('nominatim'),

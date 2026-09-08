@@ -143,7 +143,7 @@ export class VehiclesService {
       // transportda ularni jimgina oʻzgartirish — firibgarlik yoʻli
       // (5 t deb tasdiqlatib, keyin 20 t qilib qoʻyish).
       throw AppError.conflict(
-        ErrorCode.VALIDATION_FAILED,
+        ErrorCode.VEHICLE_LOCKED_AFTER_VERIFY,
         'Tasdiqlangan transportning texnik parametrlarini oʻzgartirib boʻlmaydi. Qoʻllab-quvvatlashga murojaat qiling.',
         { lockedFields: ['vehicleTypeId', 'bodyTypeId', 'plateNumber', 'capacityKg', 'volumeM3'] },
       );
@@ -271,7 +271,7 @@ export class VehiclesService {
     const plate = normalizePlate(input);
     if (!plate) {
       throw AppError.badRequest(
-        ErrorCode.VALIDATION_FAILED,
+        ErrorCode.VEHICLE_PLATE_INVALID,
         'Davlat raqami notoʻgʻri. Namuna: 01 A 123 BC',
       );
     }
@@ -290,7 +290,7 @@ export class VehiclesService {
     if (await query.executeTakeFirst()) {
       // Kimga tegishli ekanini aytmaymiz — bu boshqa foydalanuvchi haqidagi maʼlumot
       throw AppError.conflict(
-        ErrorCode.VALIDATION_FAILED,
+        ErrorCode.VEHICLE_PLATE_TAKEN,
         'Bu davlat raqami tizimda allaqachon roʻyxatdan oʻtgan',
       );
     }
@@ -307,7 +307,7 @@ export class VehiclesService {
 
     if (rows.length >= MAX_VEHICLES_PER_DRIVER) {
       throw AppError.conflict(
-        ErrorCode.VALIDATION_FAILED,
+        ErrorCode.VEHICLE_LIMIT_REACHED,
         `Bitta akkauntda ${MAX_VEHICLES_PER_DRIVER} tadan koʻp transport boʻlishi mumkin emas. Park uchun korporativ akkaunt oching.`,
       );
     }
@@ -345,10 +345,10 @@ export class VehiclesService {
     ]);
 
     if (!vehicleType) {
-      throw AppError.badRequest(ErrorCode.VALIDATION_FAILED, 'Transport turi topilmadi');
+      throw AppError.badRequest(ErrorCode.REFERENCE_NOT_FOUND, 'Transport turi topilmadi');
     }
     if (!bodyType) {
-      throw AppError.badRequest(ErrorCode.VALIDATION_FAILED, 'Kuzov turi topilmadi');
+      throw AppError.badRequest(ErrorCode.REFERENCE_NOT_FOUND, 'Kuzov turi topilmadi');
     }
 
     // Chegaradan 30% chetlanishga ruxsat: modifikatsiyalar bor, lekin

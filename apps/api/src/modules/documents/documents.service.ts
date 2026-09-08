@@ -72,13 +72,13 @@ export class DocumentsService {
     await this.assertOwnership(userId, input.ownerType, input.ownerId);
 
     if (!input.fileKey.includes(`/${userId}/`)) {
-      throw AppError.badRequest(ErrorCode.VALIDATION_FAILED, 'Fayl kaliti sizga tegishli emas');
+      throw AppError.badRequest(ErrorCode.FILE_KEY_NOT_OWNED, 'Fayl kaliti sizga tegishli emas');
     }
 
     const metadata = await this.storage.getMetadata(input.fileKey);
     if (!metadata) {
       throw AppError.badRequest(
-        ErrorCode.VALIDATION_FAILED,
+        ErrorCode.FILE_NOT_UPLOADED,
         'Fayl storage’da topilmadi. Avval uploadUrl orqali yuklang.',
       );
     }
@@ -175,7 +175,7 @@ export class DocumentsService {
 
     if (document.verificationStatus === 'VERIFIED') {
       throw AppError.conflict(
-        ErrorCode.VALIDATION_FAILED,
+        ErrorCode.FILE_DELETE_FORBIDDEN,
         'Tasdiqlangan hujjatni oʻchirib boʻlmaydi. Qoʻllab-quvvatlash xizmatiga murojaat qiling.',
       );
     }

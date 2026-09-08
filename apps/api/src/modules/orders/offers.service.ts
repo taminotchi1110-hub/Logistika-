@@ -79,19 +79,19 @@ export class OffersService {
 
     if (!load) throw AppError.notFound('Yuk topilmadi');
     if (load.shipperId === driverId) {
-      throw AppError.badRequest(ErrorCode.VALIDATION_FAILED, 'Oʻz yukingizga taklif yubormaysiz');
+      throw AppError.badRequest(ErrorCode.OFFER_OWN_LOAD, 'Oʻz yukingizga taklif yubormaysiz');
     }
     if (!['PUBLISHED', 'MATCHING', 'OFFERS_RECEIVED'].includes(load.status)) {
-      throw AppError.conflict(ErrorCode.VALIDATION_FAILED, 'Bu yuk endi takliflar qabul qilmaydi');
+      throw AppError.conflict(ErrorCode.LOAD_NOT_ACCEPTING_OFFERS, 'Bu yuk endi takliflar qabul qilmaydi');
     }
     if (new Date(load.pickupTo).getTime() <= Date.now()) {
-      throw AppError.conflict(ErrorCode.VALIDATION_FAILED, 'Yuklash vaqti oʻtib ketgan');
+      throw AppError.conflict(ErrorCode.LOAD_PICKUP_TIME_PASSED, 'Yuklash vaqti oʻtib ketgan');
     }
 
     const vehicle = await this.vehicles.getOwned(driverId, input.vehicleId);
     if (vehicle.verificationStatus !== 'VERIFIED' || !vehicle.isActive) {
       throw AppError.unprocessable(
-        ErrorCode.DRIVER_NOT_VERIFIED,
+        ErrorCode.VEHICLE_NOT_VERIFIED,
         'Transport tasdiqlanmagan yoki faol emas',
       );
     }
@@ -102,7 +102,7 @@ export class OffersService {
     const totalCapacity = vehicle.capacityKg + (vehicle.trailerCapacityKg ?? 0);
     if (totalCapacity < load.weightKg) {
       throw AppError.unprocessable(
-        ErrorCode.VALIDATION_FAILED,
+        ErrorCode.VEHICLE_CAPACITY_EXCEEDED,
         `Transport quvvati yetarli emas: ${totalCapacity} kg < ${load.weightKg} kg`,
       );
     }
@@ -112,7 +112,7 @@ export class OffersService {
 
     if (offeredPrice === null || offeredPrice <= 0) {
       throw AppError.badRequest(
-        ErrorCode.VALIDATION_FAILED,
+        ErrorCode.OFFER_PRICE_REQUIRED,
         'Yuk narxi koʻrsatilmagan — oʻz narxingizni taklif qiling',
       );
     }
@@ -123,7 +123,7 @@ export class OffersService {
       const deviation = Math.abs(offeredPrice - listedPrice) / listedPrice;
       if (deviation > COUNTER_OFFER_TOLERANCE) {
         throw AppError.unprocessable(
-          ErrorCode.VALIDATION_FAILED,
+          ErrorCode.OFFER_PRICE_OUT_OF_RANGE,
           `Taklif narxi eʼlon narxidan ${Math.round(COUNTER_OFFER_TOLERANCE * 100)}% dan koʻp farq qila olmaydi`,
           { listedPriceTiyin: listedPrice, offeredPriceTiyin: offeredPrice },
         );
@@ -152,7 +152,7 @@ export class OffersService {
 
     if (!inserted) {
       throw AppError.conflict(
-        ErrorCode.VALIDATION_FAILED,
+        ErrorCode.OFFER_DUPLICATE,
         'Siz bu yukka allaqachon taklif yuborgansiz',
       );
     }
@@ -222,7 +222,7 @@ export class OffersService {
 
     if (!offer || offer.shipperId !== shipperId) throw AppError.notFound('Taklif topilmadi');
     if (offer.status !== 'PENDING') {
-      throw AppError.conflict(ErrorCode.VALIDATION_FAILED, 'Taklif allaqachon koʻrib chiqilgan');
+      throw AppError.conflict(ErrorCode.OFFER_ALREADY_HANDLED, 'Taklif allaqachon koʻrib chiqilgan');
     }
 
     await this.database.db

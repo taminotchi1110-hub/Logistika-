@@ -162,11 +162,19 @@ apps/api/src/
 ## 13.6. Testlar
 
 ```bash
-npm test                # unit — infratuzilma kerak emas
+npm test                # unit (105 ta) — infratuzilma kerak emas
 npm run test:cov        # qamrov hisoboti
 npm run test:e2e        # e2e — infra:up + db:migrate + db:seed kerak
-npm run smoke           # uchdan-uchgacha: API ishlab turishi kerak
+
+# Uchdan-uchgacha: API ishlab turishi kerak
+npm run smoke:all       # HAMMASI (130 ta tekshiruv) — quyidagi to'rttasi
+npm run smoke           # 1. auth, park, hujjatlar, geo, yuk, lenta   (44)
+npm run smoke:orders    # 2. taklif, buyurtma, kontakt ko'rinishi     (41)
+npm run smoke:ws        # 3. chat, WebSocket, banner                  (32)
+npm run smoke:push      # 4. oflayn push navbati                      (13)
 ```
+
+Batafsil: [15-realtime-and-notifications.md](15-realtime-and-notifications.md#158-tekshiruv)
 
 ### `npm run smoke` — uchdan-uchgacha tekshiruv
 
