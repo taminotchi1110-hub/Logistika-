@@ -82,6 +82,13 @@ export const envSchema = z
     FCM_CLIENT_EMAIL: z.string().optional().or(z.literal('')),
     FCM_PRIVATE_KEY: z.string().optional().or(z.literal('')),
 
+    // --- admin paneli ---
+    //
+    // Foydalanuvchi tokenidan BOSHQA kalit: admin tokeni bilan
+    // foydalanuvchi endpointlariga kirish (va aksincha) mumkin
+    // boʻlmasligi kerak. Boʻsh boʻlsa admin paneli ishlamaydi.
+    ADMIN_JWT_SECRET: z.string().min(32).optional().or(z.literal('')),
+
     // --- to'lov tizimlari ---
     //
     // Kalitlar bo'sh bo'lsa PSP webhook'lari 503 qaytaradi va to'lov

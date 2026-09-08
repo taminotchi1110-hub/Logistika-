@@ -1,7 +1,7 @@
 # KARVON — O'zbekiston uchun raqamli yuk almashinuv platformasi
 
-> **Holat:** 4-BOSQICH — takliflar, buyurtma, chat, WebSocket, push, matching va GPS kuzatuv kodlandi
-> **Versiya:** 0.4.0 · **Sana:** 2026-09-08
+> **Holat:** 5-BOSQICH — toʻlovlar (Click/Payme), reyting va admin paneli kodlandi
+> **Versiya:** 0.5.0 · **Sana:** 2026-09-08
 
 Yuk beruvchi (shipper) va haydovchi (carrier) ni real vaqtda bog'laydigan, GPS tracking,
 avtomatik matching, escrow to'lov va reyting tizimiga ega marketplace platforma.
@@ -27,7 +27,8 @@ Batafsil: [docs/13-backend.md](docs/13-backend.md)
 | 2 — Sprint 0 + Auth (OTP, JWT, sessiyalar, spravochnik) | ✅ tayyor |
 | 3 — Transport, hujjatlar, geo servis, yuk e'loni va lenta | ✅ tayyor |
 | 4 — Takliflar, buyurtma, chat, realtime, push, **matching**, **GPS kuzatuv** | ✅ tayyor |
-| 5 — To'lovlar (Click/Payme), reyting, admin panel | ⏳ keyingi |
+| 5 — **To'lovlar** (Click/Payme), **reyting**, **admin paneli** | ✅ tayyor |
+| 6 — Flutter mobil ilova | ⏳ keyingi |
 
 ---
 
@@ -78,6 +79,7 @@ Batafsil: [docs/13-backend.md](docs/13-backend.md)
 | 14 | [docs/14-loads-and-fleet.md](docs/14-loads-and-fleet.md) | **Transport, hujjatlar, geo servis, yuk e'loni** |
 | 15 | [docs/15-realtime-and-notifications.md](docs/15-realtime-and-notifications.md) | **Chat, WebSocket, bildirishnoma va push** |
 | 16 | [docs/16-matching-and-tracking.md](docs/16-matching-and-tracking.md) | **Avtomatik matching va jonli GPS kuzatuv** |
+| 17 | [docs/17-payments-ratings-admin.md](docs/17-payments-ratings-admin.md) | **Toʻlovlar, reyting va admin paneli** |
 | — | [db/migrations/0001_init.sql](db/migrations/0001_init.sql) | To'liq PostgreSQL DDL |
 | — | [db/seeds/0001_reference.sql](db/seeds/0001_reference.sql) | Spravochnik ma'lumotlari |
 

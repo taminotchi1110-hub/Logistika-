@@ -32,7 +32,10 @@
     "dev:reset-limits": "node scripts/reset-rate-limits.js",
     "smoke:matching": "node scripts/matching-test.js",
     "smoke:tracking": "node scripts/tracking-test.js",
-    "smoke:payments": "node scripts/payments-test.js"
+    "smoke:payments": "node scripts/payments-test.js",
+    "admin:create": "npm run admin:create --workspace=@karvon/api --",
+    "smoke:ratings": "node scripts/ratings-test.js",
+    "smoke:admin": "node scripts/admin-test.js"
   },
   "devDependencies": {
     "prettier": "^3.3.3"

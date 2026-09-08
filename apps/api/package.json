@@ -18,7 +18,8 @@
     "db:migrate": "ts-node -r tsconfig-paths/register src/infra/database/migrator.ts up",
     "db:seed": "ts-node -r tsconfig-paths/register src/infra/database/migrator.ts seed",
     "db:status": "ts-node -r tsconfig-paths/register src/infra/database/migrator.ts status",
-    "db:reset": "ts-node -r tsconfig-paths/register src/infra/database/migrator.ts reset"
+    "db:reset": "ts-node -r tsconfig-paths/register src/infra/database/migrator.ts reset",
+    "admin:create": "ts-node -r tsconfig-paths/register src/scripts/create-admin.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.670.0",
@@ -33,6 +34,7 @@
     "@nestjs/swagger": "^11.0.0",
     "@nestjs/terminus": "^11.0.0",
     "@nestjs/websockets": "^11.2.3",
+    "@node-rs/argon2": "^2.2.0",
     "@socket.io/redis-adapter": "^8.3.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
@@ -42,6 +44,7 @@
     "ioredis": "^5.4.1",
     "kysely": "^0.27.4",
     "nestjs-pino": "^4.1.0",
+    "otplib": "^12.0.1",
     "pg": "^8.12.0",
     "pino": "^9.4.0",
     "pino-http": "^10.3.0",

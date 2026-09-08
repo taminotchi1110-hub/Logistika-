@@ -30,6 +30,8 @@ run "4. Oflayn push navbati" node scripts/push-test.js
 run "5. Avtomatik matching (Match Score)" node scripts/matching-test.js
 run "6. Jonli GPS kuzatuv" node scripts/tracking-test.js
 run "7. Hamyon, ledger va PSP toʻlovlari" node scripts/payments-test.js
+run "8. Ikki tomonlama reyting" node scripts/ratings-test.js
+run "9. Admin paneli" node scripts/admin-test.js
 
 echo ""
 if [ "$FAILED" -eq 0 ]; then

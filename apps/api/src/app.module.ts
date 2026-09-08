@@ -11,6 +11,7 @@ import { DatabaseModule } from '@/infra/database/database.module';
 import { RedisModule } from '@/infra/redis/redis.module';
 import { StorageModule } from '@/infra/storage/storage.module';
 import { AddressesModule } from '@/modules/addresses/addresses.module';
+import { AdminModule } from '@/modules/admin/admin.module';
 import { AuthModule } from '@/modules/auth/auth.module';
 import { DocumentsModule } from '@/modules/documents/documents.module';
 import { DriversModule } from '@/modules/drivers/drivers.module';
@@ -23,6 +24,7 @@ import { ChatModule } from '@/modules/chat/chat.module';
 import { NotificationsModule } from '@/modules/notifications/notifications.module';
 import { OrdersModule } from '@/modules/orders/orders.module';
 import { PaymentsModule } from '@/modules/payments/payments.module';
+import { RatingsModule } from '@/modules/ratings/ratings.module';
 import { ReferenceModule } from '@/modules/reference/reference.module';
 import { SmsModule } from '@/modules/sms/sms.module';
 import { TrackingModule } from '@/modules/tracking/tracking.module';
@@ -105,6 +107,8 @@ import { VehiclesModule } from '@/modules/vehicles/vehicles.module';
     MatchingModule,
     TrackingModule,
     PaymentsModule,
+    RatingsModule,
+    AdminModule,
   ],
 })
 export class AppModule {}

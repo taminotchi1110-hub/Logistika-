@@ -89,6 +89,8 @@ async function createOrderFixture(options = {}) {
     driverToken,
   );
 
+  if (!vehicle.data) throw new Error(`transport yaratilmadi: ${JSON.stringify(vehicle.error)}`);
+
   await api(
     '/me/driver/routes',
     { method: 'POST', body: JSON.stringify({ fromRegionId: 1, toRegionId: 3 }) },
@@ -133,6 +135,8 @@ async function createOrderFixture(options = {}) {
     shipperToken,
   );
 
+  if (!load.data) throw new Error(`yuk yaratilmadi: ${JSON.stringify(load.error)}`);
+
   if (options.beforeOffer) await options.beforeOffer({ shipperToken, driverToken, loadId: load.data.id });
 
   const offer = await api(
@@ -140,6 +144,8 @@ async function createOrderFixture(options = {}) {
     { method: 'POST', body: JSON.stringify({ vehicleId: vehicle.data.id }) },
     driverToken,
   );
+
+  if (!offer.data) throw new Error(`taklif yuborilmadi: ${JSON.stringify(offer.error)}`);
 
   const order = await api(`/offers/${offer.data.id}/accept`, { method: 'POST' }, shipperToken);
 

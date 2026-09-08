@@ -25,14 +25,15 @@ export type NotificationType =
   | 'load.matched'
   | 'payment.received'
   | 'payout.processed'
-  | 'rating.received';
+  | 'rating.received'
+  | 'document.reviewed';
 
 export interface NotifyInput {
   userId: string;
   type: NotificationType;
   title: string;
   body: string;
-  entityType?: 'ORDER' | 'LOAD' | 'OFFER' | 'CONVERSATION' | 'PAYMENT' | 'RATING';
+  entityType?: 'ORDER' | 'LOAD' | 'OFFER' | 'CONVERSATION' | 'PAYMENT' | 'RATING' | 'DOCUMENT' | 'VEHICLE' | 'USER';
   entityId?: string;
   deepLink?: string;
   data?: Record<string, unknown>;
@@ -58,6 +59,7 @@ const CHANNEL_BY_TYPE: Record<NotificationType, 'karvon_messages' | 'karvon_orde
   'payment.received': 'karvon_orders',
   'payout.processed': 'karvon_orders',
   'rating.received': 'karvon_orders',
+  'document.reviewed': 'karvon_orders',
 };
 
 @Injectable()
