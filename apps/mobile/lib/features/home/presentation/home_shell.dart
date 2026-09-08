@@ -5,6 +5,7 @@ import '../../../core/providers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../auth/domain/user.dart';
+import '../../loads/presentation/feed_screen.dart';
 import '../../../shared/widgets/app_states.dart';
 
 /// Asosiy ekran — pastki navigatsiya bilan.
@@ -131,11 +132,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           label: 'Lenta',
           icon: Icons.explore_outlined,
           activeIcon: Icons.explore_rounded,
-          builder: (_) => const _Placeholder(
-            title: 'Yuklar lentasi',
-            message: 'Sizga mos yuklar shu yerda koʻrinadi',
-            icon: Icons.explore_outlined,
-          ),
+          builder: (_) => const FeedScreen(),
         ),
         _Tab(
           label: 'Reyslarim',
