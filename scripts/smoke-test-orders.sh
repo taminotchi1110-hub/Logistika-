@@ -135,6 +135,32 @@ checkne "ASSIGNED — telefon maskalangan" "$(echo "$ORD" | jget 'data.counterpa
 check "ASSIGNED — maskada '***' bor" "1" "$(echo "$ORD" | jget 'data.counterparty.phone' | grep -c '\*\*\*')"
 check "'Bog'lana olmayapman' tugmasi ko'rinadi" "true" "$(echo "$ORD" | jget 'data.visibility.emergencyRevealAvailable')"
 
+# ---------------------------------------------------------------
+#  RO'YXAT BANDLARI VA TUGMALAR
+# ---------------------------------------------------------------
+# Mobil ilova tugmalarni `nextAllowed` dan chizadi. Agar ro'yxatda
+# foydalanuvchi bajara olmaydigan qadam bo'lsa, u bosiladigan, lekin
+# 409 qaytaradigan tugmaga aylanadi.
+step "Ro'yxat bandlari va ruxsat etilgan qadamlar"
+check "* HAYDOVCHIGA — TASDIQLASH QADAMI" "CONFIRMED" "$(echo "$ORD" | jget 'data.nextAllowed.0')"
+
+SH_ORD=$(curl -s "$API/orders/$ORDER_ID" -H "Authorization: Bearer $SH_TOKEN")
+SH_NEXT=$(echo "$SH_ORD" | jget 'data.nextAllowed')
+check "* MIJOZGA TASDIQLASH KO'RSATILMAYDI" "0" "$(echo "$SH_NEXT" | grep -c 'CONFIRMED')"
+check "mijozga o'z bekor qilishi ko'rinadi" "1" "$(echo "$SH_NEXT" | grep -c 'CANCELLED_BY_SHIPPER')"
+check "mijozga haydovchi bekor qilishi ko'rinmaydi" "0" "$(echo "$SH_NEXT" | grep -c 'CANCELLED_BY_DRIVER')"
+
+# ASSIGNED — haydovchi tasdiqlashi kerak bo'lgan holat. U "faol"
+# bandida bo'lishi SHART, aks holda haydovchi o'zidan kutilayotgan
+# ishni umuman ko'rmaydi.
+ACTIVE_LIST=$(curl -s "$API/orders?active=true" -H "Authorization: Bearer $DR_TOKEN")
+check "* ASSIGNED — FAOL BANDDA" "1" "$(echo "$ACTIVE_LIST" | jget 'data.0.id' | grep -c "$ORDER_ID")"
+
+# `?active=false` matn sifatida keladi va `Boolean('false')` = true.
+# Bu tuzatilmasa "Tarix" bandi faol reyslarni ko'rsatardi.
+HISTORY_LIST=$(curl -s "$API/orders?active=false" -H "Authorization: Bearer $DR_TOKEN")
+check "* TARIX BANDIDA FAOL REYS YO'Q" "0" "$(echo "$HISTORY_LIST" | grep -c "$ORDER_ID")"
+
 CONF=$(curl -s -X POST "$API/orders/$ORDER_ID/status" -H "Authorization: Bearer $DR_TOKEN" \
   -H 'Content-Type: application/json' -d '{"status":"CONFIRMED"}')
 check "haydovchi tasdiqladi" "CONFIRMED" "$(echo "$CONF" | jget 'data.status')"
@@ -178,6 +204,22 @@ HIST=$(sql "SELECT count(*) FROM order_status_history WHERE order_id='$ORDER_ID'
 check "har bir o'tish tarixga yozildi" "5" "$HIST"
 GEOM=$(sql "SELECT count(*) FROM order_status_history WHERE order_id='$ORDER_ID' AND geom IS NOT NULL")
 check "koordinatalar ham saqlandi" "2" "$GEOM"
+
+# Tarix API orqali ham ochiq bo'lishi kerak: mobil ilova vaqt chizig'ini
+# shundan chizadi. Baza tekshiruvi endpoint borligini isbotlamaydi.
+HIST_API=$(curl -s "$API/orders/$ORDER_ID/history" -H "Authorization: Bearer $SH_TOKEN")
+check "* TARIX API ORQALI KELDI" "5" "$(echo "$HIST_API" | jget 'data.length')"
+check "birinchi qadam ASSIGNED" "ASSIGNED" "$(echo "$HIST_API" | jget 'data.0.status')"
+check "tartib eskidan yangiga" "LOADED" "$(echo "$HIST_API" | jget 'data.4.status')"
+check "status matni tarjima qilingan" "Yuk ortildi" "$(echo "$HIST_API" | jget 'data.4.statusLabel')"
+check "kim bajargani ko'rsatilgan" "DRIVER" "$(echo "$HIST_API" | jget 'data.4.actorRole')"
+checkne "* KOORDINATA API'DA HAM BOR" "$(echo "$HIST_API" | jget 'data.3.lat')"
+
+# Begona buyurtma tarixi ochilmasligi kerak: tarix nizoda dalil bo'ladi
+# va unda kontakt izohlari ham bo'lishi mumkin
+OTHER_TOKEN=$(login "+99897${RND}3" SHIPPER)
+STRANGER=$(curl -s "$API/orders/$ORDER_ID/history" -H "Authorization: Bearer $OTHER_TOKEN")
+check "* BEGONA TARIXNI KO'RA OLMAYDI" "NOT_FOUND" "$(echo "$STRANGER" | jget 'error.code')"
 
 NOTIF_N=$(curl -s "$API/notifications" -H "Authorization: Bearer $DR_TOKEN" | jget 'data.length')
 check "haydovchida bildirishnoma bor" "ha" "$([ "${NOTIF_N:-0}" -gt 0 ] && echo ha || echo "yo'q ($NOTIF_N)")"

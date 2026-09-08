@@ -1,7 +1,9 @@
 import {
   ACTIVE_STATUSES,
   ALLOWED_TRANSITIONS,
+  OPEN_STATUSES,
   ORDER_STATUSES,
+  canActorTransition,
   canTransition,
   contactVisibility,
   isTerminal,
@@ -109,6 +111,59 @@ describe('Buyurtma holatlari — kim oʻzgartira oladi', () => {
     expect(ACTIVE_STATUSES).toContain('ARRIVED_AT_DELIVERY');
     expect(ACTIVE_STATUSES).not.toContain('ASSIGNED');
     expect(ACTIVE_STATUSES).not.toContain('DELIVERED');
+  });
+
+  it('★ FOYDALANUVCHI ROʻYXATIDAGI "FAOL" — BOSHQA TOʻPLAM', () => {
+    // `ASSIGNED` va `DELIVERED` aynan eʼtibor talab qiladigan holatlar:
+    // birida haydovchi tasdiqlashi, ikkinchisida mijoz qabul qilishi
+    // kerak. Ular "tarix" ga tushib qolsa, foydalanuvchi oʻzidan
+    // kutilayotgan ishni umuman koʻrmaydi.
+    expect(OPEN_STATUSES).toContain('ASSIGNED');
+    expect(OPEN_STATUSES).toContain('DELIVERED');
+    expect(OPEN_STATUSES).toContain('DISPUTED');
+
+    // Yakunlangan va bekor qilinganlar — tarixda
+    expect(OPEN_STATUSES).not.toContain('COMPLETED');
+    expect(OPEN_STATUSES).not.toContain('CLOSED');
+    expect(OPEN_STATUSES).not.toContain('CANCELLED_BY_DRIVER');
+
+    // Band haydovchi toʻplami ochiq buyurtmalar ichida boʻlishi kerak
+    for (const status of ACTIVE_STATUSES) {
+      expect(OPEN_STATUSES).toContain(status);
+    }
+  });
+});
+
+describe('Kim qaysi oʻtishni bajara oladi', () => {
+  it('★ MIJOZ HAYDOVCHI QADAMLARINI BAJARA OLMAYDI', () => {
+    expect(canActorTransition('CONFIRMED', 'SHIPPER')).toBe(false);
+    expect(canActorTransition('LOADED', 'SHIPPER')).toBe(false);
+    expect(canActorTransition('DELIVERED', 'SHIPPER')).toBe(false);
+  });
+
+  it('★ HAYDOVCHI YAKUNLASHNI OʻZI BOSA OLMAYDI', () => {
+    // Aks holda haydovchi topshirmasdan turib pulni chiqarib olardi
+    expect(canActorTransition('COMPLETED', 'DRIVER')).toBe(false);
+    expect(canActorTransition('COMPLETED', 'SHIPPER')).toBe(true);
+  });
+
+  it('★ CLOSED — FAQAT TIZIM', () => {
+    expect(canActorTransition('CLOSED', 'SHIPPER')).toBe(false);
+    expect(canActorTransition('CLOSED', 'DRIVER')).toBe(false);
+    expect(canActorTransition('CLOSED', 'SYSTEM')).toBe(true);
+  });
+
+  it('har bir tomon oʻz bekor qilishini bajaradi', () => {
+    expect(canActorTransition('CANCELLED_BY_DRIVER', 'DRIVER')).toBe(true);
+    expect(canActorTransition('CANCELLED_BY_DRIVER', 'SHIPPER')).toBe(false);
+    expect(canActorTransition('CANCELLED_BY_SHIPPER', 'SHIPPER')).toBe(true);
+    expect(canActorTransition('CANCELLED_BY_SHIPPER', 'DRIVER')).toBe(false);
+  });
+
+  it('admin hamma joyda mumkin', () => {
+    for (const status of ORDER_STATUSES) {
+      expect(canActorTransition(status, 'ADMIN')).toBe(true);
+    }
   });
 });
 

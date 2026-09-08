@@ -11,6 +11,7 @@ import '../../features/home/presentation/home_shell.dart';
 import '../../features/home/presentation/splash_screen.dart';
 import '../../features/loads/presentation/create_load_screen.dart';
 import '../../features/loads/presentation/load_detail_screen.dart';
+import '../../features/orders/presentation/order_detail_screen.dart';
 import '../providers.dart';
 
 /// Navigatsiya.
@@ -80,6 +81,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: 'load/:id',
             builder: (context, state) =>
                 LoadDetailScreen(loadId: state.pathParameters['id']!),
+          ),
+          // karvon://order/<id> — status oʻzgarishi bildirishnomasidan
+          GoRoute(
+            path: 'order/:id',
+            builder: (context, state) =>
+                OrderDetailScreen(orderId: state.pathParameters['id']!),
           ),
         ],
       ),

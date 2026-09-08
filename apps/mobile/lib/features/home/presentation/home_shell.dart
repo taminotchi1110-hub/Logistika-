@@ -7,6 +7,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../auth/domain/user.dart';
 import '../../loads/presentation/feed_screen.dart';
 import '../../loads/presentation/my_loads_screen.dart';
+import '../../orders/presentation/orders_screen.dart';
 import '../../../shared/widgets/app_states.dart';
 
 /// Asosiy ekran — pastki navigatsiya bilan.
@@ -100,11 +101,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           label: 'Buyurtmalar',
           icon: Icons.receipt_long_outlined,
           activeIcon: Icons.receipt_long_rounded,
-          builder: (_) => const _Placeholder(
-            title: 'Buyurtmalar',
-            message: 'Faol va yakunlangan buyurtmalar',
-            icon: Icons.receipt_long_outlined,
-          ),
+          builder: (_) => const OrdersScreen(),
         ),
         _Tab(
           label: 'Xabarlar',
@@ -131,15 +128,13 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           activeIcon: Icons.explore_rounded,
           builder: (_) => const FeedScreen(),
         ),
+        // Bir xil ekran, boshqa sarlavha: haydovchi uchun bu "reys",
+        // mijoz uchun "buyurtma" — atama bozorda shunday ishlatiladi
         _Tab(
           label: 'Reyslarim',
           icon: Icons.local_shipping_outlined,
           activeIcon: Icons.local_shipping_rounded,
-          builder: (_) => const _Placeholder(
-            title: 'Reyslarim',
-            message: 'Faol va yakunlangan reyslar',
-            icon: Icons.local_shipping_outlined,
-          ),
+          builder: (_) => const OrdersScreen(title: 'Reyslarim'),
         ),
         _Tab(
           label: 'Xabarlar',

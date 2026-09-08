@@ -109,7 +109,15 @@ export function trackingTarget(status: OrderStatus): 'PICKUP' | 'DELIVERY' | nul
     : 'DELIVERY';
 }
 
-/** Buyurtma hali tugamaganmi (haydovchi band hisoblanadi). */
+/**
+ * Haydovchi BAND hisoblanadigan holatlar.
+ *
+ * DIQQAT: bu roʻyxat matching uchun — "bu haydovchiga yangi yuk
+ * taklif qilib boʻlmaydi". U foydalanuvchi roʻyxatidagi "faol"
+ * tushunchasi bilan BIR XIL EMAS: `ASSIGNED` da haydovchi hali
+ * tasdiqlamagan, demak band emas, lekin buyurtma allaqachon bor va
+ * roʻyxatda koʻrinishi shart.
+ */
 export const ACTIVE_STATUSES: readonly OrderStatus[] = [
   'CONFIRMED',
   'EN_ROUTE_TO_PICKUP',
@@ -117,6 +125,28 @@ export const ACTIVE_STATUSES: readonly OrderStatus[] = [
   'LOADED',
   'IN_TRANSIT',
   'ARRIVED_AT_DELIVERY',
+];
+
+/**
+ * Foydalanuvchi roʻyxatidagi "FAOL" bandi.
+ *
+ * Bu yerda mezon boshqa: buyurtma hali YAKUNLANMAGANMI. Aynan
+ * eʼtibor talab qiladigan ikki holat — `ASSIGNED` (haydovchi
+ * tasdiqlashi kerak) va `DELIVERED` (mijoz qabul qilishi kerak) —
+ * roʻyxatda birinchi boʻlib turishi kerak. `ACTIVE_STATUSES` dan
+ * foydalanilsa ular "tarix" ga tushib qolardi va foydalanuvchi
+ * oʻzidan kutilayotgan ishni umuman koʻrmasdi.
+ */
+export const OPEN_STATUSES: readonly OrderStatus[] = [
+  'ASSIGNED',
+  'CONFIRMED',
+  'EN_ROUTE_TO_PICKUP',
+  'ARRIVED_AT_PICKUP',
+  'LOADED',
+  'IN_TRANSIT',
+  'ARRIVED_AT_DELIVERY',
+  'DELIVERED',
+  'DISPUTED',
 ];
 
 export const TERMINAL_STATUSES: readonly OrderStatus[] = [

@@ -13,9 +13,10 @@ import { NotificationsService } from '@/modules/notifications/notifications.serv
 import { EscrowService } from '@/modules/payments/escrow.service';
 
 import {
-  ACTIVE_STATUSES,
   ALLOWED_TRANSITIONS,
+  OPEN_STATUSES,
   STATUS_LABEL_UZ,
+  canActorTransition,
   contactVisibility,
   isTerminal,
   validateTransition,
@@ -24,6 +25,19 @@ import {
   type OrderStatus,
 } from './order-status';
 import { ORDER_STATUS_CHANGED, OrderStatusChangedEvent } from './order.events';
+
+/** Vaqt chizigʻining bitta qadami. */
+export interface OrderHistoryEntry {
+  fromStatus: OrderStatus | null;
+  status: OrderStatus;
+  statusLabel: string;
+  actorRole: string | null;
+  actorName: string | null;
+  note: string | null;
+  lat: number | null;
+  lng: number | null;
+  at: Date;
+}
 
 export interface OrderView {
   id: string;
@@ -543,6 +557,57 @@ export class OrdersService {
     return rows.map((row) => this.toView(row, userId));
   }
 
+  /**
+   * Holatlar tarixi — buyurtma tafsilotidagi vaqt chizigʻi.
+   *
+   * NEGA ALOHIDA SOʻROV (buyurtma javobiga qoʻshib emas): tarix
+   * roʻyxatda kerak emas, tafsilotda esa har safar ham qayta
+   * soʻralmaydi. Buyurtma javobini har bir roʻyxat elementi uchun
+   * ogʻirlashtirish — bu eng koʻp chaqiriladigan endpointlardan biri.
+   *
+   * `note` faqat egasiga koʻrinadi degan qoida YOʻQ: izohni status
+   * oʻzgartirgan tomon yozadi va u ikkinchi tomon uchun aynan
+   * moʻljallangan ("darvoza yopiq edi", "5 palet ortildi").
+   */
+  async historyForUser(orderId: string, userId: string): Promise<OrderHistoryEntry[]> {
+    // Egalik tekshiruvi: begona buyurtma tarixi 404 qaytaradi
+    await this.getForUser(orderId, userId);
+
+    const rows = await this.database.db
+      .selectFrom('orderStatusHistory as h')
+      .leftJoin('users as u', 'u.id', 'h.actorId')
+      // Alias qoʻyilmaydi: `CamelCasePlugin` natija kalitlarini baribir
+      // camelCase qiladi va `... as from_status` deb yozilsa TypeScript
+      // bir nomni, ish vaqti boshqasini koʻradi
+      .select([
+        'h.fromStatus',
+        'h.toStatus',
+        'h.actorRole',
+        'h.note',
+        'h.createdAt',
+        'u.firstName',
+        'u.lastName',
+        sql<number | null>`ST_Y(h.geom::geometry)`.as('lat'),
+        sql<number | null>`ST_X(h.geom::geometry)`.as('lng'),
+      ])
+      .where('h.orderId', '=', orderId)
+      .orderBy('h.createdAt', 'asc')
+      .execute();
+
+    return rows.map((row) => ({
+      fromStatus: row.fromStatus,
+      status: row.toStatus,
+      statusLabel: STATUS_LABEL_UZ[row.toStatus],
+      actorRole: row.actorRole,
+      actorName: [row.firstName, row.lastName].filter(Boolean).join(' ') || null,
+      note: row.note,
+      // Statusni qayerda bosgani — nizoda asosiy dalil
+      lat: row.lat === null ? null : Number(row.lat),
+      lng: row.lng === null ? null : Number(row.lng),
+      at: row.createdAt,
+    }));
+  }
+
   // =================================================================
   //  Ichki
   // =================================================================
@@ -641,11 +706,14 @@ export class OrdersService {
         eb.or([eb('o.shipperId', '=', params.userId!), eb('o.driverId', '=', params.userId!)]),
       );
     }
+    // `OPEN_STATUSES`, `ACTIVE_STATUSES` emas: `ASSIGNED` va `DELIVERED`
+    // aynan eʼtibor talab qiladigan holatlar va ular "faol" bandida
+    // turishi shart
     if (params.active === true) {
-      query = query.where('o.status', 'in', ACTIVE_STATUSES as unknown as OrderStatusDb[]);
+      query = query.where('o.status', 'in', OPEN_STATUSES as unknown as OrderStatusDb[]);
     }
     if (params.active === false) {
-      query = query.where('o.status', 'not in', ACTIVE_STATUSES as unknown as OrderStatusDb[]);
+      query = query.where('o.status', 'not in', OPEN_STATUSES as unknown as OrderStatusDb[]);
     }
 
     return (await query.orderBy('o.createdAt', 'desc').execute()) as unknown as OrderRow[];
@@ -670,7 +738,17 @@ export class OrdersService {
       publicNo: String(row.publicNo),
       status,
       statusLabel: STATUS_LABEL_UZ[status],
-      nextAllowed: [...ALLOWED_TRANSITIONS[status]],
+      // FAQAT SHU FOYDALANUVCHI bajara oladigan oʻtishlar.
+      //
+      // Filtrsiz roʻyxat mijozga `CLOSED` (faqat tizim) yoki haydovchiga
+      // `COMPLETED` (faqat mijoz) kabi qadamlarni koʻrsatardi. Mobil
+      // ilova tugmalarni shu roʻyxatdan chizadi — demak foydalanuvchi
+      // bosa oladigan, lekin server 409 qaytaradigan tugma paydo
+      // boʻlardi. Bu "ilovada faol, serverda rad etiladi" muammosining
+      // aynan oʻzi.
+      nextAllowed: ALLOWED_TRANSITIONS[status].filter((to) =>
+        canActorTransition(to, viewerIsDriver ? 'DRIVER' : 'SHIPPER'),
+      ),
 
       priceTiyin: Number(row.priceTiyin),
       commissionTiyin: Number(row.commissionTiyin),

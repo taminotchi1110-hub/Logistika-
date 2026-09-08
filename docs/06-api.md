@@ -164,7 +164,7 @@ uchun, keyset uni hisobga olmasa, eski sanali TOP e'lon 2-sahifada takrorlanadi.
 
 | Metod | Yo'l | Tavsif |
 |---|---|---|
-| GET | `/orders` | Ro'yxat (`?status=active\|completed\|cancelled`) |
+| GET | `/orders` | Ro'yxat (`?active=true` — faol, `?active=false` — tarix) |
 | GET | `/orders/:id` | Batafsil (yuk, haydovchi, marshrut, moliya) |
 | POST | `/orders/:id/confirm` | Haydovchi yakuniy tasdiqlaydi |
 | POST | `/orders/:id/status` | Status o'zgartirish `{status, lat, lng, note}` |
@@ -189,6 +189,41 @@ POST /v1/orders/{id}/status
                   "etaAt": "2026-09-05T14:20:00Z" } }
 409 → { "error": { "code": "ORDER_INVALID_TRANSITION", ... } }
 ```
+
+**`nextAllowed` — faqat SHU foydalanuvchi bajara oladigan qadamlar.**
+Ro'yxat ikki bosqichda filtrlanadi: avval holat bo'yicha (`ALLOWED_TRANSITIONS`),
+so'ng rol bo'yicha (`canActorTransition`). Mobil ilova tugmalarni aynan shu
+ro'yxatdan chizadi — filtrsiz bo'lsa haydovchiga `COMPLETED` (faqat mijoz)
+yoki mijozga `CLOSED` (faqat tizim) tugmasi ko'rinib, bosilganda 409 qaytarardi.
+
+**`?active` bandi.** `true` — hali yakunlanmagan buyurtmalar: `ASSIGNED`,
+`CONFIRMED`, `EN_ROUTE_TO_PICKUP`, `ARRIVED_AT_PICKUP`, `LOADED`, `IN_TRANSIT`,
+`ARRIVED_AT_DELIVERY`, `DELIVERED`, `DISPUTED`. `false` — qolganlari.
+
+E'tibor talab qiladigan ikki holat — `ASSIGNED` (haydovchi tasdiqlashi kerak)
+va `DELIVERED` (mijoz qabul qilishi kerak) — **faol** bandida turadi. Ular
+matching ishlatadigan `ACTIVE_STATUSES` ("haydovchi band") to'plamiga
+kirmaydi: bu ikki to'plam har xil savolga javob beradi va ularni chalkashtirish
+foydalanuvchini o'zidan kutilayotgan ishdan mahrum qiladi.
+
+| Metod | Yo'l | Tavsif |
+|---|---|---|
+| GET | `/orders/:id/history` | Holatlar tarixi: o'tish, kim, qachon, izoh, koordinata |
+
+```http
+GET /v1/orders/{id}/history
+
+200 → { "data": [
+  { "fromStatus": null, "status": "ASSIGNED", "statusLabel": "Haydovchi tanlandi",
+    "actorRole": "SHIPPER", "actorName": "Anvar Karimov",
+    "note": "Taklif qabul qilindi", "lat": null, "lng": null,
+    "at": "2026-09-08T10:00:00Z" },
+  { "fromStatus": "ASSIGNED", "status": "CONFIRMED", "statusLabel": "Buyurtma tasdiqlandi",
+    "actorRole": "DRIVER", "lat": 41.31, "lng": 69.28, "at": "2026-09-08T10:05:00Z" }
+] }
+```
+
+Koordinata — nizoda asosiy dalil: "statusni qayerda turib bosgan".
 
 ## 6.8. Tracking (`/tracking`)
 

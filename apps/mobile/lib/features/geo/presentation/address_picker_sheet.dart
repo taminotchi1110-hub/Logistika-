@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:geolocator/geolocator.dart';
 
 import '../../../core/api/api_exception.dart';
+import '../../../core/location/device_location.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
@@ -132,7 +132,7 @@ class _AddressPickerSheetState extends ConsumerState<_AddressPickerSheet> {
     setState(() => _isLocating = true);
 
     try {
-      final position = await _currentPosition();
+      final position = await ref.read(locationResolverProvider)();
       if (position == null) {
         if (!mounted) return;
         setState(() => _isLocating = false);
@@ -141,8 +141,8 @@ class _AddressPickerSheetState extends ConsumerState<_AddressPickerSheet> {
       }
 
       final place = await ref.read(geoRepositoryProvider).reverse(
-            lat: position.latitude,
-            lng: position.longitude,
+            lat: position.lat,
+            lng: position.lng,
           );
 
       if (!mounted) return;
@@ -156,30 +156,6 @@ class _AddressPickerSheetState extends ConsumerState<_AddressPickerSheet> {
       setState(() => _isLocating = false);
       _showMessage('Joylashuvni aniqlab boʻlmadi');
     }
-  }
-
-  /// Ruxsat so'raydi va joriy nuqtani qaytaradi.
-  ///
-  /// `deniedForever` alohida: bu holatda qayta so'rash foydasiz —
-  /// foydalanuvchi tizim sozlamalaridan yoqishi kerak.
-  Future<Position?> _currentPosition() async {
-    if (!await Geolocator.isLocationServiceEnabled()) return null;
-
-    var permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-    }
-    if (permission == LocationPermission.denied ||
-        permission == LocationPermission.deniedForever) {
-      return null;
-    }
-
-    return Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        timeLimit: Duration(seconds: 12),
-      ),
-    );
   }
 
   void _showMessage(String text) {

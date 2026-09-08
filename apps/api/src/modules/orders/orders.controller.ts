@@ -7,7 +7,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsBoolean,
   IsIn,
@@ -83,7 +83,20 @@ export class EmergencyRevealDto {
 export class OrdersQueryDto {
   @ApiPropertyOptional({ description: 'true — faqat faol, false — yakunlanganlar' })
   @IsOptional()
-  @Type(() => Boolean)
+  /**
+   * DIQQAT: `@Type(() => Boolean)` BU YERDA ISHLAMAYDI.
+   *
+   * Query satrida qiymat doim matn: `Boolean('false')` esa `true`
+   * qaytaradi. Natijada `?active=false` soʻrovi FAOL buyurtmalarni
+   * qaytarardi — "Tarix" bandi faol reyslarni koʻrsatardi va
+   * yakunlangan buyurtmalar umuman koʻrinmasdi.
+   */
+  @Transform(({ value }) => {
+    if (value === true || value === 'true' || value === '1') return true;
+    if (value === false || value === 'false' || value === '0') return false;
+    // Boshqa qiymat — `@IsBoolean()` rad etadi
+    return value;
+  })
   @IsBoolean()
   active?: boolean;
 }
@@ -181,6 +194,17 @@ export class OrdersController {
   })
   get(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.orders.getForUser(id, user.id);
+  }
+
+  @Get('orders/:id/history')
+  @ApiOperation({
+    summary: 'Buyurtma holatlari tarixi',
+    description:
+      'Vaqt chizigʻi: har bir oʻtish, uni kim va qachon bajargani, izoh va ' +
+      '(berilgan boʻlsa) koordinata. Nizoda "qayerda turib bosgan" savoliga javob shu.',
+  })
+  history(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.orders.historyForUser(id, user.id);
   }
 
   @Post('orders/:id/status')
