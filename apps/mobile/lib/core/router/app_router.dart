@@ -14,6 +14,7 @@ import '../../features/home/presentation/splash_screen.dart';
 import '../../features/loads/presentation/create_load_screen.dart';
 import '../../features/loads/presentation/load_detail_screen.dart';
 import '../../features/orders/presentation/order_detail_screen.dart';
+import '../../features/profile/presentation/driver_profile_screen.dart';
 import '../../features/tracking/presentation/tracking_screen.dart';
 import '../../features/wallet/presentation/wallet_screen.dart';
 import '../providers.dart';
@@ -102,6 +103,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'wallet',
             builder: (context, state) => const WalletScreen(),
+          ),
+          GoRoute(
+            path: 'driver-profile',
+            builder: (context, state) => const DriverProfileScreen(),
           ),
           // Suhbat. `extra` — roʻyxatdan kelgan `Conversation`: sarlavha
           // va yoʻnalishni darhol koʻrsatish uchun. Push bildirishnomadan

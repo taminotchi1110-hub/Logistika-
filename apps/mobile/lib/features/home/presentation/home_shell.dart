@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/api/api_exception.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
@@ -11,6 +12,7 @@ import '../../chat/presentation/conversations_screen.dart';
 import '../../loads/presentation/feed_screen.dart';
 import '../../loads/presentation/my_loads_screen.dart';
 import '../../orders/presentation/orders_screen.dart';
+import '../../profile/presentation/profile_providers.dart';
 
 /// Asosiy ekran — pastki navigatsiya bilan.
 ///
@@ -247,12 +249,30 @@ class ProfileTab extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.xxl),
           const Divider(),
+
+          // Haydovchi boʻlimi — tayyorlik, transport va yoʻnalishlar.
+          // Yetishmayotgan qadam borligi shu yerda darhol koʻrinadi,
+          // aks holda haydovchi nega taklif yubora olmayotganini
+          // qidirib yuradi
+          if (user.role.canDrive) ...[
+            const _DriverProfileTile(),
+            const Divider(),
+          ],
+
           ListTile(
             leading: const Icon(Icons.account_balance_wallet_outlined),
             title: const Text('Hamyon'),
             subtitle: const Text('Balans, toʻldirish va yechish'),
             trailing: const Icon(Icons.chevron_right_rounded),
             onTap: () => context.push('/wallet'),
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.person_outline_rounded),
+            title: const Text('Maʼlumotlarim'),
+            subtitle: Text(user.fullName),
+            trailing: const Icon(Icons.chevron_right_rounded),
+            onTap: () => _editProfile(context, ref, user),
           ),
           const Divider(),
           ListTile(
@@ -263,6 +283,86 @@ class ProfileTab extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  /// Ism va familiyani tahrirlash.
+  ///
+  /// Telefon raqami OʻZGARTIRILMAYDI: u sessiya va bildirishnomalar
+  /// kaliti. Almashtirish uchun qayta tasdiqlash oqimi kerak — bu
+  /// alohida ish.
+  Future<void> _editProfile(BuildContext context, WidgetRef ref, AppUser user) async {
+    final firstName = TextEditingController(text: user.firstName ?? '');
+    final lastName = TextEditingController(text: user.lastName ?? '');
+
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Maʼlumotlarim'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: firstName,
+              textCapitalization: TextCapitalization.words,
+              decoration: const InputDecoration(labelText: 'Ism'),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            TextField(
+              controller: lastName,
+              textCapitalization: TextCapitalization.words,
+              decoration: const InputDecoration(labelText: 'Familiya'),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Row(
+              children: [
+                const Icon(
+                  Icons.phone_outlined,
+                  size: AppSizes.iconSm,
+                  color: AppColors.gray400,
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    '${user.phone} — oʻzgartirib boʻlmaydi',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Bekor qilish'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Saqlash'),
+          ),
+        ],
+      ),
+    );
+
+    if (saved != true || !context.mounted) return;
+
+    try {
+      final updated = await ref.read(profileRepositoryProvider).updateProfile(
+            firstName: firstName.text,
+            lastName: lastName.text,
+          );
+      ref.read(authStateProvider.notifier).setUser(updated);
+    } on ApiException catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(localizeError(error)),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+    }
   }
 
   Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
@@ -287,5 +387,58 @@ class ProfileTab extends ConsumerWidget {
     if (confirmed ?? false) {
       await ref.read(authStateProvider.notifier).logout();
     }
+  }
+}
+
+/// Haydovchi bo'limiga o'tish.
+///
+/// Yetishmayotgan qadamlar soni shu yerda ko'rsatiladi: haydovchi
+/// nega taklif yubora olmayotganini qidirib yurmasligi kerak.
+class _DriverProfileTile extends ConsumerWidget {
+  const _DriverProfileTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final readiness = ref.watch(driverReadinessProvider).valueOrNull;
+    final missing = readiness?.missingSteps.length ?? 0;
+    final ready = readiness?.canSendOffers ?? false;
+
+    return ListTile(
+      leading: const Icon(Icons.local_shipping_outlined),
+      title: const Text('Haydovchi profili'),
+      subtitle: Text(
+        ready
+            ? 'Hammasi tayyor'
+            : missing > 0
+                ? '$missing ta qadam qoldi'
+                : 'Transport va yoʻnalishlar',
+      ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (!ready && missing > 0)
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: const BoxDecoration(
+                color: AppColors.warning,
+                shape: BoxShape.circle,
+              ),
+              constraints: const BoxConstraints(minWidth: 22, minHeight: 22),
+              child: Text(
+                '$missing',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+            ),
+          const SizedBox(width: AppSpacing.sm),
+          const Icon(Icons.chevron_right_rounded),
+        ],
+      ),
+      onTap: () => context.push('/driver-profile'),
+    );
   }
 }
