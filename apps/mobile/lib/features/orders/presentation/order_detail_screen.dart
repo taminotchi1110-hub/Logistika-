@@ -77,6 +77,17 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
             title: 'Yoʻl',
             child: _RouteBlock(order: order),
           ),
+          // Xarita tugmasi FAQAT kuzatuv ishlayotganda: boshqa paytda
+          // u boʻsh xaritaga olib boradi va "ishlamayapti" degan
+          // taassurot qoldiradi
+          if (order.status.isTracking) ...[
+            const SizedBox(height: AppSpacing.md),
+            AppButton.secondary(
+              label: 'Xaritada kuzatish',
+              icon: Icons.map_rounded,
+              onPressed: () => context.push('/order/${order.id}/track'),
+            ),
+          ],
           const SizedBox(height: AppSpacing.lg),
 
           _Section(

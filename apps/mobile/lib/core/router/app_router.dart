@@ -14,6 +14,7 @@ import '../../features/home/presentation/splash_screen.dart';
 import '../../features/loads/presentation/create_load_screen.dart';
 import '../../features/loads/presentation/load_detail_screen.dart';
 import '../../features/orders/presentation/order_detail_screen.dart';
+import '../../features/tracking/presentation/tracking_screen.dart';
 import '../providers.dart';
 
 /// Navigatsiya.
@@ -89,6 +90,13 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: 'order/:id',
             builder: (context, state) =>
                 OrderDetailScreen(orderId: state.pathParameters['id']!),
+            routes: [
+              GoRoute(
+                path: 'track',
+                builder: (context, state) =>
+                    TrackingScreen(orderId: state.pathParameters['id']!),
+              ),
+            ],
           ),
           // Suhbat. `extra` — roʻyxatdan kelgan `Conversation`: sarlavha
           // va yoʻnalishni darhol koʻrsatish uchun. Push bildirishnomadan

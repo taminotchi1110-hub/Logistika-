@@ -8,6 +8,7 @@ import 'core/theme/app_theme.dart';
 import 'core/ws/socket_client.dart';
 import 'core/ws/ws_providers.dart';
 import 'features/chat/presentation/chat_providers.dart';
+import 'features/tracking/presentation/tracking_providers.dart';
 import 'shared/widgets/notification_banner.dart';
 
 class KarvonApp extends ConsumerWidget {
@@ -94,7 +95,36 @@ class _RealtimeHostState extends ConsumerState<_RealtimeHost> {
       _onNotification(notification);
     });
 
+    // Kuzatuv reysning butun davomida ishlaydi — haydovchi xarita
+    // ekranidan chiqib ketsa ham. Aks holda mijoz haydovchi ilovani
+    // boshqa ekranga o'tkazishi bilan uni yo'qotgan bo'lardi.
+    //
+    // `watch`, `listen` emas: dastlabki qiymat ham qo'llanishi kerak —
+    // ilova davom etayotgan reys ustida ochilishi mumkin.
+    final trackedOrderId = ref.watch(trackedOrderIdProvider);
+
+    if (trackedOrderId != _trackedOrderId) {
+      _trackedOrderId = trackedOrderId;
+      // Yon ta'sir `build` ichida bajarilmaydi — keyingi kadrga suriladi
+      WidgetsBinding.instance.addPostFrameCallback((_) => _applyTracking());
+    }
+
     return widget.child;
+  }
+
+  String? _trackedOrderId;
+
+  void _applyTracking() {
+    if (!mounted) return;
+
+    final sender = ref.read(locationSenderProvider);
+    final orderId = _trackedOrderId;
+
+    if (orderId == null) {
+      sender.stop();
+    } else {
+      sender.start(orderId);
+    }
   }
 
   void _onNotification(RealtimeNotification notification) {

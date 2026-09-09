@@ -105,7 +105,11 @@ export class TrackingController {
     description:
       'Asosiy yoʻl — WebSocket `location:update`. Bu endpoint aloqa uzilib ' +
       'qayta tiklanganda buferdagi nuqtalarni TOʻPLAM bilan yuborish uchun. ' +
-      'Faol reys boʻlmasa 409 `TRACKING_NOT_ACTIVE` — maxfiylik qoidasi.',
+      'Javobdagi `tracking` — marshrut tarixi yozildimi. Faol reys boʻlmasa ' +
+      '`tracking: false` qaytadi va MARSHRUT YOZILMAYDI (maxfiylik qoidasi), ' +
+      'lekin matching keshi baribir yangilanadi — bu bitta joriy nuqta, ' +
+      'tarix emas. Xato qaytarilmaydi: haydovchi ilovasi reys holatini ' +
+      'server bilan bir vaqtda bilmasligi mumkin va bu normal holat.',
   })
   record(@CurrentUser() user: AuthenticatedUser, @Body() dto: RecordLocationDto) {
     return this.tracking.record(user.id, dto.points);

@@ -198,6 +198,16 @@ Marshrutda teshik qolmaydi.
 Rad etiladigan nuqtalar: koordinatasi noto'g'ri, 24 soatdan eski,
 yoki 5 daqiqadan ko'p kelajakdagi vaqt (telefon soati noto'g'ri).
 
+**Faol reys bo'lmasa xato QAYTARILMAYDI.** Javobda `tracking: false`
+keladi va marshrut tarixi yozilmaydi (maxfiylik qoidasi), lekin matching
+keshi — haydovchining joriy nuqtasi — baribir yangilanadi. Bu bitta
+qiymat, tarix emas.
+
+Nega xato emas: haydovchi ilovasi reys holatini server bilan bir vaqtda
+bilmaydi. U "Yetkazib berdim" tugmasini bosgan payt buferdagi nuqtalar
+hali yo'lda bo'lishi mumkin — ular xato bilan qaytsa ilova ularni qayta
+yuborishga urinadi va tsikl hosil bo'ladi.
+
 ### Soxta GPS
 
 Ikki manba:
