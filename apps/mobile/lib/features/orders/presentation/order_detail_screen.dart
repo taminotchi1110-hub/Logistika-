@@ -10,6 +10,10 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/money.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_states.dart';
+import '../../ratings/domain/rating.dart';
+import '../../ratings/presentation/rate_order_sheet.dart';
+import '../../ratings/presentation/rating_providers.dart';
+import '../../ratings/presentation/widgets/star_rating.dart';
 import '../domain/order.dart';
 import 'orders_screen.dart';
 import 'widgets/status_timeline.dart';
@@ -102,6 +106,16 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
 
           _Section(title: 'Moliya', child: _MoneyBlock(order: order)),
           const SizedBox(height: AppSpacing.lg),
+
+          // Baho FAQAT yuk topshirilgandan keyin: undan oldin baholash
+          // uchun asos yoʻq va server ham rad etadi
+          if (order.status.step >= OrderStatus.delivered.step) ...[
+            _Section(
+              title: 'Baho',
+              child: _RatingBlock(order: order, onRate: _rate),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+          ],
 
           _Section(
             title: 'Bosqichlar',
@@ -303,6 +317,23 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     ref.invalidate(orderHistoryEntriesProvider(widget.orderId));
     ref.invalidate(activeOrdersProvider);
     ref.invalidate(orderHistoryProvider);
+  }
+
+  /// Baho oynasini ochadi.
+  ///
+  /// `counterparty.isDriver` — hamkor haydovchi, demak foydalanuvchi
+  /// mijoz va u HAYDOVCHINI baholaydi.
+  Future<void> _rate(Order order) async {
+    final done = await showRateOrderSheet(
+      context,
+      orderId: order.id,
+      counterpartyName: order.counterparty.fullName,
+      isRatingDriver: order.counterparty.isDriver,
+    );
+
+    if ((done ?? false) && mounted) {
+      ref.invalidate(orderRatingsProvider(order.id));
+    }
   }
 
   Future<void> _call(String phone) async {
@@ -682,6 +713,137 @@ class _CounterpartyBlock extends StatelessWidget {
               color: AppColors.textSecondary,
             ),
           ),
+        ],
+      ],
+    );
+  }
+}
+
+/// Baho bloki.
+///
+/// UCH HOLAT BOR VA UCHALASI HAM AYTILADI:
+///   1. Baho berilmagan — tugma.
+///   2. Berilgan, lekin hamkor javob bermagan — "yashirin turibdi".
+///   3. Ikkalasi ham bergan — baholar ko'rinadi.
+///
+/// Ikkinchi holatni yashirish eng ko'p savol tug'diradigan xato
+/// bo'lardi: foydalanuvchi baho yuborgan, lekin hech qayerda
+/// ko'rmagan va uni qayta yuborishga uringan bo'lardi.
+class _RatingBlock extends ConsumerWidget {
+  const _RatingBlock({required this.order, required this.onRate});
+
+  final Order order;
+  final void Function(Order order) onRate;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final ratings = ref.watch(orderRatingsProvider(order.id));
+
+    return ratings.when(
+      loading: () => const SizedBox(
+        height: 40,
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2.5)),
+      ),
+      error: (_, __) => Text(
+        'Baholarni yuklab boʻlmadi',
+        style: theme.textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+      ),
+      data: (items) {
+        // O'z bahom — server faqat ko'rish huquqi bor baholarni beradi,
+        // shuning uchun yo'nalish bo'yicha ajratamiz
+        final ratingDriver = order.counterparty.isDriver;
+        final mine = items.where(
+          (item) => item.direction.isFromShipper == ratingDriver,
+        );
+        final theirs = items.where(
+          (item) => item.direction.isFromShipper != ratingDriver,
+        );
+
+        if (mine.isEmpty) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Reys qanday oʻtdi? Bahongiz hamkorga keyingi buyurtmalarda '
+                'yordam beradi.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              AppButton(
+                label: 'Baho berish',
+                icon: Icons.star_rounded,
+                onPressed: () => onRate(order),
+              ),
+            ],
+          );
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _RatingRow(title: 'Sizning bahongiz', rating: mine.first),
+            const SizedBox(height: AppSpacing.md),
+            if (theirs.isEmpty)
+              Row(
+                children: [
+                  const Icon(
+                    Icons.visibility_off_outlined,
+                    size: AppSizes.iconSm,
+                    color: AppColors.gray400,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      'Hamkor hali baho bermagan. Bahongiz u javob berganda '
+                      'yoki 14 kundan keyin ochiladi.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            else
+              _RatingRow(title: 'Hamkor bahosi', rating: theirs.first),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _RatingRow extends StatelessWidget {
+  const _RatingRow({required this.title, required this.rating});
+
+  final String title;
+  final Rating rating;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                title,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ),
+            StarRatingDisplay(value: rating.score),
+          ],
+        ),
+        if (rating.hasComment) ...[
+          const SizedBox(height: AppSpacing.xs),
+          Text(rating.comment!, style: theme.textTheme.bodyMedium),
         ],
       ],
     );

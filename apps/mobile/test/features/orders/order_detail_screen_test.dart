@@ -7,6 +7,8 @@ import 'package:karvon/features/orders/data/orders_repository.dart';
 import 'package:karvon/features/orders/domain/order.dart';
 import 'package:karvon/features/orders/presentation/order_detail_screen.dart';
 import 'package:karvon/features/orders/presentation/orders_screen.dart';
+import 'package:karvon/features/ratings/domain/rating.dart';
+import 'package:karvon/features/ratings/presentation/rating_providers.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockOrdersRepository extends Mock implements OrdersRepository {}
@@ -102,6 +104,7 @@ void main() {
     Order value, {
     List<OrderHistoryEntry>? entries,
     DeviceLocation? location,
+    List<Rating> ratings = const [],
   }) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -110,6 +113,9 @@ void main() {
           orderProvider('o-1').overrideWith((ref) => Future.value(value)),
           orderHistoryEntriesProvider('o-1')
               .overrideWith((ref) => Future.value(entries ?? history)),
+          // Baho bloki yuk topshirilgandan keyin chiziladi va soʻrov
+          // yuboradi — testda uni ham almashtiramiz
+          orderRatingsProvider('o-1').overrideWith((ref) => Future.value(ratings)),
           // Testda platforma kanali yo'q va haqiqiy `Geolocator`
           // chaqiruvi javob qaytarmaydi
           locationResolverProvider.overrideWithValue(() async => location),
@@ -281,5 +287,69 @@ void main() {
 
     expect(find.text('Platforma komissiyasi'), findsOneWidget);
     expect(find.text('Sizga tushadi'), findsOneWidget);
+  });
+
+  // ------------------------------------------------------------- baho
+
+  Rating rating({
+    required String direction,
+    int score = 5,
+    String? comment,
+  }) =>
+      Rating.fromJson({
+        'id': 'r-$direction',
+        'orderId': 'o-1',
+        'score': score,
+        'direction': direction,
+        'isVisible': true,
+        'comment': comment,
+        'createdAt': '2026-09-09T11:00:00.000Z',
+      });
+
+  testWidgets('★ BAHO BLOKI YUK TOPSHIRILGUNCHA KOʻRINMAYDI', (tester) async {
+    // Undan oldin baholash uchun asos yoʻq va server ham rad etadi
+    await pump(tester, order(status: 'IN_TRANSIT', nextAllowed: ['ARRIVED_AT_DELIVERY']));
+
+    expect(find.text('Baho berish'), findsNothing);
+  });
+
+  testWidgets('★ TOPSHIRILGACH BAHO TUGMASI CHIQADI', (tester) async {
+    await pump(tester, order(status: 'DELIVERED', nextAllowed: const []));
+    await scrollTo(tester, find.text('Baho berish'));
+
+    expect(find.text('Baho berish'), findsOneWidget);
+  });
+
+  testWidgets('★ BAHO BERILGACH "YASHIRIN TURIBDI" DEYILADI', (tester) async {
+    // Bu holatni yashirish eng koʻp savol tugʻdiradigan xato boʻlardi:
+    // foydalanuvchi baho yuborgan, lekin hech qayerda koʻrmagan
+    await pump(
+      tester,
+      order(status: 'COMPLETED', nextAllowed: const []),
+      ratings: [rating(direction: 'SHIPPER_TO_DRIVER', comment: 'Zoʻr')],
+    );
+    await scrollTo(tester, find.text('Sizning bahongiz'));
+
+    expect(find.text('Sizning bahongiz'), findsOneWidget);
+    expect(find.text('Zoʻr'), findsOneWidget);
+    expect(find.textContaining('Hamkor hali baho bermagan'), findsOneWidget);
+    expect(find.text('Baho berish'), findsNothing);
+  });
+
+  testWidgets('★ IKKALASI BAHO BERGACH IKKALASI KOʻRINADI', (tester) async {
+    await pump(
+      tester,
+      order(status: 'COMPLETED', nextAllowed: const []),
+      ratings: [
+        rating(direction: 'SHIPPER_TO_DRIVER', comment: 'Zoʻr haydovchi'),
+        rating(direction: 'DRIVER_TO_SHIPPER', score: 4, comment: 'Yaxshi mijoz'),
+      ],
+    );
+    await scrollTo(tester, find.text('Hamkor bahosi'));
+
+    expect(find.text('Sizning bahongiz'), findsOneWidget);
+    expect(find.text('Hamkor bahosi'), findsOneWidget);
+    expect(find.text('Yaxshi mijoz'), findsOneWidget);
+    expect(find.textContaining('Hamkor hali baho bermagan'), findsNothing);
   });
 }

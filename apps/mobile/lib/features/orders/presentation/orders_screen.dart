@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/providers.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/app_states.dart';
+import '../../ratings/presentation/rating_providers.dart';
 import '../data/orders_repository.dart';
 import '../domain/order.dart';
 import 'widgets/order_card.dart';
@@ -57,10 +59,20 @@ class OrdersScreen extends ConsumerWidget {
             tabs: [Tab(text: 'Faol'), Tab(text: 'Tarix')],
           ),
         ),
-        body: TabBarView(
+        body: Column(
           children: [
-            _OrderList(provider: activeOrdersProvider, isActive: true),
-            _OrderList(provider: orderHistoryProvider, isActive: false),
+            // Baho eslatmasi ikkala bandda ham koʻrinadi: baholanmagan
+            // reys "Tarix" da yotibdi va foydalanuvchi u yerga kamdan-kam
+            // kiradi — eslatma esa tepada turadi
+            const _PendingRatingsBanner(),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  _OrderList(provider: activeOrdersProvider, isActive: true),
+                  _OrderList(provider: orderHistoryProvider, isActive: false),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -123,6 +135,70 @@ class _OrderList extends ConsumerWidget {
             },
           );
         },
+      ),
+    );
+  }
+}
+
+/// Baho kutayotgan reyslar eslatmasi.
+///
+/// NEGA BANNER (bildirishnoma emas): baho berish shoshilinch emas,
+/// lekin unutiladi. Push xabar bezovta qiladi, banner esa foydalanuvchi
+/// o'zi ilovaga kirganda ko'rinadi va bir bosishda hal bo'ladi.
+class _PendingRatingsBanner extends ConsumerWidget {
+  const _PendingRatingsBanner();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pending = ref.watch(pendingRatingsProvider).valueOrNull ?? const [];
+    if (pending.isEmpty) return const SizedBox.shrink();
+
+    final theme = Theme.of(context);
+    final first = pending.first;
+
+    return Material(
+      color: first.isUrgent ? AppColors.warningLight : AppColors.primaryLight,
+      child: InkWell(
+        onTap: () => context.push('/order/${first.orderId}'),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Row(
+            children: [
+              Icon(
+                Icons.star_outline_rounded,
+                color: first.isUrgent ? AppColors.warning : AppColors.primary,
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      pending.length == 1
+                          ? '№${first.publicNo} reysga baho bering'
+                          : '${pending.length} ta reys baho kutmoqda',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      // Muddat aytiladi: "keyinroq" deb qoldirgan
+                      // foydalanuvchi qancha vaqti borligini bilishi kerak
+                      first.daysLeft <= 0
+                          ? 'Bugun oxirgi kun'
+                          : '${first.counterpartyName} · ${first.daysLeft} kun qoldi',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right_rounded, color: AppColors.gray400),
+            ],
+          ),
+        ),
       ),
     );
   }
