@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
@@ -90,6 +91,15 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
                 ),
                 const SizedBox(height: AppSpacing.xl),
               ],
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.badge_outlined),
+                title: const Text('Hujjatlar'),
+                subtitle: const Text('Pasport, guvohnoma, sugʻurta'),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () => context.push('/documents'),
+              ),
+              const SizedBox(height: AppSpacing.lg),
               const _VehiclesSection(),
               const SizedBox(height: AppSpacing.xl),
               const _RoutesSection(),

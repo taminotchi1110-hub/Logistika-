@@ -9,6 +9,7 @@ import '../../features/auth/presentation/phone_screen.dart';
 import '../../features/auth/presentation/profile_setup_screen.dart';
 import '../../features/chat/domain/conversation.dart';
 import '../../features/chat/presentation/chat_screen.dart';
+import '../../features/documents/presentation/documents_screen.dart';
 import '../../features/home/presentation/home_shell.dart';
 import '../../features/home/presentation/splash_screen.dart';
 import '../../features/loads/presentation/create_load_screen.dart';
@@ -107,6 +108,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'driver-profile',
             builder: (context, state) => const DriverProfileScreen(),
+          ),
+          GoRoute(
+            path: 'documents',
+            builder: (context, state) => const DocumentsScreen(),
           ),
           // Suhbat. `extra` — roʻyxatdan kelgan `Conversation`: sarlavha
           // va yoʻnalishni darhol koʻrsatish uchun. Push bildirishnomadan
