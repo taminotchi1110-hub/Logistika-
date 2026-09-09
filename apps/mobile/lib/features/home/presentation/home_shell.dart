@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/providers.dart';
 import '../../../core/theme/app_colors.dart';
@@ -245,6 +246,14 @@ class ProfileTab extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.xxl),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.account_balance_wallet_outlined),
+            title: const Text('Hamyon'),
+            subtitle: const Text('Balans, toʻldirish va yechish'),
+            trailing: const Icon(Icons.chevron_right_rounded),
+            onTap: () => context.push('/wallet'),
+          ),
           const Divider(),
           ListTile(
             leading: const Icon(Icons.logout_rounded, color: AppColors.danger),

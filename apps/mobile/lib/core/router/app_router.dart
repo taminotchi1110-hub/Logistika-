@@ -15,6 +15,7 @@ import '../../features/loads/presentation/create_load_screen.dart';
 import '../../features/loads/presentation/load_detail_screen.dart';
 import '../../features/orders/presentation/order_detail_screen.dart';
 import '../../features/tracking/presentation/tracking_screen.dart';
+import '../../features/wallet/presentation/wallet_screen.dart';
 import '../providers.dart';
 
 /// Navigatsiya.
@@ -97,6 +98,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                     TrackingScreen(orderId: state.pathParameters['id']!),
               ),
             ],
+          ),
+          GoRoute(
+            path: 'wallet',
+            builder: (context, state) => const WalletScreen(),
           ),
           // Suhbat. `extra` — roʻyxatdan kelgan `Conversation`: sarlavha
           // va yoʻnalishni darhol koʻrsatish uchun. Push bildirishnomadan
