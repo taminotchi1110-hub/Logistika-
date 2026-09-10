@@ -59,7 +59,16 @@ DR_TOKEN=$(login "$DRIVER_PHONE" DRIVER)
 checkne "yuk beruvchi tokeni" "$SH_TOKEN"
 checkne "haydovchi tokeni" "$DR_TOKEN"
 
-PLATE="01A$((RANDOM % 900 + 100))BC"
+# Davlat raqami TASODIFIY: hudud kodi va harflar ham o'zgaradi.
+# Ilgari "01A<3 raqam>BC" edi — atigi 900 ta variant. Dev bazasida
+# allaqachon 44 tasi band va test ~5% ehtimol bilan
+# `VEHICLE_PLATE_TAKEN` bilan yiqilardi. Vaqti-vaqti bilan yiqiladigan
+# test yiqilmaydigan testdan yomonroq: unga ishonch yo'qoladi va
+# haqiqiy xato ham "yana o'sha tasodif" deb o'tkazib yuboriladi.
+# `smoke-test.sh` da bu allaqachon tuzatilgan, bu yerda unutilgan.
+PLATE_LETTERS=ABCDEFGHIJKLMNOPQRSTUVXYZ
+rand_letter() { echo -n "${PLATE_LETTERS:$((RANDOM % ${#PLATE_LETTERS})):1}"; }
+PLATE="$(( (RANDOM % 90) + 10 ))$(rand_letter)$((RANDOM % 900 + 100))$(rand_letter)$(rand_letter)"
 VEH=$(curl -s -X POST "$API/vehicles" -H "Authorization: Bearer $DR_TOKEN" \
   -H 'Content-Type: application/json' -d "{
     \"vehicleTypeId\":4,\"bodyTypeId\":1,\"brand\":\"Isuzu\",\"model\":\"NPR 75\",

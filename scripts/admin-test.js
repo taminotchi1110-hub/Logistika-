@@ -444,6 +444,93 @@ async function main() {
   );
   check('mavjud boʻlmagan buyurtma — xato', true, Boolean(missingOrder.error));
 
+  // ------------------------------------------------- holatni oʻzgartirish
+  step('Buyurtma holatini admin oʻzgartirishi');
+
+  const noReason = await adminApi(
+    `/admin/orders/${fx.orderId}/status`,
+    { method: 'POST', body: JSON.stringify({ status: 'CANCELLED_BY_ADMIN' }) },
+    adminToken,
+  );
+  // Sabab status tarixiga tushadi va nizoda asosiy dalil bo'ladi
+  check('★ SABABSIZ OʻZGARTIRIB BOʻLMAYDI', 'VALIDATION_FAILED', noReason.error?.code);
+
+  const shortReason = await adminApi(
+    `/admin/orders/${fx.orderId}/status`,
+    { method: 'POST', body: JSON.stringify({ status: 'CANCELLED_BY_ADMIN', reason: 'ok' }) },
+    adminToken,
+  );
+  check('★ "ok" BILAN QUTULIB BOʻLMAYDI', 'VALIDATION_FAILED', shortReason.error?.code);
+
+  // ASOSIY QAROR: holat grafigi CHETLAB O'TILMAYDI. `CLOSED` dan
+  // `IN_TRANSIT` ga o'tish mumkin bo'lsa, to'lov listeneri hech qachon
+  // ko'rmagan holat paydo bo'ladi va komissiya ikki marta yechilishi
+  // yoki umuman yechilmasligi mumkin
+  const impossible = await adminApi(
+    `/admin/orders/${fx.orderId}/status`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ status: 'CLOSED', reason: 'Sinov uchun notoʻgʻri oʻtish' }),
+    },
+    adminToken,
+  );
+  check('★ GRAFIK CHETLAB OʻTILMAYDI', 'ORDER_INVALID_TRANSITION', impossible.error?.code);
+
+  const statusBefore = await pg.query('SELECT status FROM orders WHERE id = $1', [fx.orderId]);
+
+  const cancelled = await adminApi(
+    `/admin/orders/${fx.orderId}/status`,
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        status: 'CANCELLED_BY_ADMIN',
+        reason: 'Haydovchi aloqaga chiqmadi, mijoz bekor qilishni soʻradi',
+      }),
+    },
+    adminToken,
+  );
+  check('★ ADMIN BEKOR QILDI', true, cancelled.data?.ok);
+
+  const statusAfter = await pg.query('SELECT status FROM orders WHERE id = $1', [fx.orderId]);
+  check('bazada holat oʻzgardi', 'CANCELLED_BY_ADMIN', statusAfter.rows[0].status);
+
+  // Tarixda ADMIN ko'rinadi, lekin `actor_id` NULL: u `users(id)` ga
+  // bog'langan va admin `admin_users` da. Kim qilgani auditda qoladi
+  const historyRow = await pg.query(
+    `SELECT actor_id, actor_role, note, from_status FROM order_status_history
+      WHERE order_id = $1 ORDER BY created_at DESC LIMIT 1`,
+    [fx.orderId],
+  );
+  check('★ TARIXDA ADMIN KOʻRINADI', 'ADMIN', historyRow.rows[0].actor_role);
+  check('★ actor_id NULL (FK users bilan toʻqnashmaydi)', null, historyRow.rows[0].actor_id);
+  check('sabab tarixga yozildi', true, String(historyRow.rows[0].note).includes('aloqaga chiqmadi'));
+  check('oldingi holat saqlandi', statusBefore.rows[0].status, historyRow.rows[0].from_status);
+
+  const statusAudit = await pg.query(
+    `SELECT before, after FROM audit_logs
+      WHERE action = 'order.status_change' AND entity_id = $1`,
+    [fx.orderId],
+  );
+  check('★ AUDITGA YOZILDI', 1, statusAudit.rows.length);
+  check('auditda oldingi holat bor', statusBefore.rows[0].status, statusAudit.rows[0]?.before?.status);
+  check('auditda sabab bor', true, String(statusAudit.rows[0]?.after?.reason).length > 5);
+
+  // Bekor qilingan buyurtmadan boshqa holatga oʻtib boʻlmaydi
+  const afterTerminal = await adminApi(
+    `/admin/orders/${fx.orderId}/status`,
+    { method: 'POST', body: JSON.stringify({ status: 'IN_TRANSIT', reason: 'Sinov uchun' }) },
+    adminToken,
+  );
+  check('★ YAKUNIY HOLATDAN QAYTIB BOʻLMAYDI', 'ORDER_INVALID_TRANSITION', afterTerminal.error?.code);
+
+  // Moderatorda `orders.force_status` yo'q
+  const modForce = await adminApi(
+    `/admin/orders/${fx.orderId}/status`,
+    { method: 'POST', body: JSON.stringify({ status: 'IN_TRANSIT', reason: 'Sinov uchun' }) },
+    modToken,
+  );
+  check('★ MODERATOR HOLATNI OʻZGARTIRA OLMAYDI', true, Boolean(modForce.error));
+
   // ------------------------------------------------------ boshqaruv paneli
   step('Boshqaruv paneli');
   const dashboard = await adminApi('/admin/dashboard', {}, adminToken);

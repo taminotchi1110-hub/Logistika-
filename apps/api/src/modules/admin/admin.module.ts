@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 
 import { PaymentsModule } from '@/modules/payments/payments.module';
+import { OrdersModule } from '@/modules/orders/orders.module';
 
 import { AdminAuthService } from './admin-auth.service';
 import { AdminController } from './admin.controller';
@@ -16,7 +17,7 @@ import { AdminService } from './admin.service';
  * BOSHQA kalit bilan imzolanadi.
  */
 @Module({
-  imports: [JwtModule.register({}), PaymentsModule],
+  imports: [JwtModule.register({}), PaymentsModule, OrdersModule],
   controllers: [AdminController],
   providers: [AdminAuthService, AdminService, AdminGuard],
   exports: [AdminAuthService],

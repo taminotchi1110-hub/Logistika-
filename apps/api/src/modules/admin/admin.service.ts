@@ -10,6 +10,8 @@ import { StorageService } from '@/infra/storage/storage.service';
 import { LedgerService } from '@/modules/payments/ledger.service';
 import { PayoutsService } from '@/modules/payments/payouts.service';
 import { NotificationsService } from '@/modules/notifications/notifications.service';
+import type { OrderStatus } from '@/modules/orders/order-status';
+import { OrdersService } from '@/modules/orders/orders.service';
 
 export interface AuditContext {
   adminId: string;
@@ -37,6 +39,9 @@ export class AdminService {
     private readonly notifications: NotificationsService,
     // `StorageModule` global — alohida import kerak emas
     private readonly storage: StorageService,
+    // Holat oʻzgarishi mantigʻi BITTA joyda: admin ham foydalanuvchi
+    // bilan bir xil yoʻldan oʻtadi
+    private readonly orders: OrdersService,
   ) {}
 
   // =================================================================
@@ -1059,6 +1064,48 @@ export class AdminService {
     });
 
     return { messages };
+  }
+
+  /**
+   * Buyurtma holatini admin sifatida oʻzgartirish.
+   *
+   * Support ishining eng oʻtkir quroli: qotib qolgan buyurtmani bekor
+   * qilish yoki nizoni yopish. Shuning uchun:
+   *   - SABAB majburiy (kontrollerda tekshiriladi) va u ham status
+   *     tarixiga, ham audit jurnaliga tushadi
+   *   - holat grafigi CHETLAB OʻTILMAYDI (`changeStatusByAdmin` izohiga
+   *     qarang) — u moliya va kuzatuvni himoya qiladi
+   *
+   * AUDIT AMALDAN KEYIN yoziladi, oldin emas. Oʻqish amallarida
+   * teskarisi edi: u yerda maqsad "koʻrgani yozilsin" edi va yozuv
+   * yiqilsa maʼlumot ham berilmasligi kerak edi. Bu yerda esa
+   * bajarilmagan oʻzgarishni jurnalga yozib qoʻyish jurnalni
+   * yolgʻonga aylantiradi.
+   */
+  async changeOrderStatus(
+    ctx: AuditContext,
+    orderId: string,
+    to: string,
+    reason: string,
+  ): Promise<void> {
+    const before = await this.database.db
+      .selectFrom('orders')
+      .select(['id', 'status', 'shipperId'])
+      .where('id', '=', orderId)
+      .executeTakeFirst();
+
+    if (!before) throw AppError.notFound('Buyurtma topilmadi');
+
+    await this.orders.changeStatusByAdmin(orderId, to as OrderStatus, reason);
+
+    await this.audit(
+      ctx,
+      'order.status_change',
+      { type: 'ORDER', id: orderId },
+      { status: before.status },
+      { status: to, reason },
+      before.shipperId,
+    );
   }
 
   // =================================================================

@@ -402,6 +402,84 @@ export class OrdersService {
       );
     }
 
+    await this.applyStatusChange(order, to, {
+      actorId: userId,
+      actorRole,
+      ...(options.note !== undefined ? { note: options.note } : {}),
+      ...(options.lat !== undefined ? { lat: options.lat } : {}),
+      ...(options.lng !== undefined ? { lng: options.lng } : {}),
+    });
+
+    return this.getForUser(orderId, userId);
+  }
+
+  /**
+   * Admin tomonidan holat oʻzgartirish.
+   *
+   * "MAJBURAN" EMAS, TEKSHIRILGAN. Hujjatda "statusni majburan
+   * oʻzgartirish" deb yozilgan, lekin bu yerda holat grafigi CHETLAB
+   * OʻTILMAYDI — faqat "siz bu buyurtmaning tomonisiz" tekshiruvi
+   * oʻtkazib yuboriladi.
+   *
+   * Sabab: grafik moliya va kuzatuvni himoya qiladi. `CLOSED` dan
+   * `IN_TRANSIT` ga oʻtish mumkin boʻlsa, toʻlov listeneri hech
+   * qachon koʻrmagan holat paydo boʻladi — komissiya ikki marta
+   * yechilishi yoki umuman yechilmasligi mumkin. Admin uchun grafik
+   * allaqachon kengroq: `canActorTransition` unga har qanday
+   * strukturaviy jihatdan toʻgʻri oʻtishga ruxsat beradi va
+   * `CANDELLED_BY_ADMIN` deyarli hamma holatdan mumkin.
+   *
+   * ADMIN ID'si `order_status_history` GA YOZILMAYDI: `actor_id`
+   * `users(id)` ga bogʻlangan, admin esa `admin_users` da. Kim
+   * qilgani audit jurnalida qoladi — oʻrni ham oʻsha.
+   */
+  async changeStatusByAdmin(orderId: string, to: OrderStatus, note: string): Promise<void> {
+    const order = await this.database.db
+      .selectFrom('orders')
+      .select(['id', 'status', 'shipperId', 'driverId'])
+      .where('id', '=', orderId)
+      .executeTakeFirst();
+
+    if (!order) throw AppError.notFound('Buyurtma topilmadi');
+
+    const from = order.status as OrderStatus;
+    const check = validateTransition(from, to, 'ADMIN');
+
+    if (!check.ok) {
+      throw AppError.conflict(
+        ErrorCode.ORDER_INVALID_TRANSITION,
+        `Buyurtma holatini ${from} dan ${to} ga oʻzgartirib boʻlmaydi`,
+        { from, to, allowed: ALLOWED_TRANSITIONS[from] },
+      );
+    }
+
+    await this.applyStatusChange(order, to, { actorId: null, actorRole: 'ADMIN', note });
+  }
+
+  /**
+   * Holat oʻzgarishining oʻzi: yozuv, tarix, haydovchi bandligi,
+   * bildirishnoma va hodisa.
+   *
+   * BITTA JOYDA: foydalanuvchi ham, admin ham shu yoʻldan oʻtadi.
+   * Ikki nusxa boʻlsa, biri yangilanib ikkinchisi qolib ketardi —
+   * masalan toʻlov hodisasi admin yoʻlida yuborilmay, komissiya
+   * yechilmasdi.
+   */
+  private async applyStatusChange(
+    order: { id: string; status: string; shipperId: string; driverId: string },
+    to: OrderStatus,
+    options: {
+      actorId: string | null;
+      actorRole: ActorRole;
+      note?: string;
+      lat?: number;
+      lng?: number;
+    },
+  ): Promise<void> {
+    const orderId = order.id;
+    const from = order.status as OrderStatus;
+    const { actorId, actorRole } = options;
+
     await this.database.db.transaction().execute(async (trx) => {
       const timestamps: Record<string, Date> = {};
       if (to === 'CONFIRMED') timestamps.confirmedAt = new Date();
@@ -426,7 +504,7 @@ export class OrdersService {
           orderId,
           fromStatus: from,
           toStatus: to,
-          actorId: userId,
+          actorId,
           actorRole,
           note: options.note ?? null,
         })
@@ -468,8 +546,6 @@ export class OrdersService {
       ORDER_STATUS_CHANGED,
       new OrderStatusChangedEvent(orderId, from, to, order.driverId, order.shipperId),
     );
-
-    return this.getForUser(orderId, userId);
   }
 
   /**

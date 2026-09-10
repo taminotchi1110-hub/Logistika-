@@ -124,6 +124,21 @@ const ORDER_STATUSES = [
   'CANCELLED_BY_ADMIN',
 ] as const;
 
+export class OrderStatusDto {
+  @ApiProperty({ enum: ORDER_STATUSES })
+  @IsIn(ORDER_STATUSES)
+  status!: string;
+
+  @ApiProperty({ example: 'Haydovchi aloqaga chiqmadi, mijoz bekor qilishni soʻradi' })
+  // SABAB MAJBURIY va boʻsh boʻlishi mumkin emas. Server uni status
+  // tarixiga yozadi va u NIZODA asosiy dalil: "nega admin buyurtmani
+  // bekor qilgan?" degan savolga javob shu yerdan olinadi. `@Length`
+  // minimumi 5 — "ok" yoki "." bilan qutulib boʻlmasin.
+  @IsString()
+  @Length(5, 500)
+  reason!: string;
+}
+
 export class OrdersQueryDto {
   @ApiPropertyOptional({ enum: ORDER_STATUSES })
   @IsOptional()
@@ -580,6 +595,35 @@ export class AdminController {
     @UserAgent() userAgent: string,
   ) {
     return this.admin.orderChat(this.context(request, ip, userAgent), id);
+  }
+
+  @Public()
+  @UseGuards(AdminGuard)
+  @Post('orders/:id/status')
+  @ApiBearerAuth()
+  @RequirePermission('orders.force_status')
+  @ApiOperation({
+    summary: 'Buyurtma holatini oʻzgartirish',
+    description:
+      'Holat grafigi CHETLAB OʻTILMAYDI — u moliya va kuzatuvni himoya qiladi. Admin uchun ' +
+      'grafik allaqachon kengroq: `CANCELLED_BY_ADMIN` deyarli hamma holatdan mumkin va ' +
+      'nizoni yopish ham. **Sabab majburiy**: u status tarixiga ham, audit jurnaliga ham ' +
+      'tushadi va ikkala tomonga bildirishnoma yuboriladi.',
+  })
+  async forceOrderStatus(
+    @Req() request: AdminRequest,
+    @Param('id') id: string,
+    @Body() dto: OrderStatusDto,
+    @ClientIp() ip: string,
+    @UserAgent() userAgent: string,
+  ) {
+    await this.admin.changeOrderStatus(
+      this.context(request, ip, userAgent),
+      id,
+      dto.status,
+      dto.reason,
+    );
+    return { ok: true };
   }
 
   // --------------------------------------------------------- sozlamalar
