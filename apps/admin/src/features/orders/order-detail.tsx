@@ -1,12 +1,13 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
-import { Alert, Button, Card } from '@/components/ui';
+import { Alert, Button, Card, Input } from '@/components/ui';
 import { useSession } from '@/features/auth/session';
 import { api } from '@/lib/api';
 import { ApiError } from '@/lib/api-error';
 
 import {
+  adminActions,
   gapLabel,
   gapMinutes,
   moment,
@@ -15,6 +16,9 @@ import {
   type ChatMessage,
   type OrderDetail,
 } from './orders';
+
+/** Sabab uchun eng kam uzunlik — serverdagi `@Length(5, 500)` bilan bir xil. */
+const MIN_REASON = 5;
 
 /**
  * Buyurtma tafsiloti.
@@ -25,10 +29,31 @@ import {
  */
 export function OrderDetailPanel({ orderId, onClose }: { orderId: string; onClose: () => void }) {
   const { can } = useSession();
+  const queryClient = useQueryClient();
 
   const detail = useQuery({
     queryKey: ['order', orderId],
     queryFn: () => api.get<OrderDetail>(`/admin/orders/${orderId}`),
+  });
+
+  const [pendingStatus, setPendingStatus] = useState<string | null>(null);
+  const [reason, setReason] = useState('');
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const changeStatus = useMutation({
+    mutationFn: (input: { status: string; reason: string }) =>
+      api.post(`/admin/orders/${orderId}/status`, input),
+    onSuccess: () => {
+      // Roʻyxatdagi holat belgisi ham eskirdi
+      void queryClient.invalidateQueries({ queryKey: ['order', orderId] });
+      void queryClient.invalidateQueries({ queryKey: ['orders'] });
+      setPendingStatus(null);
+      setReason('');
+      setActionError(null);
+    },
+    onError: (cause: unknown) => {
+      setActionError(cause instanceof ApiError ? cause.message : 'Amal bajarilmadi');
+    },
   });
 
   /**
@@ -179,6 +204,88 @@ export function OrderDetailPanel({ orderId, onClose }: { orderId: string; onClos
           <p className="mt-2 text-sm text-danger">Bekor sababi: {order.cancelReason}</p>
         ) : null}
       </section>
+
+      {/* Amallar: faqat `orders.force_status` huquqi bilan va faqat
+          tugamagan buyurtmada */}
+      {can('orders.force_status') && adminActions(order.status).length > 0 ? (
+        <section className="mt-5 border-t border-slate-100 pt-4">
+          {actionError ? (
+            <div className="mb-3">
+              <Alert>{actionError}</Alert>
+            </div>
+          ) : null}
+
+          {pendingStatus ? (
+            <div className="space-y-2">
+              <p className="text-sm text-slate-700">
+                № {order.publicNo} → <strong>{ORDER_STATUS_LABELS[pendingStatus]}</strong>
+              </p>
+              <Input
+                value={reason}
+                onChange={(event) => setReason(event.target.value)}
+                placeholder="Sabab — status tarixiga va auditga yoziladi"
+                aria-label="Sabab"
+                autoFocus
+              />
+              {/* Oqibat OLDINDAN: ikkala tomonga bildirishnoma ketadi va
+                  haydovchining ilovasida buyurtma yoʻqoladi */}
+              <p className="text-xs text-warn">
+                Ikkala tomonga bildirishnoma yuboriladi. Bekor qilingan buyurtmani qaytarib
+                bo‘lmaydi.
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="danger"
+                  loading={changeStatus.isPending}
+                  onClick={() => {
+                    const trimmed = reason.trim();
+                    if (trimmed.length < MIN_REASON) {
+                      // Server ham rad etadi, lekin xatoni bu yerda
+                      // aytish bir soʻrovni tejaydi va sababni aniqroq
+                      // tushuntiradi
+                      setActionError(
+                        `Sabab kamida ${MIN_REASON} belgidan iborat boʻlishi kerak — u nizoda asosiy dalil.`,
+                      );
+                      return;
+                    }
+                    setActionError(null);
+                    changeStatus.mutate({ status: pendingStatus, reason: trimmed });
+                  }}
+                >
+                  Tasdiqlash
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setPendingStatus(null);
+                    setReason('');
+                    setActionError(null);
+                  }}
+                  disabled={changeStatus.isPending}
+                >
+                  Bekor
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {adminActions(order.status).map((action) => (
+                <Button
+                  key={action.status}
+                  variant={action.status === 'CANCELLED_BY_ADMIN' ? 'danger' : 'primary'}
+                  onClick={() => {
+                    setPendingStatus(action.status);
+                    setReason('');
+                    setActionError(null);
+                  }}
+                >
+                  {action.label}
+                </Button>
+              ))}
+            </div>
+          )}
+        </section>
+      ) : null}
 
       {/* `chat.view` — alohida huquq. Moliyachiga begonalarning
           yozishmasini oʻqish kerak emas */}

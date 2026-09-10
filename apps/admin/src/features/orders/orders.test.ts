@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import { gapLabel, gapMinutes, isFinished, isMasked, moment, orderTone, personName } from './orders';
+import {
+  adminActions,
+  gapLabel,
+  gapMinutes,
+  isFinished,
+  isMasked,
+  moment,
+  orderTone,
+  personName,
+} from './orders';
 
 /**
  * Buyurtma monitoringi mantiqi.
@@ -81,6 +90,33 @@ describe('gapLabel', () => {
     expect(gapLabel(120)).toBe('+2 soat');
     expect(gapLabel(150)).toBe('+2 soat 30 daq');
     expect(gapLabel(null)).toBe('');
+  });
+});
+
+describe('adminActions', () => {
+  it('★ TUGAGAN BUYURTMADA AMAL YOʻQ', () => {
+    expect(adminActions('COMPLETED')).toEqual([]);
+    expect(adminActions('CLOSED')).toEqual([]);
+    expect(adminActions('CANCELLED_BY_ADMIN')).toEqual([]);
+  });
+
+  it('★ NIZODA "YOPISH" AMALI PAYDO BOʻLADI', () => {
+    const actions = adminActions('DISPUTED');
+    expect(actions.map((a) => a.status)).toEqual(['COMPLETED', 'CANCELLED_BY_ADMIN']);
+  });
+
+  it('★ YETKAZILGAN BUYURTMANI BEKOR QILIB BOʻLMAYDI', () => {
+    // Grafikda `DELIVERED → CANCELLED_BY_ADMIN` yoʻq: yuk allaqachon
+    // topshirilgan va uni "boʻlmagan" qilib boʻlmaydi. Tugmani
+    // koʻrsatish 409 bilan tugardi
+    expect(adminActions('DELIVERED')).toEqual([]);
+  });
+
+  it('faol buyurtmada faqat bekor qilish', () => {
+    // Qolgan oʻtishlarni haydovchining oʻzi bajaradi — admin uning
+    // oʻrniga bosishi GPS va vaqt belgilarini yolgʻon qiladi
+    expect(adminActions('IN_TRANSIT').map((a) => a.status)).toEqual(['CANCELLED_BY_ADMIN']);
+    expect(adminActions('ASSIGNED').map((a) => a.status)).toEqual(['CANCELLED_BY_ADMIN']);
   });
 });
 

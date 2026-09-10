@@ -264,6 +264,55 @@ describe('OrdersPage', () => {
     expect(screen.getByText('[IMAGE]')).toBeInTheDocument();
   });
 
+  it('★ NIZOLI BUYURTMADA IKKI AMAL BOR', async () => {
+    stubApi();
+    renderOrders();
+
+    await userEvent.click(await screen.findByText('1042'));
+    await screen.findByText('Tayinlangan');
+
+    expect(screen.getByRole('button', { name: /Nizoni yopish/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Bekor qilish' })).toBeInTheDocument();
+  });
+
+  it('★ QISQA SABAB BILAN YUBORILMAYDI', async () => {
+    const calls = stubApi();
+    renderOrders();
+
+    await userEvent.click(await screen.findByText('1042'));
+    await userEvent.click(await screen.findByRole('button', { name: 'Bekor qilish' }));
+    await userEvent.type(screen.getByLabelText('Sabab'), 'ok');
+    await userEvent.click(screen.getByRole('button', { name: 'Tasdiqlash' }));
+
+    // Server ham rad etadi (`@Length(5, 500)`), lekin xatoni bu yerda
+    // aytish bir soʻrovni tejaydi va sababni aniqroq tushuntiradi
+    expect(await screen.findByRole('alert')).toHaveTextContent('kamida 5 belgi');
+    expect(calls.filter((call) => call.includes('/status'))).toHaveLength(0);
+  });
+
+  it('★ OQIBAT OLDINDAN AYTILADI', async () => {
+    stubApi();
+    renderOrders();
+
+    await userEvent.click(await screen.findByText('1042'));
+    await userEvent.click(await screen.findByRole('button', { name: 'Bekor qilish' }));
+
+    // Bekor qilish ikkala tomonga bildirishnoma yuboradi va
+    // haydovchining ilovasida buyurtma yoʻqoladi
+    expect(screen.getByText(/Ikkala tomonga bildirishnoma/)).toBeInTheDocument();
+    expect(screen.getByText(/qaytarib bo‘lmaydi/)).toBeInTheDocument();
+  });
+
+  it('★ HUQUQSIZ ADMIN AMALLARNI KOʻRMAYDI', async () => {
+    stubApi({ permissions: ['orders.view', 'chat.view'] });
+    renderOrders();
+
+    await userEvent.click(await screen.findByText('1042'));
+    await screen.findByText('Tayinlangan');
+
+    expect(screen.queryByRole('button', { name: 'Bekor qilish' })).toBeNull();
+  });
+
   it('★ chat.view YOʻQ BOʻLSA YOZISHMA BOʻLIMI KOʻRINMAYDI', async () => {
     // Moliyachi yoki moderatorga begonalarning yozishmasini oʻqish
     // kerak emas

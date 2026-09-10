@@ -141,6 +141,37 @@ export function isMasked(phone: string | null): boolean {
   return phone !== null && phone.includes('****');
 }
 
+/**
+ * Backenddagi `ALLOWED_TRANSITIONS` ning admin uchun kerakli qismi.
+ *
+ * SERVER BARIBIR QAYTA TEKSHIRADI — bu ro'yxat faqat interfeys uchun:
+ * bosilganda 409 beradigan tugmani ko'rsatmaslik kerak.
+ *
+ * TO'LIQ NUSXA EMAS, ATAYLAB. Admin panelda faqat ikkita amal
+ * ma'noli: buyurtmani bekor qilish va nizoni yopish. Qolgan
+ * o'tishlarni (masalan `LOADED → IN_TRANSIT`) haydovchining o'zi
+ * bajaradi va admin uning o'rniga bosishi kerak emas — bu GPS va
+ * vaqt belgilarini yolg'on qiladi.
+ */
+export function adminActions(status: string): { status: string; label: string }[] {
+  if (isFinished(status)) return [];
+
+  const actions: { status: string; label: string }[] = [];
+
+  if (status === 'DISPUTED') {
+    // Nizoni yopish: pul haydovchiga o'tadi
+    actions.push({ status: 'COMPLETED', label: 'Nizoni yopish (yakunlandi)' });
+  }
+
+  // `DELIVERED` dan bekor qilish grafikda yo'q: yuk allaqachon
+  // topshirilgan va uni "bo'lmagan" qilib bo'lmaydi
+  if (status !== 'DELIVERED') {
+    actions.push({ status: 'CANCELLED_BY_ADMIN', label: 'Bekor qilish' });
+  }
+
+  return actions;
+}
+
 export function personName(person: {
   firstName: string | null;
   lastName: string | null;
