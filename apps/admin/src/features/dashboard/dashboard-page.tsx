@@ -20,13 +20,9 @@ import { useSession } from '@/features/auth/session';
 import { api } from '@/lib/api';
 import { ApiError } from '@/lib/api-error';
 
-import {
-  formatSoum,
-  summarize,
-  toChartPoints,
-  type DashboardStats,
-  type SeriesPoint,
-} from './metrics';
+import { formatSoum } from '@/lib/money';
+
+import { summarize, toChartPoints, type DashboardStats, type SeriesPoint } from './metrics';
 
 /**
  * Boshqaruv paneli.

@@ -1,12 +1,10 @@
+import { parseTiyin, tiyinToSoum } from '@/lib/money';
+
 /**
  * Boshqaruv paneli ma'lumotlari.
  *
- * PUL SATR SIFATIDA KELADI. Tiyin qiymati `Number.MAX_SAFE_INTEGER`
- * (~90 trillion) dan oshishi mumkin: 1 so'm = 100 tiyin, ya'ni chegara
- * ~900 milliard so'm. Platforma aylanmasi uchun bu yaqin raqam va
- * `Number` ga o'tkazish bir kun kelib jimgina noto'g'ri summa
- * ko'rsatardi. Shuning uchun serverdan satr keladi va shu yerda
- * `BigInt` bilan ishlanadi.
+ * Pul bilan ishlash qoidalari `lib/money.ts` da — u butun panel uchun
+ * yagona joy. Bu yerda faqat grafik uchun shakl berish.
  */
 
 export interface DashboardStats {
@@ -74,18 +72,6 @@ export function shortDate(isoDate: string): string {
   return `${Number(day)} ${MONTHS[Number(month) - 1] ?? month}`;
 }
 
-/**
- * Tiyinni so'mga o'tkazadi — GRAFIK UCHUN.
- *
- * Bu yerda `Number` ga o'tish xavfsiz: grafik nuqtasi kunlik summa
- * (milliardlardan oshmaydi) va u faqat chiziqning balandligini
- * belgilaydi. Aniq qiymat kerak bo'lgan joyda (KPI karta) serverning
- * `*Formatted` maydoni ishlatiladi.
- */
-export function tiyinToSoum(tiyin: string): number {
-  return Number(BigInt(tiyin || '0') / 100n);
-}
-
 export function toChartPoints(series: SeriesPoint[]): ChartPoint[] {
   return series.map((point) => ({
     date: point.date,
@@ -124,8 +110,8 @@ export function summarize(series: SeriesPoint[]): {
     created += point.created;
     completed += point.completed;
     cancelled += point.cancelled;
-    gmv += BigInt(point.gmvTiyin || '0');
-    commission += BigInt(point.commissionTiyin || '0');
+    gmv += parseTiyin(point.gmvTiyin);
+    commission += parseTiyin(point.commissionTiyin);
   }
 
   return {
@@ -138,10 +124,4 @@ export function summarize(series: SeriesPoint[]): {
     // umuman bo'lmasligi mumkin va `NaN%` ko'rsatish xato ko'rinadi
     completionRate: created === 0 ? 0 : Math.round((completed / created) * 100),
   };
-}
-
-/** `1234567` → `1 234 567 soʻm`. */
-export function formatSoum(tiyin: string): string {
-  const soum = BigInt(tiyin || '0') / 100n;
-  return `${soum.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} soʻm`;
 }

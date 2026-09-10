@@ -1,13 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  formatSoum,
-  shortDate,
-  summarize,
-  tiyinToSoum,
-  toChartPoints,
-  type SeriesPoint,
-} from './metrics';
+import { formatSoum, tiyinToSoum } from '@/lib/money';
+
+import { shortDate, summarize, toChartPoints, type SeriesPoint } from './metrics';
 
 /**
  * Boshqaruv paneli hisob-kitoblari.

@@ -6,6 +6,8 @@ import { AppShell } from '@/components/app-shell';
 import { Card } from '@/components/ui';
 import { LoginPage } from '@/features/auth/login-page';
 import { useSession } from '@/features/auth/session';
+import { LedgerPage } from '@/features/finance/ledger-page';
+import { PayoutsPage } from '@/features/finance/payouts-page';
 import { UsersPage } from '@/features/users/users-page';
 import { VerificationsPage } from '@/features/verifications/verifications-page';
 import { NAV_ITEMS } from '@/nav';
@@ -30,6 +32,8 @@ const SCREENS: Record<string, ComponentType> = {
   })),
   '/verifications': VerificationsPage,
   '/users': UsersPage,
+  '/payouts': PayoutsPage,
+  '/ledger': LedgerPage,
 };
 
 /**
