@@ -107,6 +107,46 @@ export class ComplaintActionDto {
   resolution?: string;
 }
 
+const ORDER_STATUSES = [
+  'ASSIGNED',
+  'CONFIRMED',
+  'EN_ROUTE_TO_PICKUP',
+  'ARRIVED_AT_PICKUP',
+  'LOADED',
+  'IN_TRANSIT',
+  'ARRIVED_AT_DELIVERY',
+  'DELIVERED',
+  'COMPLETED',
+  'CLOSED',
+  'DISPUTED',
+  'CANCELLED_BY_SHIPPER',
+  'CANCELLED_BY_DRIVER',
+  'CANCELLED_BY_ADMIN',
+] as const;
+
+export class OrdersQueryDto {
+  @ApiPropertyOptional({ enum: ORDER_STATUSES })
+  @IsOptional()
+  // Roʻyxat SQL enumiga toʻgʻridan-toʻgʻri boradi: tekshirilmasa
+  // notoʻgʻri qiymat 500 beradi
+  @IsIn(ORDER_STATUSES)
+  status?: string;
+
+  @ApiPropertyOptional({ example: '1042', description: 'Buyurtma raqami yoki telefon' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  search?: string;
+
+  @ApiPropertyOptional({ example: 50 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(200)
+  limit?: number;
+}
+
 /**
  * Shikoyat filtri.
  *
@@ -465,6 +505,81 @@ export class AdminController {
   })
   integrity() {
     return this.admin.ledgerIntegrity();
+  }
+
+  // -------------------------------------------------------- buyurtmalar
+
+  @Public()
+  @UseGuards(AdminGuard)
+  @Get('orders')
+  @ApiBearerAuth()
+  @RequirePermission('orders.view')
+  @ApiOperation({
+    summary: 'Buyurtmalar roʻyxati',
+    description:
+      'Telefon raqamlari YASHIRILGAN holda qaytadi. Haqiqiy raqamlar uchun ' +
+      '`GET /admin/orders/:id/contacts` — u har bir ochilishni audit jurnaliga yozadi.',
+  })
+  orders(@Query() query: OrdersQueryDto) {
+    return this.admin.listOrders({
+      ...(query.status ? { status: query.status } : {}),
+      ...(query.search ? { search: query.search } : {}),
+      ...(query.limit !== undefined ? { limit: query.limit } : {}),
+    });
+  }
+
+  @Public()
+  @UseGuards(AdminGuard)
+  @Get('orders/:id')
+  @ApiBearerAuth()
+  @RequirePermission('orders.view')
+  @ApiOperation({
+    summary: 'Buyurtma tafsiloti va status tarixi',
+    description: 'Telefon raqamlari yashirilgan. Moliya bir joyda: narx, komissiya, jarima.',
+  })
+  orderDetail(@Param('id') id: string) {
+    return this.admin.orderDetail(id);
+  }
+
+  @Public()
+  @UseGuards(AdminGuard)
+  @Get('orders/:id/contacts')
+  @ApiBearerAuth()
+  @RequirePermission('orders.view')
+  @ApiOperation({
+    summary: 'Haqiqiy telefon raqamlari',
+    description:
+      'HAR BIR OCHISH audit jurnaliga yoziladi. Roʻyxatda raqamlar yashirilgan: aks holda ' +
+      'roʻyxatni ochgan xodim bir zumda yuzlab raqamni koʻrardi va ularning tashqariga ' +
+      'chiqishi hech qanday iz qoldirmasdi.',
+  })
+  orderContacts(
+    @Req() request: AdminRequest,
+    @Param('id') id: string,
+    @ClientIp() ip: string,
+    @UserAgent() userAgent: string,
+  ) {
+    return this.admin.orderContacts(this.context(request, ip, userAgent), id);
+  }
+
+  @Public()
+  @UseGuards(AdminGuard)
+  @Get('orders/:id/chat')
+  @ApiBearerAuth()
+  @RequirePermission('chat.view')
+  @ApiOperation({
+    summary: 'Buyurtma yozishmasi',
+    description:
+      'Nizolarda asosiy dalil. Alohida huquq (`chat.view`) — moliyachi yoki moderatorga ' +
+      'begonalarning yozishmasini oʻqish kerak emas. Oʻqish auditga yoziladi.',
+  })
+  orderChat(
+    @Req() request: AdminRequest,
+    @Param('id') id: string,
+    @ClientIp() ip: string,
+    @UserAgent() userAgent: string,
+  ) {
+    return this.admin.orderChat(this.context(request, ip, userAgent), id);
   }
 
   // --------------------------------------------------------- sozlamalar

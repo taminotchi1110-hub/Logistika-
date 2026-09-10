@@ -5,6 +5,7 @@ import { AppError } from '@/common/errors/app.error';
 import { SettingsService } from '@/common/services/settings.service';
 import { formatSoum, toTiyin } from '@/common/utils/money.util';
 import { DatabaseService } from '@/infra/database/database.service';
+import type { OrderStatusDb } from '@/infra/database/database.types';
 import { StorageService } from '@/infra/storage/storage.service';
 import { LedgerService } from '@/modules/payments/ledger.service';
 import { PayoutsService } from '@/modules/payments/payouts.service';
@@ -795,6 +796,269 @@ export class AdminService {
       gmvTiyin: row.gmvTiyin,
       commissionTiyin: row.commissionTiyin,
     }));
+  }
+
+  // =================================================================
+  //  Buyurtmalar (support)
+  // =================================================================
+
+  /**
+   * Telefon raqamini yashiradi: `+998901112233` → `+9989011****3`.
+   *
+   * NEGA ADMIN PANELIDA HAM YASHIRILADI: platformaning butun biznes
+   * modeli kontaktni yukni olishgacha yashirishga qurilgan
+   * (`docs/03-user-flows.md`). Admin uchun ham ochiq qoldirilsa,
+   * roʻyxatni ochgan har bir xodim yuzlab raqamni bir zumda koʻradi
+   * va ularni chiqarib yuborish uchun hech qanday iz qolmaydi.
+   *
+   * Haqiqiy raqam alohida endpointdan olinadi va HAR BIR OCHISH
+   * auditga yoziladi.
+   */
+  private maskPhone(phone: string | null): string | null {
+    if (!phone) return null;
+    if (phone.length <= 5) return phone;
+    return `${phone.slice(0, -5)}****${phone.slice(-1)}`;
+  }
+
+  /**
+   * Buyurtmalar roʻyxati — support uchun.
+   *
+   * `orders.service.ts` dagi `selectOrders` QAYTA ISHLATILMAYDI: u
+   * koʻruvchiga bogʻlangan (`toView(row, viewerId)`) va kontakt
+   * koʻrinishi qoidalarini oʻsha koʻruvchi uchun hisoblaydi. Admin
+   * esa tomon emas — unga boshqa qoida amal qiladi va ikkalasini
+   * bitta funksiyaga tiqish ikkalasini ham chalkashtirardi.
+   */
+  async listOrders(options: { status?: string; search?: string; limit?: number }) {
+    let query = this.database.db
+      .selectFrom('orders as o')
+      .innerJoin('loads as l', 'l.id', 'o.loadId')
+      .innerJoin('users as s', 's.id', 'o.shipperId')
+      .innerJoin('users as d', 'd.id', 'o.driverId')
+      .select([
+        'o.id',
+        'o.publicNo',
+        'o.status',
+        'o.priceTiyin',
+        'o.commissionTiyin',
+        'o.paymentStatus',
+        'o.createdAt',
+        'o.deliveredAt',
+        'o.cancelledAt',
+        'l.title as loadTitle',
+        'l.pickupAddress',
+        'l.deliveryAddress',
+        's.id as shipperId',
+        's.firstName as shipperFirstName',
+        's.lastName as shipperLastName',
+        's.phone as shipperPhone',
+        'd.id as driverId',
+        'd.firstName as driverFirstName',
+        'd.lastName as driverLastName',
+        'd.phone as driverPhone',
+      ]);
+
+    if (options.status) {
+      query = query.where('o.status', '=', options.status as OrderStatusDb);
+    }
+
+    if (options.search) {
+      const term = `%${options.search.trim()}%`;
+      query = query.where((eb) =>
+        eb.or([
+          // `public_no` — BIGINT, matn emas. `ILIKE` uni toʻgʻridan-
+          // toʻgʻri qabul qilmaydi va soʻrov 500 bilan yiqiladi;
+          // shuning uchun aniq `::text` kerak
+          eb(sql<string>`o.public_no::text`, 'like', term),
+          eb('s.phone', 'like', term),
+          eb('d.phone', 'like', term),
+        ]),
+      );
+    }
+
+    const rows = await query
+      .orderBy('o.createdAt', 'desc')
+      .limit(options.limit ?? 50)
+      .execute();
+
+    return rows.map((row) => ({
+      ...row,
+      shipperPhone: this.maskPhone(row.shipperPhone),
+      driverPhone: this.maskPhone(row.driverPhone),
+    }));
+  }
+
+  /**
+   * Bitta buyurtmaning toʻliq manzarasi.
+   *
+   * Status tarixi ham shu yerda: support "nima boʻlgan?" degan savolga
+   * javob berishi kerak va u vaqt chizigʻisiz mumkin emas.
+   */
+  async orderDetail(orderId: string) {
+    const order = await this.database.db
+      .selectFrom('orders as o')
+      .innerJoin('loads as l', 'l.id', 'o.loadId')
+      .innerJoin('users as s', 's.id', 'o.shipperId')
+      .innerJoin('users as d', 'd.id', 'o.driverId')
+      .leftJoin('vehicles as v', 'v.id', 'o.vehicleId')
+      .leftJoin('conversations as c', 'c.orderId', 'o.id')
+      .select([
+        'o.id',
+        'o.publicNo',
+        'o.status',
+        'o.priceTiyin',
+        'o.commissionTiyin',
+        'o.driverPayoutTiyin',
+        'o.penaltyTiyin',
+        'o.paymentMethod',
+        'o.paymentStatus',
+        'o.plannedDistanceKm',
+        'o.actualDistanceKm',
+        'o.cancelReason',
+        'o.createdAt',
+        'o.confirmedAt',
+        'o.pickedUpAt',
+        'o.deliveredAt',
+        'o.completedAt',
+        'o.cancelledAt',
+        'l.title as loadTitle',
+        'l.weightKg as loadWeightKg',
+        'l.pickupAddress',
+        'l.deliveryAddress',
+        'l.distanceKm',
+        's.id as shipperId',
+        's.firstName as shipperFirstName',
+        's.lastName as shipperLastName',
+        's.phone as shipperPhone',
+        'd.id as driverId',
+        'd.firstName as driverFirstName',
+        'd.lastName as driverLastName',
+        'd.phone as driverPhone',
+        'v.brand as vehicleBrand',
+        'v.model as vehicleModel',
+        'v.plateNumber as vehiclePlate',
+        'c.id as conversationId',
+      ])
+      .where('o.id', '=', orderId)
+      .executeTakeFirst();
+
+    if (!order) throw AppError.notFound('Buyurtma topilmadi');
+
+    const history = await this.database.db
+      .selectFrom('orderStatusHistory as h')
+      .leftJoin('users as u', 'u.id', 'h.actorId')
+      .select([
+        'h.id',
+        'h.fromStatus',
+        'h.toStatus',
+        'h.actorRole',
+        'h.note',
+        'h.createdAt',
+        'u.firstName as actorFirstName',
+        'u.lastName as actorLastName',
+      ])
+      .where('h.orderId', '=', orderId)
+      .orderBy('h.createdAt', 'asc')
+      .execute();
+
+    return {
+      order: {
+        ...order,
+        shipperPhone: this.maskPhone(order.shipperPhone),
+        driverPhone: this.maskPhone(order.driverPhone),
+      },
+      history,
+      // Moliya bir joyda: support "pul qayerda?" degan savolga javob
+      // berishi kerak
+      finance: {
+        priceFormatted: formatSoum(toTiyin(order.priceTiyin)),
+        commissionFormatted: formatSoum(toTiyin(order.commissionTiyin)),
+        driverPayoutFormatted: formatSoum(toTiyin(order.driverPayoutTiyin)),
+        penaltyFormatted: formatSoum(toTiyin(order.penaltyTiyin)),
+      },
+    };
+  }
+
+  /**
+   * Haqiqiy telefon raqamlari.
+   *
+   * ALOHIDA ENDPOINT VA AUDITGA YOZILADI. Roʻyxatda raqamlar
+   * yashirilgan; ularni ochish — ONGLI amal va u kuzatiladi. Aks
+   * holda buyurtmalar roʻyxatini ochgan xodim bir zumda yuzlab
+   * raqamni koʻrardi va ularning tashqariga chiqishi hech qanday iz
+   * qoldirmasdi.
+   */
+  async orderContacts(ctx: AuditContext, orderId: string) {
+    const order = await this.database.db
+      .selectFrom('orders as o')
+      .innerJoin('users as s', 's.id', 'o.shipperId')
+      .innerJoin('users as d', 'd.id', 'o.driverId')
+      .select([
+        'o.id',
+        'o.publicNo',
+        's.id as shipperId',
+        's.phone as shipperPhone',
+        'd.id as driverId',
+        'd.phone as driverPhone',
+      ])
+      .where('o.id', '=', orderId)
+      .executeTakeFirst();
+
+    if (!order) throw AppError.notFound('Buyurtma topilmadi');
+
+    // Audit MAʼLUMOT BERILISHIDAN OLDIN: yozuv yiqilsa, raqamlar ham
+    // berilmaydi
+    await this.audit(ctx, 'order.contacts_view', { type: 'ORDER', id: orderId }, undefined, {
+      publicNo: order.publicNo,
+    });
+
+    return {
+      shipperPhone: order.shipperPhone,
+      driverPhone: order.driverPhone,
+    };
+  }
+
+  /**
+   * Buyurtma chat tarixi.
+   *
+   * Nizolarda asosiy dalil: kim nima deb va'da qilgan. Alohida huquq
+   * (`chat.view`) — moliyachi yoki moderatorga begonalarning
+   * yozishmasini oʻqish kerak emas.
+   */
+  async orderChat(ctx: AuditContext, orderId: string) {
+    const conversation = await this.database.db
+      .selectFrom('conversations')
+      .select(['id'])
+      .where('orderId', '=', orderId)
+      .executeTakeFirst();
+
+    if (!conversation) return { messages: [] };
+
+    const messages = await this.database.db
+      .selectFrom('messages as m')
+      .leftJoin('users as u', 'u.id', 'm.senderId')
+      .select([
+        'm.id',
+        'm.type',
+        'm.body',
+        'm.senderId',
+        'm.createdAt',
+        'm.readAt',
+        'u.firstName as senderFirstName',
+        'u.lastName as senderLastName',
+      ])
+      .where('m.conversationId', '=', conversation.id)
+      .where('m.deletedAt', 'is', null)
+      .orderBy('m.createdAt', 'asc')
+      .limit(500)
+      .execute();
+
+    // Yozishmani oʻqish ham kuzatiladi: bu shaxsiy muloqot
+    await this.audit(ctx, 'order.chat_view', { type: 'ORDER', id: orderId }, undefined, {
+      messages: messages.length,
+    });
+
+    return { messages };
   }
 
   // =================================================================

@@ -370,6 +370,80 @@ async function main() {
   const openComplaints = await adminApi('/admin/complaints?status=OPEN', {}, adminToken);
   check('toʻgʻri holat qabul qilinadi', true, Array.isArray(openComplaints.data));
 
+  // ------------------------------------------------------- buyurtmalar
+  step('Buyurtmalar monitoringi (support)');
+
+  const orders = await adminApi('/admin/orders?limit=10', {}, adminToken);
+  check('★ BUYURTMALAR ROʻYXATI KELDI', true, Array.isArray(orders.data) && orders.data.length > 0);
+
+  const fxOrder = orders.data.find((o) => o.id === fx.orderId) ?? orders.data[0];
+
+  // ASOSIY TEKSHIRUV: platformaning butun biznes modeli kontaktni
+  // yashirishga qurilgan. Ro'yxatda raqamlar ochiq bo'lsa, uni ochgan
+  // xodim bir zumda yuzlab raqamni ko'radi va iz qolmaydi
+  check('★ ROʻYXATDA RAQAM YASHIRILGAN', true, String(fxOrder.driverPhone).includes('****'));
+  check('yuk beruvchi raqami ham yashirilgan', true, String(fxOrder.shipperPhone).includes('****'));
+
+  const detail = await adminApi(`/admin/orders/${fx.orderId}`, {}, adminToken);
+  check('★ TAFSILOTDA STATUS TARIXI BOR', true, Array.isArray(detail.data?.history));
+  check('tafsilotda ham raqam yashirilgan', true, String(detail.data.order.driverPhone).includes('****'));
+  check('moliya formatlangan', true, String(detail.data.finance.priceFormatted).includes('soʻm'));
+
+  const searchByNo = await adminApi(
+    `/admin/orders?search=${encodeURIComponent(detail.data.order.publicNo)}`,
+    {},
+    adminToken,
+  );
+  check('★ RAQAM BOʻYICHA QIDIRUV ISHLAYDI', true, searchByNo.data.some((o) => o.id === fx.orderId));
+
+  const badStatusOrder = await adminApi('/admin/orders?status=YOQ', {}, adminToken);
+  check('notoʻgʻri status rad etiladi', 'VALIDATION_FAILED', badStatusOrder.error?.code);
+
+  // Haqiqiy raqamlar — alohida endpoint va HAR BIR OCHISH auditda
+  const contacts = await adminApi(`/admin/orders/${fx.orderId}/contacts`, {}, adminToken);
+  check('★ HAQIQIY RAQAM ALOHIDA ENDPOINTDAN', true, !String(contacts.data.driverPhone).includes('****'));
+  check('raqam toʻliq', true, String(contacts.data.driverPhone).startsWith('+998'));
+
+  const contactAudit = await pg.query(
+    `SELECT count(*)::int AS n FROM audit_logs
+      WHERE action = 'order.contacts_view' AND entity_id = $1`,
+    [fx.orderId],
+  );
+  check('★ KONTAKT OCHILISHI AUDITGA YOZILDI', 1, contactAudit.rows[0].n);
+
+  await adminApi(`/admin/orders/${fx.orderId}/contacts`, {}, adminToken);
+  const contactAudit2 = await pg.query(
+    `SELECT count(*)::int AS n FROM audit_logs
+      WHERE action = 'order.contacts_view' AND entity_id = $1`,
+    [fx.orderId],
+  );
+  check('★ HAR BIR OCHISH ALOHIDA YOZILADI', 2, contactAudit2.rows[0].n);
+
+  const chat = await adminApi(`/admin/orders/${fx.orderId}/chat`, {}, adminToken);
+  check('★ CHAT TARIXI OʻQILDI', true, Array.isArray(chat.data?.messages));
+
+  const chatAudit = await pg.query(
+    `SELECT count(*)::int AS n FROM audit_logs
+      WHERE action = 'order.chat_view' AND entity_id = $1`,
+    [fx.orderId],
+  );
+  check('yozishmani oʻqish ham auditda', true, chatAudit.rows[0].n >= 1);
+
+  // Moderatorda `chat.view` yo'q: begonalarning yozishmasini o'qish
+  // uning ishiga kirmaydi
+  const modChat = await adminApi(`/admin/orders/${fx.orderId}/chat`, {}, modToken);
+  check('★ MODERATOR YOZISHMANI OʻQIY OLMAYDI', true, Boolean(modChat.error));
+  // Lekin buyurtmani ko'rishi mumkin — unda `orders.view` bor
+  const modOrders = await adminApi('/admin/orders?limit=5', {}, modToken);
+  check('moderator buyurtmani koʻra oladi', true, Array.isArray(modOrders.data));
+
+  const missingOrder = await adminApi(
+    '/admin/orders/00000000-0000-0000-0000-000000000000',
+    {},
+    adminToken,
+  );
+  check('mavjud boʻlmagan buyurtma — xato', true, Boolean(missingOrder.error));
+
   // ------------------------------------------------------ boshqaruv paneli
   step('Boshqaruv paneli');
   const dashboard = await adminApi('/admin/dashboard', {}, adminToken);
