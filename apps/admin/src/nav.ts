@@ -25,6 +25,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { path: '/', label: 'Boshqaruv paneli', permission: 'dashboard.view', group: 'ish' },
   { path: '/verifications', label: 'Verifikatsiya navbati', permission: 'docs.verify', group: 'ish' },
   { path: '/users', label: 'Foydalanuvchilar', permission: 'users.view', group: 'ish' },
+  { path: '/orders', label: 'Buyurtmalar', permission: 'orders.view', group: 'ish' },
   { path: '/complaints', label: 'Shikoyatlar', permission: 'complaints.view', group: 'ish' },
 
   { path: '/payouts', label: 'Pul yechish navbati', permission: 'payments.view', group: 'moliya' },

@@ -9,6 +9,7 @@ import { useSession } from '@/features/auth/session';
 import { AuditPage } from '@/features/audit/audit-page';
 import { ComplaintsPage } from '@/features/complaints/complaints-page';
 import { LedgerPage } from '@/features/finance/ledger-page';
+import { OrdersPage } from '@/features/orders/orders-page';
 import { SettingsPage } from '@/features/settings/settings-page';
 import { PayoutsPage } from '@/features/finance/payouts-page';
 import { UsersPage } from '@/features/users/users-page';
@@ -35,6 +36,7 @@ const SCREENS: Record<string, ComponentType> = {
   })),
   '/verifications': VerificationsPage,
   '/users': UsersPage,
+  '/orders': OrdersPage,
   '/payouts': PayoutsPage,
   '/ledger': LedgerPage,
   '/complaints': ComplaintsPage,
