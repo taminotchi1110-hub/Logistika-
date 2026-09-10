@@ -107,6 +107,18 @@ export class ComplaintActionDto {
   resolution?: string;
 }
 
+export class SeriesQueryDto {
+  @ApiPropertyOptional({ example: 30, description: 'Necha kunlik oraliq (1–90)' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  // 90 kun — yuqori chegara. Cheksiz oraliq butun `orders` jadvalini
+  // skanerlashga aylanadi va admin paneli bazani sekinlashtira oladi
+  @Max(90)
+  days?: number;
+}
+
 export class ListQueryDto {
   @ApiPropertyOptional()
   @IsOptional()
@@ -188,6 +200,22 @@ export class AdminController {
   })
   dashboard() {
     return this.admin.dashboard();
+  }
+
+  @Public()
+  @UseGuards(AdminGuard)
+  @Get('dashboard/series')
+  @ApiBearerAuth()
+  @RequirePermission('dashboard.view')
+  @ApiOperation({
+    summary: 'Kunlik dinamika (grafiklar uchun)',
+    description:
+      'Buyurtmalar, bekor qilinganlar, yakunlanganlar va GMV — kun boʻyicha. Buyurtma ' +
+      'boʻlmagan kunlar NOL bilan toʻldiriladi: tushib qolgan kun grafikda pasayishni ' +
+      'yashirardi. Sanalar Toshkent vaqti boʻyicha.',
+  })
+  dashboardSeries(@Query() query: SeriesQueryDto) {
+    return this.admin.dashboardSeries(query.days ?? 30);
   }
 
   // ------------------------------------------------------- verifikatsiya

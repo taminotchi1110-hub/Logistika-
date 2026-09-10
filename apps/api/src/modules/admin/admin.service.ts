@@ -696,6 +696,107 @@ export class AdminService {
     };
   }
 
+  /**
+   * Kunlik dinamika — grafiklar uchun.
+   *
+   * NEGA ALOHIDA ENDPOINT: `dashboard()` bir nechta COUNT qaytaradi va
+   * u tez. Bu esa oraliq boʻyicha guruhlangan skanerlash — 90 kunlik
+   * soʻrov sekinroq. Ikkisini qoʻshib qoʻysak, KPI kartalar eng sekin
+   * soʻrovni kutib turardi.
+   *
+   * BOʻSH KUNLAR NOL BILAN TOʻLDIRILADI (`generate_series`). Buyurtma
+   * boʻlmagan kun grafikdan tushib qolsa, chiziq ikkita qoʻshni kunni
+   * toʻgʻridan-toʻgʻri bogʻlaydi va pasayish umuman koʻrinmaydi —
+   * grafik yolgʻon gapiradi.
+   *
+   * VAQT ZONASI ANIQ KOʻRSATILGAN. Bazaning sessiya zonasiga
+   * tayanish xavfli: boshqa muhitda u UTC boʻlsa, kun chegarasi
+   * Toshkent vaqti bilan 05:00 ga siljiydi va "bugungi buyurtmalar"
+   * jimgina notoʻgʻri boʻlib qoladi.
+   *
+   * GMV va komissiya YAKUNLANGAN sanaga yoziladi, yaratilgan sanaga
+   * emas: daromad buyurtma yopilgandagina haqiqiy boʻladi.
+   */
+  async dashboardSeries(days: number): Promise<
+    {
+      date: string;
+      created: number;
+      cancelled: number;
+      completed: number;
+      gmvTiyin: string;
+      commissionTiyin: string;
+    }[]
+  > {
+    const result = await sql<{
+      date: string;
+      created: string;
+      cancelled: string;
+      completed: string;
+      gmvTiyin: string;
+      commissionTiyin: string;
+    }>`
+      WITH bounds AS (
+        SELECT (now() AT TIME ZONE 'Asia/Tashkent')::date            AS today,
+               (now() AT TIME ZONE 'Asia/Tashkent')::date - (${days}::int - 1) AS since
+      ),
+      days AS (
+        SELECT generate_series(b.since, b.today, interval '1 day')::date AS day FROM bounds b
+      ),
+      created AS (
+        SELECT (o.created_at AT TIME ZONE 'Asia/Tashkent')::date AS day,
+               count(*)                                          AS n
+          FROM orders o, bounds b
+         WHERE (o.created_at AT TIME ZONE 'Asia/Tashkent')::date >= b.since
+         GROUP BY 1
+      ),
+      -- Bekor qilish cancelled_at SANASIGA yoziladi, yaratilgan sanaga
+      -- emas: yakunlanish bilan bir xil mantiq. Status roʻyxati
+      -- ishlatilmaydi, chunki bekor qilishning uchta turi bor
+      -- (CANCELLED_BY_SHIPPER / DRIVER / ADMIN) va yangisi qoʻshilsa
+      -- bu soʻrov jimgina notoʻgʻri boʻlib qolardi.
+      cancelled AS (
+        SELECT (o.cancelled_at AT TIME ZONE 'Asia/Tashkent')::date AS day,
+               count(*)                                            AS n
+          FROM orders o, bounds b
+         WHERE o.cancelled_at IS NOT NULL
+           AND (o.cancelled_at AT TIME ZONE 'Asia/Tashkent')::date >= b.since
+         GROUP BY 1
+      ),
+      finished AS (
+        SELECT (o.completed_at AT TIME ZONE 'Asia/Tashkent')::date AS day,
+               count(*)                                            AS n,
+               COALESCE(SUM(o.price_tiyin), 0)                      AS gmv,
+               COALESCE(SUM(o.commission_tiyin), 0)                 AS commission
+          FROM orders o, bounds b
+         WHERE o.completed_at IS NOT NULL
+           AND (o.completed_at AT TIME ZONE 'Asia/Tashkent')::date >= b.since
+         GROUP BY 1
+      )
+      SELECT to_char(d.day, 'YYYY-MM-DD')      AS date,
+             COALESCE(c.n, 0)::text            AS created,
+             COALESCE(x.n, 0)::text            AS cancelled,
+             COALESCE(f.n, 0)::text            AS completed,
+             COALESCE(f.gmv, 0)::text          AS gmv_tiyin,
+             COALESCE(f.commission, 0)::text   AS commission_tiyin
+        FROM days d
+        LEFT JOIN created   c ON c.day = d.day
+        LEFT JOIN cancelled x ON x.day = d.day
+        LEFT JOIN finished  f ON f.day = d.day
+       ORDER BY d.day
+    `.execute(this.database.db);
+
+    return result.rows.map((row) => ({
+      date: row.date,
+      created: Number(row.created),
+      cancelled: Number(row.cancelled),
+      completed: Number(row.completed),
+      // Pul BUTUN SON EMAS, SATR: tiyin qiymati `Number.MAX_SAFE_INTEGER`
+      // dan oshishi mumkin va mijoz uni oʻzi formatlaydi
+      gmvTiyin: row.gmvTiyin,
+      commissionTiyin: row.commissionTiyin,
+    }));
+  }
+
   // =================================================================
   //  Shikoyatlar
   // =================================================================

@@ -1,4 +1,5 @@
-import type { ReactElement } from 'react';
+import { lazy, Suspense } from 'react';
+import type { ComponentType } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 
 import { AppShell } from '@/components/app-shell';
@@ -14,8 +15,18 @@ import { NAV_ITEMS } from '@/nav';
  * Menyudagi qolgan bo'limlar `Placeholder` oladi. Ro'yxat shu yerda
  * bitta joyda: ekran qo'shilganda faqat shu qatorga yozib qo'yiladi va
  * router avtomatik yangilanadi.
+ *
+ * DASHBOARD KECHIKTIRIB YUKLANADI. U Recharts'ga bog'liq va u ~300 kB
+ * — butun ilovaning qolganidan kattaroq. Kun bo'yi verifikatsiya
+ * navbatida ishlaydigan moderator grafik kutubxonasini umuman
+ * yuklab olmasligi kerak. Verifikatsiya ekrani esa ODDIY import:
+ * u eng ko'p ochiladigan ekran va uni kechiktirish har safar
+ * qo'shimcha kutish degani.
  */
-const SCREENS: Record<string, () => ReactElement> = {
+const SCREENS: Record<string, ComponentType> = {
+  '/': lazy(async () => ({
+    default: (await import('@/features/dashboard/dashboard-page')).DashboardPage,
+  })),
   '/verifications': VerificationsPage,
 };
 
@@ -44,7 +55,16 @@ export function App() {
         <Route element={<AppShell />}>
           {NAV_ITEMS.map((item) => {
             const Screen = SCREENS[item.path];
-            const element = Screen ? <Screen /> : <Placeholder title={item.label} />;
+            const element = Screen ? (
+              // `Suspense` HAR BIR MARSHRUTDA, tashqarida emas: umumiy
+              // o'rovda kechiktirilgan ekran yuklanayotganda BUTUN
+              // qobiq (yon menyu ham) yo'qolib turardi
+              <Suspense fallback={<ScreenLoading />}>
+                <Screen />
+              </Suspense>
+            ) : (
+              <Placeholder title={item.label} />
+            );
 
             return item.path === '/' ? (
               <Route key={item.path} index element={element} />
@@ -73,6 +93,11 @@ function SessionLoading() {
       <p className="text-sm text-slate-500">Sessiya tekshirilmoqda…</p>
     </div>
   );
+}
+
+/** Kechiktirib yuklanadigan ekran kelguncha. */
+function ScreenLoading() {
+  return <p className="text-sm text-slate-500">Yuklanmoqda…</p>;
 }
 
 /**

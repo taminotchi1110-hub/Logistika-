@@ -351,6 +351,41 @@ async function main() {
   const integrity = await adminApi('/admin/ledger/integrity', {}, adminToken);
   check('★ LEDGER BUTUN', true, integrity.data.ok);
 
+  // ------------------------------------------------------- kunlik dinamika
+  step('Kunlik dinamika (grafiklar uchun)');
+
+  const series = await adminApi('/admin/dashboard/series?days=7', {}, adminToken);
+  // BO'SH KUNLAR NOL BILAN: buyurtma bo'lmagan kun grafikdan tushib
+  // qolsa, chiziq qo'shni kunlarni to'g'ridan-to'g'ri bog'laydi va
+  // pasayish umuman ko'rinmaydi — grafik yolg'on gapiradi
+  check('★ HAR BIR KUN QATORDA BOR', 7, series.data?.length);
+  check(
+    '★ BOʻSH KUNLAR NOL BILAN TOʻLDIRILDI',
+    true,
+    series.data.every((row) => typeof row.created === 'number' && row.created >= 0),
+  );
+  check(
+    'sanalar oʻsish tartibida',
+    true,
+    series.data.every((row, i) => i === 0 || series.data[i - 1].date < row.date),
+  );
+  check('sana formati YYYY-MM-DD', true, /^\d{4}-\d{2}-\d{2}$/.test(series.data[0].date));
+
+  // Bugun buyurtma yaratildi (fixture) — oxirgi kunda ko'rinishi kerak
+  const today = series.data[series.data.length - 1];
+  check('★ BUGUNGI BUYURTMA QATORDA', true, today.created > 0);
+
+  // Pul SATR sifatida: tiyin qiymati Number chegarasidan oshishi mumkin
+  check('★ PUL SATR SIFATIDA QAYTADI', 'string', typeof today.gmvTiyin);
+  check('komissiya ham satr', 'string', typeof today.commissionTiyin);
+
+  const tooLong = await adminApi('/admin/dashboard/series?days=365', {}, adminToken);
+  // Cheksiz oraliq butun `orders` jadvalini skanerlashga aylanadi
+  check('★ 90 KUNDAN UZUN ORALIQ RAD ETILADI', true, Boolean(tooLong.error));
+
+  const defaultDays = await adminApi('/admin/dashboard/series', {}, adminToken);
+  check('parametrsiz — 30 kun', 30, defaultDays.data?.length);
+
   // ------------------------------------------------------------ bloklash
   step('Notoʻgʻri urinishlarda bloklash');
   for (let i = 0; i < 5; i++) {
