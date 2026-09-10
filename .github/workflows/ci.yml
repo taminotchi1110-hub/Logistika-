@@ -1,0 +1,280 @@
+name: CI
+
+# Har bir push va PR da. `main` ga tegishli har qanday oʻzgarish
+# tekshiruvdan oʻtadi — shu paytgacha 1000 dan ortiq test QOʻLDA
+# ishga tushirilardi va ular vaqti-vaqti bilan oʻtkazib yuborilardi.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Ketma-ket ikki push boʻlsa, birinchisini toʻxtatamiz: eskirgan
+# natijani kutish ham, uning uchun pul toʻlash ham keraksiz.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Ishlab chiqish mashinasidagi versiya bilan BIR XIL. Boshqa versiya
+  # tanlansa, faqat CI da yiqiladigan xatolar paydo boʻladi va ularni
+  # lokal takrorlab boʻlmaydi.
+  NODE_VERSION: '24'
+
+jobs:
+  # ------------------------------------------------------------------
+  #  Backend: lint, tur tekshiruvi, build va unit testlar
+  #  Bazasiz — bu testlar mock bilan ishlaydi va tez qaytadi.
+  # ------------------------------------------------------------------
+  api:
+    name: API (lint, tsc, 213 unit test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint --workspace=@karvon/api
+
+      - name: Build (tur tekshiruvi ham shu yerda)
+        run: npm run build --workspace=@karvon/api
+
+      - name: Unit testlar
+        run: npm test --workspace=@karvon/api
+
+  # ------------------------------------------------------------------
+  #  Admin panel
+  # ------------------------------------------------------------------
+  admin:
+    name: Admin panel (lint, tsc, 188 test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint --workspace=@karvon/admin
+
+      - name: Tur tekshiruvi
+        run: npm run typecheck --workspace=@karvon/admin
+
+      - name: Testlar
+        run: npm test --workspace=@karvon/admin
+
+      - name: Build
+        run: npm run build --workspace=@karvon/admin
+
+  # ------------------------------------------------------------------
+  #  Mobil ilova — analiz va unit/widget testlar
+  #  Integratsiya testlari alohida ishda (ular API talab qiladi).
+  # ------------------------------------------------------------------
+  mobile:
+    name: Mobil (analyze, 256 test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+        working-directory: apps/mobile
+
+      - name: Analiz
+        run: flutter analyze
+        working-directory: apps/mobile
+
+      - name: Unit va widget testlar
+        run: flutter test
+        working-directory: apps/mobile
+
+  # ------------------------------------------------------------------
+  #  Uchidan-uchiga: haqiqiy Postgres, Redis, MinIO va ishlab turgan API
+  #
+  #  MINIO SHU YERDA BOR — lokal muhitda Docker koʻtarilmagani uchun
+  #  hujjat yuklash testlari oʻtkazib yuborilardi. CI da ular
+  #  HAQIQATAN ishga tushadi.
+  # ------------------------------------------------------------------
+  integration:
+    name: Uchidan-uchiga (425 backend + 69 mobil)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        # PostGIS majburiy: geo soʻrovlar (`ST_DWithin`, `ST_MakePoint`)
+        # oddiy Postgres'da ishlamaydi
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_USER: karvon
+          POSTGRES_PASSWORD: karvon_ci
+          POSTGRES_DB: karvon
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U karvon"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+      minio:
+        # `edge-cicd` — MinIO ning CI uchun chiqaradigan tegi: u
+        # `minio server /data` ni oʻzi ishga tushiradi. Oddiy
+        # `minio/minio` tegida buyruq berish kerak, GitHub xizmat
+        # konteynerlari esa `command` ni qoʻllab-quvvatlamaydi.
+        image: minio/minio:edge-cicd
+        env:
+          MINIO_ROOT_USER: karvon
+          MINIO_ROOT_PASSWORD: karvon_ci_secret
+        ports: ['9000:9000']
+        # Sogʻliq tekshiruvi konteyner ichida emas, RUNNER tomonida
+        # (quyidagi qadam). Sabab: `--health-cmd` konteyner ichidagi
+        # buyruqni ishlatadi va u yerda `curl` borligiga kafolat yoʻq —
+        # tasvir oʻzgarsa CI tushunarsiz sababdan yiqilardi.
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - run: npm ci
+
+      - name: Muhit sozlamalari
+        # JWT kalitlari BOʻSH qoldiriladi: dev rejimida ilova
+        # vaqtinchalik RS256 juftligini oʻzi generatsiya qiladi.
+        # Bu yerdagi parollar CI ga xos va har ishda yangi bazaga
+        # tegishli — ular maxfiy emas.
+        run: |
+          cat > .env <<'ENVFILE'
+          NODE_ENV=development
+          PORT=3000
+          API_PREFIX=v1
+          CORS_ORIGINS=http://localhost:5173,http://localhost:8090
+          DATABASE_URL=postgresql://karvon:karvon_ci@localhost:5432/karvon
+          DATABASE_POOL_MAX=10
+          REDIS_URL=redis://localhost:6379
+          JWT_PRIVATE_KEY=
+          JWT_PUBLIC_KEY=
+          JWT_ISSUER=karvon.uz
+          JWT_ACCESS_TTL=15m
+          JWT_REFRESH_TTL_DAYS=30
+          OTP_PEPPER=ci-pepper-not-a-secret
+          OTP_LENGTH=6
+          OTP_TTL_SECONDS=300
+          OTP_MAX_ATTEMPTS=5
+          OTP_RESEND_COOLDOWN_SECONDS=60
+          # Sxemadagi CHEGARALAR: soatiga max 20, kuniga max 200
+          # (`env.schema.ts`). Kattaroq qiymat yozilsa ilova umuman
+          # ishga tushmaydi. Testlar orasida limitlar tozalanadi.
+          OTP_MAX_PER_HOUR_PER_PHONE=3
+          OTP_MAX_PER_DAY_PER_IP=200
+          OTP_EXPOSE_CODE_IN_DEV=true
+          SMS_PROVIDER=console
+          FIELD_ENCRYPTION_KEY=0123456789abcdef0123456789abcdef
+          S3_ENDPOINT=http://localhost:9000
+          S3_REGION=us-east-1
+          S3_BUCKET=karvon
+          S3_ACCESS_KEY=karvon
+          S3_SECRET_KEY=karvon_ci_secret
+          S3_FORCE_PATH_STYLE=true
+          S3_UPLOAD_URL_TTL_SECONDS=600
+          S3_DOWNLOAD_URL_TTL_SECONDS=300
+          S3_MAX_UPLOAD_BYTES=20971520
+          PAYMENTS_ALLOW_SIMULATION=true
+          # Kamida 32 belgi (`env.schema.ts`)
+          ADMIN_JWT_SECRET=ci-admin-jwt-secret-32-belgidan-uzun
+          LOG_LEVEL=warn
+          GEOCODER_PROVIDER=nominatim
+          NOMINATIM_BASE_URL=https://nominatim.openstreetmap.org
+          GEO_HTTP_TIMEOUT_MS=8000
+          ENVFILE
+
+      - name: MinIO tayyorligini kutish
+        run: |
+          for i in $(seq 1 60); do
+            curl -sf http://localhost:9000/minio/health/live && break
+            sleep 1
+          done
+          curl -sf http://localhost:9000/minio/health/live
+
+      - name: Migratsiya va seed
+        run: |
+          npm run db:migrate
+          npm run db:seed
+
+      - name: Admin hisobi
+        # `admin-test.js` `admin@karvon.uz` ning parol xeshidan
+        # namuna sifatida foydalanadi va aynan shu parol bilan
+        # kiradi — qiymat skriptning oʻzida yozilgan, yaʼni bu
+        # test fikstura, maxfiy soʻz emas.
+        run: npm run admin:create -- --email=admin@karvon.uz --password='Karvon!Admin2026' --name='CI Admin'
+
+      - name: API ni qurish va ishga tushirish
+        run: |
+          npm run build --workspace=@karvon/api
+          node apps/api/dist/main.js &
+          # Sogʻliq tekshiruvi: `sleep 10` ishonchsiz — sekin ishda
+          # yetmaydi, tez ishda esa behuda kutish
+          for i in $(seq 1 60); do
+            curl -sf http://localhost:3000/health && break
+            sleep 1
+          done
+          curl -sf http://localhost:3000/health
+
+      - name: Backend uchidan-uchiga (10 toʻplam)
+        # Skriptlar bazaga toʻgʻridan-toʻgʻri ham murojaat qiladi
+        # (fikstura, tekshiruv). Ular `PGURL` ni oʻqiydi va standart
+        # qiymati dev paroliga qotib yozilgan
+        env:
+          PGURL: postgresql://karvon:karvon_ci@localhost:5432/karvon
+        run: bash scripts/test-all.sh
+
+      - name: OTP limitlarini tozalash
+        # Kunlik chegara IP boʻyicha (200) va butun CI bitta IP dan
+        # ishlaydi. Backend toʻplami undan katta qismini yeydi —
+        # mobil testlar oldidan hisoblagichni nolga qaytaramiz
+        run: node scripts/reset-rate-limits.js
+
+      - name: Mobil integratsiya testlari
+        # MinIO ishlab turgani uchun hujjat yuklash testlari ham
+        # HAQIQATAN ishga tushadi — lokal muhitda ular oʻtkazib
+        # yuborilardi (Docker koʻtarilmagan)
+        run: |
+          flutter pub get
+          flutter test test_integration --dart-define=API_BASE_URL=http://localhost:3000/v1 --dart-define=WS_URL=http://localhost:3000
+        working-directory: apps/mobile
+
+      - name: API loglari (yiqilganda)
+        if: failure()
+        run: |
+          echo "--- oxirgi audit yozuvlari ---"
+          PGPASSWORD=karvon_ci psql -h localhost -U karvon -d karvon \
+            -c "SELECT action, entity_type, created_at FROM audit_logs ORDER BY created_at DESC LIMIT 20" || true

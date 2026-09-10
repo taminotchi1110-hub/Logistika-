@@ -12,7 +12,17 @@
 set -u
 
 API="${API:-http://localhost:3000/v1}"
-PSQL="${PSQL:-/c/Program Files/PostgreSQL/16/bin/psql.exe}"
+# `psql` yoʻli AVTOMATIK aniqlanadi. Ilgari bu yerda faqat Windows
+# yoʻli turgan edi va skript CI (Linux) da ishlamas edi — muammo esa
+# tushunarsiz koʻrinardi: "psql: command not found" emas, balki
+# soʻrovlar jimgina boʻsh natija qaytarardi.
+if [ -n "${PSQL:-}" ]; then
+  :
+elif command -v psql > /dev/null 2>&1; then
+  PSQL="psql"
+else
+  PSQL="/c/Program Files/PostgreSQL/16/bin/psql.exe"
+fi
 PGURL="${PGURL:-postgresql://karvon:karvon_dev_password@localhost:5432/karvon}"
 
 RND=$((RANDOM % 900000 + 100000))

@@ -1,7 +1,9 @@
 # KARVON — O'zbekiston uchun raqamli yuk almashinuv platformasi
 
-> **Holat:** 5-BOSQICH — toʻlovlar (Click/Payme), reyting va admin paneli kodlandi
-> **Versiya:** 0.5.0 · **Sana:** 2026-09-08
+[![CI](https://github.com/taminotchi1110-hub/Logistika-/actions/workflows/ci.yml/badge.svg)](https://github.com/taminotchi1110-hub/Logistika-/actions/workflows/ci.yml)
+
+> **Holat:** 8-BOSQICH — admin panel interfeysi va buyurtma monitoringi
+> **Versiya:** 0.8.0 · **Sana:** 2026-09-10
 
 Yuk beruvchi (shipper) va haydovchi (carrier) ni real vaqtda bog'laydigan, GPS tracking,
 avtomatik matching, escrow to'lov va reyting tizimiga ega marketplace platforma.
@@ -27,8 +29,23 @@ Batafsil: [docs/13-backend.md](docs/13-backend.md)
 | 2 — Sprint 0 + Auth (OTP, JWT, sessiyalar, spravochnik) | ✅ tayyor |
 | 3 — Transport, hujjatlar, geo servis, yuk e'loni va lenta | ✅ tayyor |
 | 4 — Takliflar, buyurtma, chat, realtime, push, **matching**, **GPS kuzatuv** | ✅ tayyor |
-| 5 — **To'lovlar** (Click/Payme), **reyting**, **admin paneli** | ✅ tayyor |
-| 6 — Flutter mobil ilova | ⏳ keyingi |
+| 5 — **To'lovlar** (Click/Payme), **reyting**, **admin API** | ✅ tayyor |
+| 6 — Flutter mobil ilova (12 ekran, chat, kuzatuv, hamyon) | ✅ tayyor |
+| 7 — Admin panel interfeysi (React + Vite, 9 ekran) | ✅ tayyor |
+| 8 — Buyurtma monitoringi va support amallari, **CI** | ✅ tayyor |
+| 9 — i18n (uz/ru/en), yuklama va xavfsizlik testlari, deploy | ⏳ keyingi |
+
+### Testlar
+
+| Qatlam | Soni | Buyruq |
+|---|---|---|
+| Backend unit | 213 | `npm test --workspace=@karvon/api` |
+| Backend uchidan-uchiga | 425 | `bash scripts/test-all.sh` |
+| Admin panel | 188 | `npm run admin:test` |
+| Mobil unit/widget | 256 | `npm run mobile:test` |
+| Mobil integratsiya | 69 | `npm run mobile:test:api` |
+
+Hammasi har push va PR da avtomatik ishlaydi ([ci.yml](.github/workflows/ci.yml)).
 
 ---
 
