@@ -81,3 +81,7 @@ apps/mobile/web/
 # Firebase konfiguratsiyasi — maxfiy emas, lekin loyihaga xos
 apps/mobile/android/app/google-services.json
 apps/mobile/ios/Runner/GoogleService-Info.plist
+
+# Admin panel (Vite build natijasi)
+apps/admin/dist/
+apps/admin/.env

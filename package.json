@@ -38,7 +38,11 @@
     "smoke:admin": "node scripts/admin-test.js",
     "mobile:analyze": "cd apps/mobile && flutter analyze",
     "mobile:test": "cd apps/mobile && flutter test",
-    "mobile:test:api": "cd apps/mobile && flutter test test_integration --dart-define=API_BASE_URL=http://localhost:3000/v1"
+    "mobile:test:api": "cd apps/mobile && flutter test test_integration --dart-define=API_BASE_URL=http://localhost:3000/v1",
+    "admin:dev": "npm run dev --workspace=@karvon/admin",
+    "admin:build": "npm run build --workspace=@karvon/admin",
+    "admin:test": "npm run test --workspace=@karvon/admin",
+    "admin:lint": "npm run lint --workspace=@karvon/admin"
   },
   "devDependencies": {
     "prettier": "^3.3.3"
