@@ -340,6 +340,36 @@ async function main() {
   const settingsLog = logs.data.find((l) => l.action === 'settings.update');
   check('★ SOZLAMA OʻZGARISHI AUDITDA', true, Boolean(settingsLog));
 
+  // Filtr ISHLASHI KERAK: avval `ListQueryDto & { action }` turgan edi va
+  // unda `action` maydoni yo'q — `forbidNonWhitelisted` bilan bu so'rov
+  // 400 qaytarardi, ya'ni hujjatda va'da qilingan filtr umuman ishlamas edi
+  const filtered = await adminApi('/admin/audit-logs?action=settings.update', {}, adminToken);
+  check('★ AMAL BOʻYICHA FILTR ISHLAYDI', true, Array.isArray(filtered.data));
+  check(
+    'filtr faqat oʻsha amalni qaytaradi',
+    true,
+    filtered.data.length > 0 && filtered.data.every((l) => l.action === 'settings.update'),
+  );
+
+  const byAdmin = await adminApi(
+    `/admin/audit-logs?adminId=${settingsLog.adminId ?? ''}&limit=5`,
+    {},
+    adminToken,
+  );
+  check('admin boʻyicha filtr qabul qilinadi', true, Array.isArray(byAdmin.data));
+
+  // Shikoyat filtri ham tekshiriladi: avval hech qanday validatsiya yo'q
+  // edi va noto'g'ri qiymat to'g'ridan-to'g'ri SQL enumiga borib 500 berardi
+  const badStatus = await adminApi('/admin/complaints?status=YOQ', {}, adminToken);
+  check('★ NOTOʻGʻRI SHIKOYAT HOLATI RAD ETILADI', true, Boolean(badStatus.error));
+  // Kod muhim: `VALIDATION_FAILED` — bu 400, ya'ni soʻrov tekshirildi.
+  // Server xatosi boʻlganda boshqa kod kelardi va bu enum bilan
+  // toʻqnashuv (500) degani boʻlardi
+  check('validatsiya xatosi, server xatosi emas', 'VALIDATION_FAILED', badStatus.error?.code);
+
+  const openComplaints = await adminApi('/admin/complaints?status=OPEN', {}, adminToken);
+  check('toʻgʻri holat qabul qilinadi', true, Array.isArray(openComplaints.data));
+
   // ------------------------------------------------------ boshqaruv paneli
   step('Boshqaruv paneli');
   const dashboard = await adminApi('/admin/dashboard', {}, adminToken);

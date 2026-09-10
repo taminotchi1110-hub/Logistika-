@@ -107,6 +107,52 @@ export class ComplaintActionDto {
   resolution?: string;
 }
 
+/**
+ * Shikoyat filtri.
+ *
+ * Avval `@Query('status') status?: string` edi — hech qanday tekshiruv
+ * yoʻq. Notoʻgʻri qiymat toʻgʻridan-toʻgʻri SQL enumiga borib, 500
+ * qaytarardi. Endi roʻyxatdan tashqari qiymat 400 va sabab aytiladi.
+ */
+export class ComplaintsQueryDto {
+  @ApiPropertyOptional({ enum: ['OPEN', 'IN_REVIEW', 'RESOLVED', 'REJECTED', 'ESCALATED'] })
+  @IsOptional()
+  @IsIn(['OPEN', 'IN_REVIEW', 'RESOLVED', 'REJECTED', 'ESCALATED'])
+  status?: string;
+}
+
+/**
+ * Audit jurnali filtri.
+ *
+ * ALOHIDA DTO KERAK. Avval bu yerda `ListQueryDto & { action?: string }`
+ * turgan edi — TypeScript darajasida toʻgʻri koʻrinadi, lekin
+ * `ValidationPipe` DTO SINFINING dekoratorlariga qaraydi, tur
+ * kesishmasiga emas. `ListQueryDto` da `action` maydoni yoʻq va
+ * `forbidNonWhitelisted: true` bilan `?action=user.ban` soʻrovi 400
+ * qaytarardi: hujjatda va'da qilingan filtr umuman ishlamas edi.
+ */
+export class AuditQueryDto {
+  @ApiPropertyOptional({ example: 'user.ban', description: 'Amal turi' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  action?: string;
+
+  @ApiPropertyOptional({ description: 'Faqat shu adminning amallari' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  adminId?: string;
+
+  @ApiPropertyOptional({ example: 50 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(200)
+  limit?: number;
+}
+
 export class SeriesQueryDto {
   @ApiPropertyOptional({ example: 30, description: 'Necha kunlik oraliq (1–90)' })
   @IsOptional()
@@ -463,8 +509,8 @@ export class AdminController {
   @ApiBearerAuth()
   @RequirePermission('complaints.view')
   @ApiOperation({ summary: 'Shikoyatlar — eng muhimi birinchi' })
-  complaints(@Query('status') status?: string) {
-    return this.admin.listComplaints(status);
+  complaints(@Query() query: ComplaintsQueryDto) {
+    return this.admin.listComplaints(query.status);
   }
 
   @Public()
@@ -500,7 +546,11 @@ export class AdminController {
     summary: 'Audit jurnali',
     description: 'Har bir admin amali: kim, qachon, nima, oldin va keyin qanday edi.',
   })
-  auditLogs(@Query() query: ListQueryDto & { action?: string }) {
-    return this.admin.auditLogs({ limit: query.limit, action: query.action });
+  auditLogs(@Query() query: AuditQueryDto) {
+    return this.admin.auditLogs({
+      ...(query.limit !== undefined ? { limit: query.limit } : {}),
+      ...(query.action ? { action: query.action } : {}),
+      ...(query.adminId ? { adminId: query.adminId } : {}),
+    });
   }
 }
