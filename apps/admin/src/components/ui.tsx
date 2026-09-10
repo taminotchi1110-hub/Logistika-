@@ -1,4 +1,5 @@
 import clsx from 'clsx';
+import { forwardRef } from 'react';
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from 'react';
 
 /**
@@ -106,20 +107,31 @@ export function Field({ label, htmlFor, hint, error, children }: FieldProps) {
   );
 }
 
-export function Input({ className, ...rest }: InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <input
-      className={clsx(
-        'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900',
-        'placeholder:text-slate-400',
-        'focus:border-brand-500 focus:outline focus:outline-2 focus:outline-offset-0 focus:outline-brand-200',
-        'disabled:bg-slate-50 disabled:text-slate-500',
-        className,
-      )}
-      {...rest}
-    />
-  );
-}
+/**
+ * `forwardRef` — chaqiruvchi maydonga fokus bera olishi uchun.
+ *
+ * Verifikatsiya navbatida bu shart: "Rad etish" bosilganda fokus darhol
+ * sabab maydoniga o'tadi va operator yozishni boshlaydi. `ref` uzatilmasa,
+ * u sichqoncha bilan maydonni bosishi kerak bo'lardi — har bir rad
+ * etishga qo'shimcha soniyalar.
+ */
+export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(
+  function Input({ className, ...rest }, ref) {
+    return (
+      <input
+        ref={ref}
+        className={clsx(
+          'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900',
+          'placeholder:text-slate-400',
+          'focus:border-brand-500 focus:outline focus:outline-2 focus:outline-offset-0 focus:outline-brand-200',
+          'disabled:bg-slate-50 disabled:text-slate-500',
+          className,
+        )}
+        {...rest}
+      />
+    );
+  },
+);
 
 // ---------------------------------------------------------------- karta
 

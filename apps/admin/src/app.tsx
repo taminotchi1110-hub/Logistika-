@@ -1,10 +1,23 @@
+import type { ReactElement } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 
 import { AppShell } from '@/components/app-shell';
 import { Card } from '@/components/ui';
 import { LoginPage } from '@/features/auth/login-page';
 import { useSession } from '@/features/auth/session';
+import { VerificationsPage } from '@/features/verifications/verifications-page';
 import { NAV_ITEMS } from '@/nav';
+
+/**
+ * Yozilgan ekranlar.
+ *
+ * Menyudagi qolgan bo'limlar `Placeholder` oladi. Ro'yxat shu yerda
+ * bitta joyda: ekran qo'shilganda faqat shu qatorga yozib qo'yiladi va
+ * router avtomatik yangilanadi.
+ */
+const SCREENS: Record<string, () => ReactElement> = {
+  '/verifications': VerificationsPage,
+};
 
 /**
  * Ilova ildizi.
@@ -29,17 +42,16 @@ export function App() {
     <BrowserRouter>
       <Routes>
         <Route element={<AppShell />}>
-          {NAV_ITEMS.map((item) =>
-            item.path === '/' ? (
-              <Route key={item.path} index element={<Placeholder title={item.label} />} />
+          {NAV_ITEMS.map((item) => {
+            const Screen = SCREENS[item.path];
+            const element = Screen ? <Screen /> : <Placeholder title={item.label} />;
+
+            return item.path === '/' ? (
+              <Route key={item.path} index element={element} />
             ) : (
-              <Route
-                key={item.path}
-                path={item.path}
-                element={<Placeholder title={item.label} />}
-              />
-            ),
-          )}
+              <Route key={item.path} path={item.path} element={element} />
+            );
+          })}
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
