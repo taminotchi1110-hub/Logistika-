@@ -225,6 +225,55 @@ async function main() {
   );
   check('★ HAYDOVCHI XABARDOR QILINDI', true, notified.rows[0].n >= 2);
 
+  // ------------------------------------------------- hujjatni ko'rish
+  step('Hujjatni koʻrish havolasi va uning auditi');
+
+  // Hujjat yozuvi TO'G'RIDAN-TO'G'RI bazaga: haqiqiy yuklash S3 talab
+  // qiladi, imzo yasash esa tarmoqqa chiqmaydi va shusiz ham sinaladi
+  const docRow = await pg.query(
+    `INSERT INTO documents (owner_type, owner_id, type, file_key, file_name, mime_type,
+                            page_side, uploaded_by, verification_status)
+     VALUES ('USER', $1, 'PASSPORT', $2, 'passport.jpg', 'image/jpeg', 'FRONT', $1, 'PENDING')
+     RETURNING id`,
+    [pendingDriverId, `document/${pendingDriverId}/2026/09/test.jpg`],
+  );
+  const documentId = docRow.rows[0].id;
+
+  const view = await adminApi(`/admin/documents/${documentId}/url`, {}, adminToken);
+  check('★ IMZOLANGAN HAVOLA QAYTDI', true, String(view.data?.url).includes('X-Amz-Signature'));
+  check('hujjat turi qaytdi', 'PASSPORT', view.data?.type);
+  check('tomoni qaytdi', 'FRONT', view.data?.pageSide);
+
+  // ASOSIY TEKSHIRUV: hujjatda pasport raqami va PINFL bo'ladi, shuning
+  // uchun kim qachon kimning hujjatini ochgani yozilishi SHART
+  const viewAudit = await pg.query(
+    `SELECT admin_id, user_id, entity_id FROM audit_logs
+      WHERE action = 'document.view' AND entity_id = $1`,
+    [documentId],
+  );
+  check('★ KOʻRISH AUDITGA YOZILDI', 1, viewAudit.rows.length);
+  check('kimning hujjati ekani yozildi', pendingDriverId, viewAudit.rows[0]?.user_id);
+
+  // Ikkinchi ochish — ikkinchi yozuv. "Bir marta yozib qo'yish" yetarli
+  // emas: qayta-qayta ochish shubhali xatti-harakat va u ko'rinishi kerak
+  await adminApi(`/admin/documents/${documentId}/url`, {}, adminToken);
+  const viewAudit2 = await pg.query(
+    `SELECT count(*)::int AS n FROM audit_logs WHERE action = 'document.view' AND entity_id = $1`,
+    [documentId],
+  );
+  check('★ HAR BIR OCHISH ALOHIDA YOZILADI', 2, viewAudit2.rows[0].n);
+
+  const missingDoc = await adminApi(
+    '/admin/documents/00000000-0000-0000-0000-000000000000/url',
+    {},
+    adminToken,
+  );
+  check('mavjud boʻlmagan hujjat — 404', true, Boolean(missingDoc.error));
+
+  const modViewsDoc = await adminApi(`/admin/documents/${documentId}/url`, {}, modToken);
+  // Moderatorning ishi aynan shu: hujjatni ko'rmasdan tekshirib bo'lmaydi
+  check('★ MODERATOR HUJJATNI KOʻRA OLADI', true, Boolean(modViewsDoc.data?.url));
+
   // -------------------------------------------------- foydalanuvchi bloklash
   step('Foydalanuvchini bloklash');
   const beforeBan = await api('/me', {}, fx.shipperToken);

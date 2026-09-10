@@ -207,6 +207,27 @@ export class AdminController {
 
   @Public()
   @UseGuards(AdminGuard)
+  @Get('documents/:id/url')
+  @ApiBearerAuth()
+  @RequirePermission('docs.verify')
+  @ApiOperation({
+    summary: 'Hujjatni koʻrish havolasi',
+    description:
+      'Qisqa muddatli imzolangan havola (5 daqiqa). **Har bir ochish audit jurnaliga ' +
+      'yoziladi** — hujjatda pasport raqami va PINFL boʻladi. Navbat javobida havola ' +
+      'berilmaydi: roʻyxatni ochish 50 ta hujjatni koʻrish bilan bir xil boʻlib qolardi.',
+  })
+  documentUrl(
+    @Req() request: AdminRequest,
+    @Param('id') id: string,
+    @ClientIp() ip: string,
+    @UserAgent() userAgent: string,
+  ) {
+    return this.admin.documentViewUrl(this.context(request, ip, userAgent), id);
+  }
+
+  @Public()
+  @UseGuards(AdminGuard)
   @Post('documents/:id/review')
   @ApiBearerAuth()
   @RequirePermission('docs.verify')

@@ -5,6 +5,7 @@ import { AppError } from '@/common/errors/app.error';
 import { SettingsService } from '@/common/services/settings.service';
 import { formatSoum, toTiyin } from '@/common/utils/money.util';
 import { DatabaseService } from '@/infra/database/database.service';
+import { StorageService } from '@/infra/storage/storage.service';
 import { LedgerService } from '@/modules/payments/ledger.service';
 import { PayoutsService } from '@/modules/payments/payouts.service';
 import { NotificationsService } from '@/modules/notifications/notifications.service';
@@ -33,6 +34,8 @@ export class AdminService {
     private readonly ledger: LedgerService,
     private readonly payouts: PayoutsService,
     private readonly notifications: NotificationsService,
+    // `StorageModule` global — alohida import kerak emas
+    private readonly storage: StorageService,
   ) {}
 
   // =================================================================
@@ -162,6 +165,68 @@ export class AdminService {
       drivers,
       vehicles,
       total: documents.length + drivers.length + vehicles.length,
+    };
+  }
+
+  /**
+   * Hujjatni koʻrish uchun qisqa muddatli havola.
+   *
+   * NEGA ALOHIDA ENDPOINT, NAVBAT JAVOBIDA EMAS:
+   *
+   *   1. Navbatda 50 tagacha hujjat boʻladi. Har biriga imzo yasash —
+   *      50 ta ortiqcha hisob va ularning koʻpi hech qachon ochilmaydi.
+   *   2. Imzo 5 daqiqada oʻladi. Navbat bilan birga berilsa, operator
+   *      20-hujjatga yetganda havolalar allaqachon eskirgan boʻladi.
+   *   3. HAR BIR OCHISH AUDITGA YOZILADI. Hujjatda pasport raqami va
+   *      PINFL boʻladi; kim qachon kimning hujjatini ochgani
+   *      kuzatilishi shart (`docs/08-admin.md`, 8.4.5). Navbat javobida
+   *      berilsa, "koʻrdi" degan fakt yoʻqoladi — roʻyxatni ochish
+   *      50 ta hujjatni koʻrish bilan bir xil boʻlib qolardi.
+   *
+   * Huquq `docs.verify` — hujjatni tekshirishi kerak odam uni koʻrishi
+   * ham kerak. Alohida "shaxsiy maʼlumotni ochish" huquqi rollar
+   * seedini oʻzgartirishni talab qiladi va u alohida qadamga qoldirildi;
+   * audit talabi esa shu yerda bajarilgan.
+   */
+  async documentViewUrl(
+    ctx: AuditContext,
+    documentId: string,
+  ): Promise<{
+    id: string;
+    type: string;
+    fileName: string | null;
+    mimeType: string | null;
+    pageSide: string | null;
+    url: string;
+  }> {
+    const document = await this.database.db
+      .selectFrom('documents')
+      .select(['id', 'ownerId', 'type', 'fileKey', 'fileName', 'mimeType', 'pageSide'])
+      .where('id', '=', documentId)
+      .where('deletedAt', 'is', null)
+      .executeTakeFirst();
+
+    if (!document) throw AppError.notFound('Hujjat topilmadi');
+
+    // Audit HAVOLA BERILISHIDAN OLDIN yoziladi: agar yozuv yiqilsa,
+    // havola ham berilmaydi. Teskarisi boʻlsa, kuzatilmagan koʻrish
+    // sodir boʻlishi mumkin edi.
+    await this.audit(
+      ctx,
+      'document.view',
+      { type: 'DOCUMENT', id: documentId },
+      undefined,
+      { type: document.type },
+      document.ownerId,
+    );
+
+    return {
+      id: document.id,
+      type: document.type,
+      fileName: document.fileName,
+      mimeType: document.mimeType,
+      pageSide: document.pageSide,
+      url: await this.storage.createDownloadUrl(document.fileKey),
     };
   }
 

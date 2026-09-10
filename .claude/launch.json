@@ -2,13 +2,10 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "karvon-web",
-      "runtimeExecutable": "cmd",
-      "runtimeArgs": [
-        "/c",
-        "cd apps\\mobile && C:\\src\\flutter\\bin\\flutter.bat run -d web-server --web-hostname 127.0.0.1 --web-port 5599 --dart-define=API_BASE_URL=http://localhost:3000/v1"
-      ],
-      "port": 5599
+      "name": "admin",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--workspace=@karvon/admin"],
+      "port": 5173
     }
   ]
 }
