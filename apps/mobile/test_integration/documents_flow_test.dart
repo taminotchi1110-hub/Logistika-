@@ -306,7 +306,7 @@ void main() {
       expect(await driver.documents.mine(), isEmpty);
     });
 
-    test('★ HUJJAT VERIFIKATSIYA RO\'YXATIDAN CHIQADI', () async {
+    test('★ YUKLASH YETARLI EMAS — TASDIQLASH KERAK', () async {
       if (!await storageReachable()) {
         markTestSkipped('S3 (MinIO) javob bermayapti — tayyorlik TEKSHIRILMADI.');
         return;
@@ -321,10 +321,26 @@ void main() {
         pageSide: 'FRONT',
       );
 
-      // Hujjat qo'shilgach "nima yetishmayapti" ro'yxati qisqarishi kerak:
-      // ekranlar orasidagi bog'liqlik shu yerda tekshiriladi
+      // BU TEST AVVAL NOTOʻGʻRI YOZILGAN EDI: hujjat yuklangach
+      // "yetishmayapti" roʻyxatidan chiqadi deb kutilgandi.
+      //
+      // Aslida `hasIdentity` faqat `VERIFIED` hujjatni hisoblaydi
+      // (`documents.service.ts`). Bu ataylab: yuklangan rasm hali
+      // tekshirilmagan va u soxta boʻlishi mumkin. Agar yuklashning
+      // oʻzi yetarli boʻlsa, istalgan odam boʻsh rasm yuklab reysga
+      // chiqa olardi.
+      //
+      // Xato faqat CI da koʻrindi: lokal muhitda MinIO boʻlmagani
+      // uchun bu test oʻtkazib yuborilardi.
       final readiness = await driver.api.get<Map<String, dynamic>>('/me/driver/readiness');
-      expect(readiness['missingSteps'], isNot(contains('IDENTITY_DOCUMENT')));
+
+      expect(readiness['missingSteps'], contains('IDENTITY_DOCUMENT'));
+      expect(readiness['hasIdentity'], isFalse);
+      expect(readiness['canSendOffers'], isFalse);
+
+      // Hujjatning oʻzi esa navbatda turadi
+      final mine = await driver.documents.mine();
+      expect(mine.single.verificationStatus, VerificationStatus.pending);
     });
   });
 }

@@ -109,8 +109,20 @@ jobs:
   #  HAQIQATAN ishga tushadi.
   # ------------------------------------------------------------------
   integration:
-    name: Uchidan-uchiga (425 backend + 69 mobil)
+    name: Uchidan-uchiga (425 backend + 81 mobil)
     runs-on: ubuntu-latest
+
+    # ISH DARAJASIDA, qadam darajasida emas.
+    #
+    # Skriptlar bazaga toʻgʻridan-toʻgʻri ham murojaat qiladi va
+    # `PGURL` ni oʻqiydi; uning standart qiymati DEV PAROLIGA qotib
+    # yozilgan (`scripts/lib/fixtures.js`). Avval bu faqat backend
+    # qadamiga berilgan edi va mobil testlar chaqiradigan
+    # `order-fixture.js` bazaga ulana olmay, unga bogʻliq 30 ta test
+    # yiqilgan. Ish darajasida berilsa, kelajakda qoʻshiladigan qadam
+    # ham uni avtomatik oladi.
+    env:
+      PGURL: postgresql://karvon:karvon_ci@localhost:5432/karvon
 
     services:
       postgres:
@@ -261,11 +273,6 @@ jobs:
           curl -sf http://localhost:3000/health
 
       - name: Backend uchidan-uchiga (10 toʻplam)
-        # Skriptlar bazaga toʻgʻridan-toʻgʻri ham murojaat qiladi
-        # (fikstura, tekshiruv). Ular `PGURL` ni oʻqiydi va standart
-        # qiymati dev paroliga qotib yozilgan
-        env:
-          PGURL: postgresql://karvon:karvon_ci@localhost:5432/karvon
         run: bash scripts/test-all.sh
 
       - name: OTP limitlarini tozalash
