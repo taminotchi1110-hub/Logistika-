@@ -1,0 +1,49 @@
+{
+  "@@locale": "uz",
+
+  "appTagline": "Yuk va haydovchini bogʻlaymiz",
+  "@appTagline": {
+    "description": "Kirish ekranidagi shior. Ilova nomi (KARVON) tarjima qilinmaydi."
+  },
+
+  "languageName": "Oʻzbekcha",
+  "@languageName": {
+    "description": "Shu tilning OʻZ tilidagi nomi. Til tanlash roʻyxatida har bir variant o'z tilida yoziladi: rus tilini bilmaydigan odam 'Узбекский' ni topa olmaydi."
+  },
+
+  "languageChoose": "Tilni tanlang",
+  "@languageChoose": {
+    "description": "Til tanlash oynasining sarlavhasi"
+  },
+
+  "phoneTitle": "Telefon raqamingiz",
+  "phoneSubtitle": "SMS orqali tasdiqlash kodi yuboramiz",
+  "phoneHint": "90 123 45 67",
+  "@phoneHint": {
+    "description": "Raqam maydonidagi namuna. Format Oʻzbekiston uchun bir xil, shuning uchun tarjimada ham oʻzgarmaydi."
+  },
+
+  "phoneNotMobile": "Bu raqam mobil operatorga tegishli emas",
+
+  "phoneOperator": "{operator} raqami",
+  "@phoneOperator": {
+    "description": "Raqam toʻliq kiritilgach operator nomi koʻrsatiladi — bu raqam toʻgʻri ekanining tasdigʻi",
+    "placeholders": {
+      "operator": { "type": "String", "example": "Beeline" }
+    }
+  },
+
+  "actionContinue": "Davom etish",
+
+  "termsAgreement": "Davom etish orqali siz {terms} va {privacy}ga rozilik bildirasiz",
+  "@termsAgreement": {
+    "description": "Shartlar haqidagi jumla. Havola matnlari OʻRNI bilan beriladi, chunki soʻz tartibi tillarda har xil: oʻzbekchada '...ga rozilik bildirasiz' oxirida, inglizchada esa boshida turadi.",
+    "placeholders": {
+      "terms": { "type": "String" },
+      "privacy": { "type": "String" }
+    }
+  },
+
+  "termsOfUse": "foydalanish shartlari",
+  "privacyPolicy": "maxfiylik siyosati"
+}

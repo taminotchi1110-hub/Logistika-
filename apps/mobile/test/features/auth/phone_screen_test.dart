@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:karvon/core/l10n/locale_controller.dart';
 import 'package:karvon/core/providers.dart';
 import 'package:karvon/core/theme/app_theme.dart';
+import 'package:karvon/l10n/app_localizations.dart';
 import 'package:karvon/features/auth/data/auth_repository.dart';
 import 'package:karvon/features/auth/domain/user.dart';
 import 'package:karvon/features/auth/presentation/phone_screen.dart';
@@ -41,7 +43,16 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [authRepositoryProvider.overrideWithValue(repository)],
-        child: MaterialApp.router(theme: AppTheme.light, routerConfig: router),
+        child: MaterialApp.router(
+          theme: AppTheme.light,
+          routerConfig: router,
+          // TARJIMA DELEGATLARI MAJBURIY: ekran `AppLocalizations.of`
+          // ni chaqiradi va ularsiz `null` qaytadi. Bu testlar
+          // 9-bosqichda aynan shu sababdan yiqilgan edi
+          locale: AppLocale.uz.locale,
+          supportedLocales: AppLocale.values.map((value) => value.locale),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+        ),
       ),
     );
     await tester.pump();

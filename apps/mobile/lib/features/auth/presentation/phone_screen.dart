@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:karvon/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/api/api_exception.dart';
+import '../../../core/l10n/locale_controller.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
@@ -82,6 +84,7 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final operator = _isComplete ? operatorName(_digits) : null;
 
     return Scaffold(
@@ -91,9 +94,21 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: AppSpacing.xxxl),
+              // TIL TANLAGICH ENG TEPADA VA KIRISHDAN OLDIN.
+              //
+              // Rus tilida o'qiydigan odam o'zbekcha interfeysni
+              // ko'rib, tilni qayerdan almashtirishni bilmasa, ilovani
+              // yopadi. Sozlamalarga kirish uchun esa avval ro'yxatdan
+              // o'tish kerak — ya'ni "keyin almashtirasiz" ishlamaydi.
+              const Align(
+                alignment: Alignment.centerRight,
+                child: _LanguageButton(),
+              ),
 
-              // Logotip o'rnida — hozircha matn
+              const SizedBox(height: AppSpacing.xl),
+
+              // Logotip o'rnida — hozircha matn.
+              // Ilova nomi TARJIMA QILINMAYDI: u brend
               Text(
                 'KARVON',
                 style: theme.textTheme.displayMedium?.copyWith(
@@ -103,18 +118,18 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
               ),
               const SizedBox(height: AppSpacing.sm),
               Text(
-                'Yuk va haydovchini bogʻlaymiz',
+                l10n.appTagline,
                 style: theme.textTheme.bodyLarge?.copyWith(
                   color: AppColors.textSecondary,
                 ),
               ),
 
-              const SizedBox(height: AppSpacing.xxxl * 1.5),
+              const SizedBox(height: AppSpacing.xxxl),
 
-              Text('Telefon raqamingiz', style: theme.textTheme.titleMedium),
+              Text(l10n.phoneTitle, style: theme.textTheme.titleMedium),
               const SizedBox(height: AppSpacing.sm),
               Text(
-                'SMS orqali tasdiqlash kodi yuboramiz',
+                l10n.phoneSubtitle,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: AppColors.textSecondary,
                 ),
@@ -135,7 +150,7 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
                   _PhoneInputFormatter(),
                 ],
                 decoration: InputDecoration(
-                  hintText: '90 123 45 67',
+                  hintText: l10n.phoneHint,
                   errorText: _error,
                   prefixIcon: Padding(
                     padding: const EdgeInsets.only(
@@ -174,7 +189,7 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
                             ),
                             const SizedBox(width: AppSpacing.xs),
                             Text(
-                              '$operator raqami',
+                              l10n.phoneOperator(operator),
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: AppColors.textSecondary,
                               ),
@@ -187,7 +202,7 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
                             key: const ValueKey('invalid'),
                             padding: const EdgeInsets.only(top: AppSpacing.sm),
                             child: Text(
-                              'Bu raqam mobil operatorga tegishli emas',
+                              l10n.phoneNotMobile,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: AppColors.danger,
                               ),
@@ -199,7 +214,7 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
               const Spacer(),
 
               AppButton(
-                label: 'Davom etish',
+                label: l10n.actionContinue,
                 isLoading: _loading,
                 onPressed: _isValid ? _submit : null,
               ),
@@ -207,29 +222,12 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
 
               // Shartlar — App Store va Google Play talabi
               Text.rich(
-                TextSpan(
-                  text: 'Davom etish orqali siz ',
-                  style: theme.textTheme.bodySmall?.copyWith(
+                _termsSpan(
+                  sentence: l10n.termsAgreement(l10n.termsOfUse, l10n.privacyPolicy),
+                  links: [l10n.termsOfUse, l10n.privacyPolicy],
+                  base: theme.textTheme.bodySmall?.copyWith(
                     color: AppColors.textSecondary,
                   ),
-                  children: const [
-                    TextSpan(
-                      text: 'foydalanish shartlari',
-                      style: TextStyle(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    TextSpan(text: ' va '),
-                    TextSpan(
-                      text: 'maxfiylik siyosati',
-                      style: TextStyle(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    TextSpan(text: 'ga rozilik bildirasiz'),
-                  ],
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -240,6 +238,122 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
       ),
     );
   }
+}
+
+/// Shartlar jumlasini havolali bo'laklarga ajratadi.
+///
+/// NEGA JUMLA BUTUNLIGICHA TARJIMA QILINADI, bo'laklarga bo'linmasdan:
+/// so'z tartibi tillarda har xil. O'zbekchada "...ga rozilik
+/// bildirasiz" oxirida, inglizchada esa "By continuing you agree to
+/// the..." boshida turadi. Bo'laklarni qo'shib yozish (`'siz ' + link
+/// + ' va '`) faqat bitta tilda to'g'ri chiqadi.
+///
+/// Shuning uchun tarjimon TO'LIQ jumlani ko'radi, kod esa havola
+/// matnlarini o'sha jumla ichidan topib, ularga uslub beradi.
+@visibleForTesting
+TextSpan termsSpan({
+  required String sentence,
+  required List<String> links,
+  TextStyle? base,
+  TextStyle? linkStyle,
+}) =>
+    _termsSpan(sentence: sentence, links: links, base: base, linkStyle: linkStyle);
+
+TextSpan _termsSpan({
+  required String sentence,
+  required List<String> links,
+  TextStyle? base,
+  TextStyle? linkStyle,
+}) {
+  final style = linkStyle ??
+      const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600);
+
+  final children = <TextSpan>[];
+  var rest = sentence;
+
+  while (rest.isNotEmpty) {
+    // Eng yaqin havolani topamiz: tarjimada ular istalgan tartibda
+    // kelishi mumkin
+    var nearest = -1;
+    var nearestLink = '';
+    for (final link in links) {
+      if (link.isEmpty) continue;
+      final index = rest.indexOf(link);
+      if (index != -1 && (nearest == -1 || index < nearest)) {
+        nearest = index;
+        nearestLink = link;
+      }
+    }
+
+    if (nearest == -1) {
+      children.add(TextSpan(text: rest));
+      break;
+    }
+
+    if (nearest > 0) children.add(TextSpan(text: rest.substring(0, nearest)));
+    children.add(TextSpan(text: nearestLink, style: style));
+    rest = rest.substring(nearest + nearestLink.length);
+  }
+
+  return TextSpan(style: base, children: children);
+}
+
+/// Til tanlash tugmasi.
+class _LanguageButton extends ConsumerWidget {
+  const _LanguageButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final current = ref.watch(localeControllerProvider);
+
+    return TextButton.icon(
+      onPressed: () => _choose(context, ref, current),
+      icon: const Icon(Icons.language_rounded, size: AppSizes.iconSm),
+      // Joriy tilning O'Z nomi: "Русский", "Oʻzbekcha". Tarjima
+      // qilingan nom ("Rus tili") bu yerda foydasiz — tilni
+      // bilmaydigan odam uni o'qiy olmaydi
+      label: Text(_nameOf(current)),
+    );
+  }
+
+  Future<void> _choose(BuildContext context, WidgetRef ref, AppLocale current) async {
+    final selected = await showModalBottomSheet<AppLocale>(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              AppLocalizations.of(sheetContext).languageChoose,
+              style: Theme.of(sheetContext).textTheme.titleMedium,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            for (final value in AppLocale.values)
+              ListTile(
+                title: Text(_nameOf(value)),
+                trailing: value == current
+                    ? const Icon(Icons.check_rounded, color: AppColors.primary)
+                    : null,
+                onTap: () => Navigator.of(sheetContext).pop(value),
+              ),
+            const SizedBox(height: AppSpacing.md),
+          ],
+        ),
+      ),
+    );
+
+    if (selected != null) {
+      await ref.read(localeControllerProvider.notifier).change(selected);
+    }
+  }
+
+  /// Har bir til O'Z tilida yoziladi.
+  static String _nameOf(AppLocale locale) => switch (locale) {
+        AppLocale.uz => 'Oʻzbekcha',
+        AppLocale.ru => 'Русский',
+        AppLocale.en => 'English',
+      };
 }
 
 /// Kiritish paytida raqamni ajratadi: `90 123 45 67`.

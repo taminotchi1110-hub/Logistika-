@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:karvon/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'core/l10n/locale_controller.dart';
 import 'core/providers.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
@@ -17,6 +19,7 @@ class KarvonApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
+    final locale = ref.watch(localeControllerProvider);
 
     return MaterialApp.router(
       title: 'KARVON',
@@ -26,6 +29,16 @@ class KarvonApp extends ConsumerWidget {
       // yorqin ekran ko'zni charchatadi
       themeMode: ThemeMode.light,
       routerConfig: router,
+
+      // --- tillar ---
+      //
+      // Til TANLOVDAN olinadi, tizimdan emas: O'zbekistonda telefon
+      // ruscha, foydalanuvchi esa o'zbekcha o'qishi juda keng
+      // tarqalgan holat. Tizim tili faqat BOSHLANG'ICH qiymat sifatida
+      // ishlatiladi (`LocaleController`).
+      locale: locale.locale,
+      supportedLocales: AppLocale.values.map((value) => value.locale),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
       builder: (context, child) {
         // Tizim shrift o'lchamini cheklaymiz: 200% da interfeys buziladi.
         // 130% gacha ruxsat — bu yoshi katta foydalanuvchilar uchun yetarli.

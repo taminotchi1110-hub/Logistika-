@@ -42,8 +42,8 @@ Batafsil: [docs/13-backend.md](docs/13-backend.md)
 | Backend unit | 213 | `npm test --workspace=@karvon/api` |
 | Backend uchidan-uchiga | 425 | `bash scripts/test-all.sh` |
 | Admin panel | 188 | `npm run admin:test` |
-| Mobil unit/widget | 256 | `npm run mobile:test` |
-| Mobil integratsiya | 69 | `npm run mobile:test:api` |
+| Mobil unit/widget | 276 | `npm run mobile:test` |
+| Mobil integratsiya | 81 | `npm run mobile:test:api` |
 
 Hammasi har push va PR da avtomatik ishlaydi ([ci.yml](.github/workflows/ci.yml)).
 

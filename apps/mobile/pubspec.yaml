@@ -78,7 +78,10 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  # generate: true — l10n .arb fayllari qoʻshilgach yoqiladi
+  # `.arb` fayllaridan `AppLocalizations` klassini generatsiya qiladi
+  # (sozlamalari `l10n.yaml` da). Natija `.dart_tool` ga tushadi va
+  # repozitoriyga kirmaydi
+  generate: true
 
   fonts:
     - family: Inter

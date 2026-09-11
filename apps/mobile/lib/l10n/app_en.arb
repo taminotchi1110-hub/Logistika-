@@ -1,0 +1,24 @@
+{
+  "@@locale": "en",
+
+  "appTagline": "Connecting cargo and drivers",
+
+  "languageName": "English",
+
+  "languageChoose": "Choose language",
+
+  "phoneTitle": "Your phone number",
+  "phoneSubtitle": "We'll send a confirmation code by SMS",
+  "phoneHint": "90 123 45 67",
+
+  "phoneNotMobile": "This number does not belong to a mobile operator",
+
+  "phoneOperator": "{operator} number",
+
+  "actionContinue": "Continue",
+
+  "termsAgreement": "By continuing you agree to the {terms} and {privacy}",
+
+  "termsOfUse": "terms of use",
+  "privacyPolicy": "privacy policy"
+}

@@ -1,0 +1,24 @@
+{
+  "@@locale": "ru",
+
+  "appTagline": "Соединяем груз и водителя",
+
+  "languageName": "Русский",
+
+  "languageChoose": "Выберите язык",
+
+  "phoneTitle": "Ваш номер телефона",
+  "phoneSubtitle": "Отправим код подтверждения по SMS",
+  "phoneHint": "90 123 45 67",
+
+  "phoneNotMobile": "Этот номер не принадлежит мобильному оператору",
+
+  "phoneOperator": "Номер {operator}",
+
+  "actionContinue": "Продолжить",
+
+  "termsAgreement": "Продолжая, вы соглашаетесь с {terms} и {privacy}",
+
+  "termsOfUse": "условиями использования",
+  "privacyPolicy": "политикой конфиденциальности"
+}

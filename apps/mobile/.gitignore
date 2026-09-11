@@ -46,3 +46,7 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Tarjimalar `.arb` dan generatsiya qilinadi (`flutter pub get`)
+lib/l10n/app_localizations*.dart
+l10n-untranslated.json

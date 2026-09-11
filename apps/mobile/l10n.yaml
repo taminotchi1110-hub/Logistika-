@@ -1,0 +1,22 @@
+# Tarjimalar generatsiyasi.
+#
+# SHABLON — O'ZBEKCHA (`app_uz.arb`). Sabab: matnlar shu tilda
+# yoziladi va mahsulot qarorlari shu tilda muhokama qilinadi. Inglizcha
+# shablon tanlansa, har bir yangi matn avval tarjima qilinishi kerak
+# bo'lardi va bu ishni sekinlashtiradi.
+arb-dir: lib/l10n
+template-arb-file: app_uz.arb
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+
+# `AppLocalizations.of(context)` `null` qaytarmaydi.
+#
+# Delegat `MaterialApp` da doim ulangan, ya'ni `null` holati amalda
+# yuz bermaydi — lekin nullable bo'lsa, har bir chaqiruvda `!` yozish
+# kerak bo'ladi va u shovqin yaratadi.
+nullable-getter: false
+
+# Tarjimasi yo'q kalit uchun ogohlantirish. Yangi matn qo'shilganda
+# uni rus va ingliz tillariga ko'chirish ESDAN CHIQADI — kompilyator
+# buni aytmaydi, shuning uchun shu ro'yxat kerak.
+untranslated-messages-file: l10n-untranslated.json
