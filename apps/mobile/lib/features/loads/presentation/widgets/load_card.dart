@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/utils/money.dart';
 import '../../domain/load.dart';
+import 'package:karvon/core/l10n/formatters.dart';
+import 'package:karvon/l10n/app_localizations.dart';
+import 'package:karvon/features/loads/presentation/load_l10n.dart';
 
 /// Yuk kartochkasi — lentaning asosiy elementi.
 ///
@@ -43,6 +45,7 @@ class LoadCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
 
     return Card(
       child: InkWell(
@@ -65,22 +68,22 @@ class LoadCard extends StatelessWidget {
                     children: [
                       if (showStatus) _StatusBadge(status: load.status),
                       if (load.isUrgent)
-                        const _Badge(
-                          label: 'Shoshilinch',
+                        _Badge(
+                          label: l10n.badgeUrgent,
                           icon: Icons.bolt_rounded,
                           color: AppColors.warning,
                           background: AppColors.warningLight,
                         ),
                       if (showMatchScore && load.matchScore != null)
                         _Badge(
-                          label: '${load.matchScore!.round()}% mos',
+                          label: l10n.badgeMatch(load.matchScore!.round()),
                           icon: Icons.auto_awesome_rounded,
                           color: AppColors.success,
                           background: AppColors.successLight,
                         ),
                       if (load.isEscrow)
-                        const _Badge(
-                          label: 'Kafolatli toʻlov',
+                        _Badge(
+                          label: l10n.badgeEscrow,
                           icon: Icons.verified_user_rounded,
                           color: AppColors.primary,
                           background: AppColors.primaryLight,
@@ -108,13 +111,13 @@ class LoadCard extends StatelessWidget {
                 children: [
                   _Detail(
                     icon: Icons.scale_outlined,
-                    text: formatWeight(load.weightKg),
+                    text: context.weight(load.weightKg),
                   ),
                   const SizedBox(width: AppSpacing.lg),
                   if (load.distanceKm != null)
                     _Detail(
                       icon: Icons.route_outlined,
-                      text: formatDistance(load.distanceKm),
+                      text: context.distance(load.distanceKm),
                     ),
                   const Spacer(),
                   // Olish nuqtasigacha masofa — haydovchi uchun eng
@@ -122,7 +125,7 @@ class LoadCard extends StatelessWidget {
                   if (load.distanceToPickupKm != null)
                     _Detail(
                       icon: Icons.near_me_outlined,
-                      text: 'Sizga ${formatDistance(load.distanceToPickupKm)}',
+                      text: l10n.distanceToYou(context.distance(load.distanceToPickupKm)),
                       highlighted: load.distanceToPickupKm! <= 25,
                     ),
                 ],
@@ -139,7 +142,7 @@ class LoadCard extends StatelessWidget {
                   ),
                   const SizedBox(width: AppSpacing.xs),
                   Text(
-                    _formatPickupWindow(load.pickupFrom, load.pickupTo),
+                    _formatPickupWindow(l10n, load.pickupFrom, load.pickupTo),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: AppColors.textSecondary,
                     ),
@@ -147,7 +150,7 @@ class LoadCard extends StatelessWidget {
                   const Spacer(),
                   if (load.offerCount > 0)
                     Text(
-                      '${load.offerCount} taklif',
+                      l10n.offersCount(load.offerCount),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: AppColors.primary,
                         fontWeight: FontWeight.w600,
@@ -160,7 +163,7 @@ class LoadCard extends StatelessWidget {
               if (showMatchScore && load.matchReasons.isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.sm),
                 Text(
-                  load.matchReasons.join(' · '),
+                  load.matchReasons.map((reason) => localizeMatchReason(l10n, reason)).join(' · '),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: AppColors.success,
                   ),
@@ -178,16 +181,16 @@ class LoadCard extends StatelessWidget {
   /// Yuklash oynasi: "Bugun 14:00–18:00" yoki "9-sent 08:00–12:00".
   ///
   /// "Bugun"/"Ertaga" so'zlari sanadan ko'ra tezroq o'qiladi.
-  static String _formatPickupWindow(DateTime from, DateTime to) {
+  static String _formatPickupWindow(AppLocalizations l10n, DateTime from, DateTime to) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final day = DateTime(from.year, from.month, from.day);
     final diff = day.difference(today).inDays;
 
     final prefix = switch (diff) {
-      0 => 'Bugun',
-      1 => 'Ertaga',
-      _ => '${from.day}-${_monthShort(from.month)}',
+      0 => l10n.dateToday,
+      1 => l10n.dateTomorrow,
+      _ => l10n.dateDayMonth(from.day, _monthShort(l10n, from.month)),
     };
 
     final fromTime = '${from.hour.toString().padLeft(2, '0')}:'
@@ -198,12 +201,13 @@ class LoadCard extends StatelessWidget {
     return '$prefix $fromTime–$toTime';
   }
 
-  static String _monthShort(int month) {
-    const months = [
-      'yan', 'fev', 'mar', 'apr', 'may', 'iyun',
-      'iyul', 'avg', 'sent', 'okt', 'noy', 'dek',
-    ];
-    return months[(month - 1).clamp(0, 11)];
+  /// Oy nomlari BITTA kalitda, vergul bilan (`monthsShort`): 12 ta
+  /// alohida kalit tarjimonni charchatadi va birortasi tushib qolishi
+  /// oson — shunda ruscha sanada bitta oy o'zbekcha chiqib qolardi.
+  static String _monthShort(AppLocalizations l10n, int month) {
+    final months = l10n.monthsShort.split(',');
+    final index = (month - 1).clamp(0, months.length - 1);
+    return months[index].trim();
   }
 }
 
@@ -275,13 +279,13 @@ class _Price extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Text(
-            'Kelishuv',
+            context.l10n.priceNegotiableLine1,
             style: theme.textTheme.titleMedium?.copyWith(
               color: AppColors.accentDark,
             ),
           ),
           Text(
-            'asosida',
+            context.l10n.priceNegotiableLine2,
             style: theme.textTheme.bodySmall?.copyWith(
               color: AppColors.textSecondary,
             ),
@@ -294,14 +298,14 @@ class _Price extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Text(
-          formatSoum(load.priceTiyin, withSuffix: false),
+          context.soum(load.priceTiyin, withSuffix: false),
           style: theme.textTheme.titleLarge?.copyWith(
             color: AppColors.primary,
             fontFeatures: const [FontFeature.tabularFigures()],
           ),
         ),
         Text(
-          'soʻm',
+          context.l10n.unitSoum,
           style: theme.textTheme.bodySmall?.copyWith(
             color: AppColors.textSecondary,
           ),
@@ -386,7 +390,7 @@ class _StatusBadge extends StatelessWidget {
     };
 
     return _Badge(
-      label: status.label,
+      label: status.localized(context.l10n),
       icon: icon,
       color: color,
       background: background,

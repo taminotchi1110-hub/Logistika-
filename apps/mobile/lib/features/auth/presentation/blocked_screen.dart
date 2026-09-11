@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:karvon/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -20,6 +21,7 @@ class BlockedScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final user = ref.watch(currentUserProvider);
     final suspended = user?.status == UserStatus.suspended;
 
@@ -45,15 +47,13 @@ class BlockedScreen extends ConsumerWidget {
               ),
               const SizedBox(height: AppSpacing.xl),
               Text(
-                suspended ? 'Akkaunt vaqtincha toʻxtatilgan' : 'Akkaunt bloklangan',
+                suspended ? l10n.blockedSuspended : l10n.blockedBanned,
                 style: theme.textTheme.headlineMedium,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: AppSpacing.md),
               Text(
-                'Batafsil maʼlumot uchun qoʻllab-quvvatlash xizmatiga '
-                'murojaat qiling. Ular sizga sababni tushuntiradi va '
-                'tiklash imkoniyatini koʻrib chiqadi.',
+                l10n.blockedBody,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: AppColors.textSecondary,
                 ),
@@ -61,13 +61,13 @@ class BlockedScreen extends ConsumerWidget {
               ),
               const SizedBox(height: AppSpacing.xxxl),
               AppButton(
-                label: 'Qoʻllab-quvvatlash',
+                label: l10n.actionSupport,
                 icon: Icons.support_agent_rounded,
                 onPressed: () => launchUrl(Uri.parse('tel:+998712000000')),
               ),
               const SizedBox(height: AppSpacing.md),
               AppButton.secondary(
-                label: 'Chiqish',
+                label: l10n.actionLogout,
                 onPressed: () => ref.read(authStateProvider.notifier).logout(),
               ),
             ],

@@ -116,4 +116,38 @@ void main() {
       expect(formatDuration(0), '—');
     });
   });
+
+  group('boshqa til birliklari', () {
+    const ru = UnitLabels(
+      soum: 'сум',
+      thousand: 'тыс.',
+      million: 'млн',
+      ton: 'т',
+      kg: 'кг',
+      km: 'км',
+      meter: 'м',
+      hour: 'ч',
+      minute: 'мин',
+    );
+
+    test('★ BIRLIK ALMASHADI, RAQAM FORMATI QOLADI', () {
+      // Probel bilan ajratish tilga bogʻliq emas: raqamni oʻqiydigan
+      // odam oʻzgarmaydi, "1,000" esa "bir butun nol" deb oʻqiladi
+      expect(formatSoum('24000000', units: ru), '240 000 сум');
+      expect(formatSoumShort('240000000', units: ru), '2.4 млн сум');
+    });
+
+    test('ogʻirlik, masofa, vaqt', () {
+      expect(formatWeight(4500, units: ru), '4.5 т');
+      expect(formatWeight(750, units: ru), '750 кг');
+      expect(formatDistance(0.8, units: ru), '800 м');
+      expect(formatDuration(95, units: ru), '1 ч 35 мин');
+    });
+
+    test('★ STANDART — OʻZBEKCHA', () {
+      // Mavjud chaqiruvlar parametrsiz ishlashda davom etadi
+      expect(formatSoum('100'), '1 soʻm');
+      expect(UnitLabels.uz.hour, 'soat');
+    });
+  });
 }

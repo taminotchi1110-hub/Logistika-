@@ -10,6 +10,7 @@ import '../../../shared/widgets/app_states.dart';
 import '../data/loads_repository.dart';
 import '../domain/load.dart';
 import 'widgets/load_card.dart';
+import 'package:karvon/core/l10n/formatters.dart';
 
 final loadsRepositoryProvider = Provider<LoadsRepository>((ref) {
   return LoadsRepository(ref.watch(apiClientProvider));
@@ -159,7 +160,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Yuklar'),
+        title: Text(context.l10n.feedTitle),
         actions: [
           // Filtr tugmasi — yoqilgan filtrlar soni belgisi bilan
           Padding(
@@ -168,7 +169,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
               children: [
                 IconButton(
                   icon: const Icon(Icons.tune_rounded),
-                  tooltip: 'Filtr',
+                  tooltip: context.l10n.feedFilter,
                   onPressed: () => _openFilters(context),
                 ),
                 if (state.filter.activeCount > 0)
@@ -234,12 +235,9 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
           SizedBox(height: MediaQuery.sizeOf(context).height * 0.15),
           EmptyState(
             icon: Icons.explore_off_outlined,
-            title: hasFilters ? 'Filtrga mos yuk yoʻq' : 'Hozircha yuk yoʻq',
-            message: hasFilters
-                ? 'Filtrni kengaytiring — masalan masofa yoki ogʻirlik chegarasini oshiring'
-                : 'Yangi eʼlonlar paydo boʻlishi bilan bu yerda koʻrinadi. '
-                    'Yoʻnalishlaringizni sozlasangiz mos yuklar haqida xabar beramiz.',
-            actionLabel: hasFilters ? 'Filtrni tozalash' : null,
+            title: hasFilters ? context.l10n.feedEmptyFiltered : context.l10n.feedEmpty,
+            message: hasFilters ? context.l10n.feedEmptyFilteredHint : context.l10n.feedEmptyHint,
+            actionLabel: hasFilters ? context.l10n.feedClearFilter : null,
             onAction: hasFilters
                 ? () => ref
                     .read(feedProvider.notifier)
@@ -283,7 +281,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
         padding: const EdgeInsets.all(AppSpacing.xl),
         child: Center(
           child: Text(
-            'Hammasi shu',
+            context.l10n.feedEnd,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppColors.textSecondary,
                 ),
@@ -298,7 +296,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
   void _openFilters(BuildContext context) {
     // Filtr oynasi keyingi bosqichda
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Filtr oynasi tayyorlanmoqda')),
+      SnackBar(content: Text(context.l10n.feedFilterSoon)),
     );
   }
 }

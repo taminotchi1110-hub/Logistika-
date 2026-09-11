@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:karvon/l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -126,7 +127,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
       _controller.clear();
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Yangi kod yuborildi')),
+        SnackBar(content: Text(AppLocalizations.of(context).otpResent)),
       );
     } on ApiException catch (error) {
       if (!mounted) return;
@@ -140,6 +141,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(leading: const BackButton()),
@@ -149,11 +151,11 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Tasdiqlash kodi', style: theme.textTheme.headlineLarge),
+              Text(l10n.otpTitle, style: theme.textTheme.headlineLarge),
               const SizedBox(height: AppSpacing.sm),
               Text.rich(
                 TextSpan(
-                  text: 'Kod yuborildi: ',
+                  text: '${l10n.otpSentTo} ',
                   style: theme.textTheme.bodyLarge?.copyWith(
                     color: AppColors.textSecondary,
                   ),
@@ -223,7 +225,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                       const SizedBox(width: AppSpacing.sm),
                       Expanded(
                         child: Text(
-                          'Dev rejimi — kod: ${widget.challenge.devCode}',
+                          l10n.otpDevCode(widget.challenge.devCode!),
                           style: theme.textTheme.bodySmall,
                         ),
                       ),
@@ -232,7 +234,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                           _controller.text = widget.challenge.devCode!;
                           _verify(widget.challenge.devCode!);
                         },
-                        child: const Text('Qoʻyish'),
+                        child: Text(l10n.otpPaste),
                       ),
                     ],
                   ),
@@ -244,7 +246,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
               Center(
                 child: _secondsLeft > 0
                     ? Text(
-                        'Qayta yuborish: $_secondsLeft soniya',
+                        l10n.otpResendIn(_secondsLeft),
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: AppColors.textSecondary,
                         ),
@@ -252,14 +254,14 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                     : TextButton.icon(
                         onPressed: _resend,
                         icon: const Icon(Icons.refresh_rounded, size: AppSizes.iconSm),
-                        label: const Text('Kodni qayta yuborish'),
+                        label: Text(l10n.otpResend),
                       ),
               ),
 
               const Spacer(),
 
               AppButton(
-                label: 'Tasdiqlash',
+                label: l10n.actionConfirm,
                 isLoading: _loading,
                 onPressed: _controller.text.length == _codeLength
                     ? () => _verify(_controller.text)

@@ -13,6 +13,50 @@ library;
 /// 1 so'm = 100 tiyin.
 const int tiyinPerSoum = 100;
 
+/// O'lchov birliklari yozuvi.
+///
+/// NEGA PARAMETR, GLOBAL TIL EMAS: bu fayl sof funksiyalardan iborat va
+/// shunday qolishi kerak — uni Flutter'siz sinash mumkin. Til esa
+/// `BuildContext` dan keladi va `core/l10n/formatters.dart` dagi
+/// kengaytma orqali uzatiladi (`context.soum(...)`).
+///
+/// Standart — O'ZBEKCHA: mavjud chaqiruvlar va testlar o'zgarmaydi.
+class UnitLabels {
+  const UnitLabels({
+    required this.soum,
+    required this.thousand,
+    required this.million,
+    required this.ton,
+    required this.kg,
+    required this.km,
+    required this.meter,
+    required this.hour,
+    required this.minute,
+  });
+
+  final String soum;
+  final String thousand;
+  final String million;
+  final String ton;
+  final String kg;
+  final String km;
+  final String meter;
+  final String hour;
+  final String minute;
+
+  static const uz = UnitLabels(
+    soum: 'soʻm',
+    thousand: 'ming',
+    million: 'mln',
+    ton: 't',
+    kg: 'kg',
+    km: 'km',
+    meter: 'm',
+    hour: 'soat',
+    minute: 'daq',
+  );
+}
+
 /// Backend'dan kelgan qiymatni tiyinga o'giradi.
 ///
 /// `null`, bo'sh satr va noto'g'ri qiymat — 0. Ilova moliyaviy
@@ -32,8 +76,15 @@ BigInt parseTiyin(Object? value) {
 ///
 /// Uch xonalab ajratishda PROBEL ishlatiladi — O'zbekistonda qabul
 /// qilingan format. Vergul yoki nuqta chalkashtiradi: 1,000 ni ba'zi
-/// foydalanuvchilar "bir butun nol" deb o'qiydi.
-String formatSoum(Object? tiyin, {bool withSuffix = true, bool withTiyin = false}) {
+/// foydalanuvchilar "bir butun nol" deb o'qiydi. Bu qoida TILGA
+/// BOG'LIQ EMAS: inglizcha interfeysda ham summa probel bilan
+/// ajratiladi, chunki raqamni o'qiydigan odam o'zgarmaydi.
+String formatSoum(
+  Object? tiyin, {
+  bool withSuffix = true,
+  bool withTiyin = false,
+  UnitLabels units = UnitLabels.uz,
+}) {
   final value = parseTiyin(tiyin);
   final negative = value.isNegative;
   final abs = value.abs();
@@ -43,7 +94,7 @@ String formatSoum(Object? tiyin, {bool withSuffix = true, bool withTiyin = false
 
   final grouped = _groupDigits(soum.toString());
   final fraction = withTiyin ? ',${rest.toString().padLeft(2, '0')}' : '';
-  final suffix = withSuffix ? ' soʻm' : '';
+  final suffix = withSuffix ? ' ${units.soum}' : '';
 
   return '${negative ? '−' : ''}$grouped$fraction$suffix';
 }
@@ -51,19 +102,19 @@ String formatSoum(Object? tiyin, {bool withSuffix = true, bool withTiyin = false
 /// Qisqa shakl — ro'yxatlarda joy tejash uchun.
 ///
 /// `24000000` → `"240 ming"`, `2400000000` → `"24 mln"`.
-String formatSoumShort(Object? tiyin) {
+String formatSoumShort(Object? tiyin, {UnitLabels units = UnitLabels.uz}) {
   final soum = parseTiyin(tiyin) ~/ BigInt.from(tiyinPerSoum);
   final abs = soum.abs();
 
   if (abs >= BigInt.from(1000000)) {
     final millions = soum / BigInt.from(1000000);
-    return '${_trimZero(millions)} mln soʻm';
+    return '${_trimZero(millions)} ${units.million} ${units.soum}';
   }
   if (abs >= BigInt.from(1000)) {
     final thousands = soum / BigInt.from(1000);
-    return '${_trimZero(thousands)} ming soʻm';
+    return '${_trimZero(thousands)} ${units.thousand} ${units.soum}';
   }
-  return '$soum soʻm';
+  return '$soum ${units.soum}';
 }
 
 /// Foydalanuvchi kiritgan so'mni tiyinga o'giradi.
@@ -103,29 +154,29 @@ String _trimZero(double value) {
 ///
 /// Tonnaga o'tish chegarasi 1000 kg: yuk e'lonlarida "4000 kg" emas,
 /// "4 t" o'qish osonroq va bozorda shunday gapiriladi.
-String formatWeight(int kg) {
+String formatWeight(int kg, {UnitLabels units = UnitLabels.uz}) {
   if (kg >= 1000) {
     final tons = kg / 1000;
-    return '${tons % 1 == 0 ? tons.toStringAsFixed(0) : tons.toStringAsFixed(1)} t';
+    return '${tons % 1 == 0 ? tons.toStringAsFixed(0) : tons.toStringAsFixed(1)} ${units.ton}';
   }
-  return '$kg kg';
+  return '$kg ${units.kg}';
 }
 
 /// Masofani ko'rsatish: `328.4` → `"328 km"`, `0.8` → `"800 m"`.
-String formatDistance(num? km) {
+String formatDistance(num? km, {UnitLabels units = UnitLabels.uz}) {
   if (km == null) return '—';
-  if (km < 1) return '${(km * 1000).round()} m';
-  return '${km.round()} km';
+  if (km < 1) return '${(km * 1000).round()} ${units.meter}';
+  return '${km.round()} ${units.km}';
 }
 
 /// Davomiylik: `95` → `"1 soat 35 daq"`.
-String formatDuration(int? minutes) {
+String formatDuration(int? minutes, {UnitLabels units = UnitLabels.uz}) {
   if (minutes == null || minutes <= 0) return '—';
 
   final hours = minutes ~/ 60;
   final rest = minutes % 60;
 
-  if (hours == 0) return '$rest daq';
-  if (rest == 0) return '$hours soat';
-  return '$hours soat $rest daq';
+  if (hours == 0) return '$rest ${units.minute}';
+  if (rest == 0) return '$hours ${units.hour}';
+  return '$hours ${units.hour} $rest ${units.minute}';
 }

@@ -13,6 +13,8 @@ import '../../loads/presentation/feed_screen.dart';
 import '../../loads/presentation/my_loads_screen.dart';
 import '../../orders/presentation/orders_screen.dart';
 import '../../profile/presentation/profile_providers.dart';
+import 'package:karvon/core/l10n/formatters.dart';
+import 'package:karvon/l10n/app_localizations.dart';
 
 /// Asosiy ekran — pastki navigatsiya bilan.
 ///
@@ -86,7 +88,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
               backgroundColor: AppColors.gray900,
               icon: const Icon(Icons.swap_horiz_rounded, color: AppColors.white),
               label: Text(
-                isDriverView ? 'Yuk beruvchi rejimi' : 'Haydovchi rejimi',
+                isDriverView ? context.l10n.modeShipper : context.l10n.modeDriver,
                 style: const TextStyle(color: AppColors.white),
               ),
             )
@@ -96,25 +98,25 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
   List<_Tab> get _shipperTabs => [
         _Tab(
-          label: 'Yuklarim',
+          label: context.l10n.tabMyLoads,
           icon: Icons.inventory_2_outlined,
           activeIcon: Icons.inventory_2_rounded,
           builder: (_) => const MyLoadsScreen(),
         ),
         _Tab(
-          label: 'Buyurtmalar',
+          label: context.l10n.tabOrders,
           icon: Icons.receipt_long_outlined,
           activeIcon: Icons.receipt_long_rounded,
           builder: (_) => const OrdersScreen(),
         ),
         _Tab(
-          label: 'Xabarlar',
+          label: context.l10n.tabMessages,
           icon: Icons.chat_bubble_outline_rounded,
           activeIcon: Icons.chat_bubble_rounded,
           builder: (_) => const ConversationsScreen(),
         ),
         _Tab(
-          label: 'Profil',
+          label: context.l10n.tabProfile,
           icon: Icons.person_outline_rounded,
           activeIcon: Icons.person_rounded,
           builder: (_) => const ProfileTab(),
@@ -123,7 +125,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
   List<_Tab> get _driverTabs => [
         _Tab(
-          label: 'Lenta',
+          label: context.l10n.tabFeed,
           icon: Icons.explore_outlined,
           activeIcon: Icons.explore_rounded,
           builder: (_) => const FeedScreen(),
@@ -131,19 +133,19 @@ class _HomeShellState extends ConsumerState<HomeShell> {
         // Bir xil ekran, boshqa sarlavha: haydovchi uchun bu "reys",
         // mijoz uchun "buyurtma" — atama bozorda shunday ishlatiladi
         _Tab(
-          label: 'Reyslarim',
+          label: context.l10n.tabTrips,
           icon: Icons.local_shipping_outlined,
           activeIcon: Icons.local_shipping_rounded,
-          builder: (_) => const OrdersScreen(title: 'Reyslarim'),
+          builder: (context) => OrdersScreen(title: context.l10n.tabTrips),
         ),
         _Tab(
-          label: 'Xabarlar',
+          label: context.l10n.tabMessages,
           icon: Icons.chat_bubble_outline_rounded,
           activeIcon: Icons.chat_bubble_rounded,
           builder: (_) => const ConversationsScreen(),
         ),
         _Tab(
-          label: 'Profil',
+          label: context.l10n.tabProfile,
           icon: Icons.person_outline_rounded,
           activeIcon: Icons.person_rounded,
           builder: (_) => const ProfileTab(),
@@ -172,12 +174,13 @@ class ProfileTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final user = ref.watch(currentUserProvider);
 
     if (user == null) return const Scaffold(body: LoadingState());
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Profil')),
+      appBar: AppBar(title: Text(l10n.profileTitle)),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         children: [
@@ -201,7 +204,7 @@ class ProfileTab extends ConsumerWidget {
                     Text(user.fullName, style: theme.textTheme.titleLarge),
                     const SizedBox(height: 2),
                     Text(
-                      user.role.label,
+                      user.role.localized(l10n),
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: AppColors.textSecondary,
                       ),
@@ -219,7 +222,7 @@ class ProfileTab extends ConsumerWidget {
                           ),
                           const SizedBox(width: 2),
                           Text(
-                            '${user.ratingAvg.toStringAsFixed(1)} · ${user.ratingCount} baho',
+                            l10n.profileRatingSummary(user.ratingAvg.toStringAsFixed(1), user.ratingCount),
                             style: theme.textTheme.bodySmall,
                           ),
                         ],
@@ -235,7 +238,7 @@ class ProfileTab extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(AppRadius.pill),
                         ),
                         child: Text(
-                          'Yangi foydalanuvchi',
+                          l10n.profileNewUser,
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: AppColors.info,
                             fontWeight: FontWeight.w600,
@@ -261,15 +264,15 @@ class ProfileTab extends ConsumerWidget {
 
           ListTile(
             leading: const Icon(Icons.account_balance_wallet_outlined),
-            title: const Text('Hamyon'),
-            subtitle: const Text('Balans, toʻldirish va yechish'),
+            title: Text(l10n.menuWallet),
+            subtitle: Text(l10n.menuWalletSubtitle),
             trailing: const Icon(Icons.chevron_right_rounded),
             onTap: () => context.push('/wallet'),
           ),
           const Divider(),
           ListTile(
             leading: const Icon(Icons.person_outline_rounded),
-            title: const Text('Maʼlumotlarim'),
+            title: Text(l10n.menuMyData),
             subtitle: Text(user.fullName),
             trailing: const Icon(Icons.chevron_right_rounded),
             onTap: () => _editProfile(context, ref, user),
@@ -277,7 +280,7 @@ class ProfileTab extends ConsumerWidget {
           const Divider(),
           ListTile(
             leading: const Icon(Icons.logout_rounded, color: AppColors.danger),
-            title: const Text('Chiqish', style: TextStyle(color: AppColors.danger)),
+            title: Text(l10n.actionLogout, style: const TextStyle(color: AppColors.danger)),
             onTap: () => _confirmLogout(context, ref),
           ),
         ],
@@ -297,20 +300,20 @@ class ProfileTab extends ConsumerWidget {
     final saved = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Maʼlumotlarim'),
+        title: Text(AppLocalizations.of(context).menuMyData),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: firstName,
               textCapitalization: TextCapitalization.words,
-              decoration: const InputDecoration(labelText: 'Ism'),
+              decoration: InputDecoration(labelText: AppLocalizations.of(context).fieldFirstName),
             ),
             const SizedBox(height: AppSpacing.md),
             TextField(
               controller: lastName,
               textCapitalization: TextCapitalization.words,
-              decoration: const InputDecoration(labelText: 'Familiya'),
+              decoration: InputDecoration(labelText: AppLocalizations.of(context).fieldLastName),
             ),
             const SizedBox(height: AppSpacing.lg),
             Row(
@@ -323,7 +326,7 @@ class ProfileTab extends ConsumerWidget {
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
-                    '${user.phone} — oʻzgartirib boʻlmaydi',
+                    AppLocalizations.of(context).phoneNotEditable(user.phone),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: AppColors.textSecondary,
                         ),
@@ -336,11 +339,11 @@ class ProfileTab extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Bekor qilish'),
+            child: Text(AppLocalizations.of(context).actionCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Saqlash'),
+            child: Text(AppLocalizations.of(context).actionSave),
           ),
         ],
       ),
@@ -369,16 +372,19 @@ class ProfileTab extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Chiqish'),
-        content: const Text('Akkauntdan chiqmoqchimisiz?'),
+        title: Text(AppLocalizations.of(context).actionLogout),
+        content: Text(AppLocalizations.of(context).logoutConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Bekor qilish'),
+            child: Text(AppLocalizations.of(context).actionCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Chiqish', style: TextStyle(color: AppColors.danger)),
+            child: Text(
+              AppLocalizations.of(context).actionLogout,
+              style: const TextStyle(color: AppColors.danger),
+            ),
           ),
         ],
       ),
@@ -405,13 +411,13 @@ class _DriverProfileTile extends ConsumerWidget {
 
     return ListTile(
       leading: const Icon(Icons.local_shipping_outlined),
-      title: const Text('Haydovchi profili'),
+      title: Text(context.l10n.driverProfileTitle),
       subtitle: Text(
         ready
-            ? 'Hammasi tayyor'
+            ? context.l10n.driverReadyAll
             : missing > 0
-                ? '$missing ta qadam qoldi'
-                : 'Transport va yoʻnalishlar',
+                ? context.l10n.driverStepsLeft(missing)
+                : context.l10n.driverVehicleAndRoutes,
       ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,

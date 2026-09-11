@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:karvon/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -73,19 +74,20 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Profil')),
+      appBar: AppBar(title: Text(l10n.profileTitle)),
       body: SafeArea(
         child: Form(
           key: _formKey,
           child: ListView(
             padding: const EdgeInsets.all(AppSpacing.xxl),
             children: [
-              Text('Oʻzingiz haqingizda', style: theme.textTheme.headlineMedium),
+              Text(l10n.profileAboutYou, style: theme.textTheme.headlineMedium),
               const SizedBox(height: AppSpacing.sm),
               Text(
-                'Hamkoringiz sizni shu nom bilan koʻradi',
+                l10n.profileNameHint,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: AppColors.textSecondary,
                 ),
@@ -95,9 +97,9 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
               TextFormField(
                 controller: _firstName,
                 textCapitalization: TextCapitalization.words,
-                decoration: const InputDecoration(labelText: 'Ism'),
+                decoration: InputDecoration(labelText: l10n.fieldFirstName),
                 validator: (value) =>
-                    (value?.trim().length ?? 0) < 2 ? 'Ismni kiriting' : null,
+                    (value?.trim().length ?? 0) < 2 ? l10n.validationFirstName : null,
                 onChanged: (_) => setState(() {}),
               ),
               const SizedBox(height: AppSpacing.lg),
@@ -105,18 +107,18 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
               TextFormField(
                 controller: _lastName,
                 textCapitalization: TextCapitalization.words,
-                decoration: const InputDecoration(labelText: 'Familiya'),
+                decoration: InputDecoration(labelText: l10n.fieldLastName),
                 validator: (value) =>
-                    (value?.trim().length ?? 0) < 2 ? 'Familiyani kiriting' : null,
+                    (value?.trim().length ?? 0) < 2 ? l10n.validationLastName : null,
                 onChanged: (_) => setState(() {}),
               ),
 
               const SizedBox(height: AppSpacing.xxxl),
 
-              Text('Siz kimsiz?', style: theme.textTheme.headlineMedium),
+              Text(l10n.profileWhoAreYou, style: theme.textTheme.headlineMedium),
               const SizedBox(height: AppSpacing.sm),
               Text(
-                'Keyinchalik sozlamalardan oʻzgartirishingiz mumkin',
+                l10n.profileRoleLater,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: AppColors.textSecondary,
                 ),
@@ -126,8 +128,8 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
               _RoleCard(
                 role: UserRole.shipper,
                 icon: Icons.inventory_2_outlined,
-                title: 'Yuk beruvchi',
-                description: 'Yuk eʼlon qilaman va haydovchi topaman',
+                title: l10n.roleShipper,
+                description: l10n.roleShipperDesc,
                 selected: _role == UserRole.shipper,
                 onTap: () => setState(() => _role = UserRole.shipper),
               ),
@@ -136,8 +138,8 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
               _RoleCard(
                 role: UserRole.driver,
                 icon: Icons.local_shipping_outlined,
-                title: 'Haydovchi',
-                description: 'Yuk tashiyman va daromad qilaman',
+                title: l10n.roleDriver,
+                description: l10n.roleDriverDesc,
                 selected: _role == UserRole.driver,
                 onTap: () => setState(() => _role = UserRole.driver),
               ),
@@ -146,8 +148,8 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
               _RoleCard(
                 role: UserRole.both,
                 icon: Icons.swap_horiz_rounded,
-                title: 'Ikkalasi',
-                description: 'Yuk ham beraman, ham tashiyman',
+                title: l10n.roleBoth,
+                description: l10n.roleBothDesc,
                 selected: _role == UserRole.both,
                 onTap: () => setState(() => _role = UserRole.both),
               ),
@@ -184,7 +186,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
               const SizedBox(height: AppSpacing.xxxl),
 
               AppButton(
-                label: 'Boshlash',
+                label: l10n.actionStart,
                 isLoading: _loading,
                 onPressed: _canSubmit ? _submit : null,
               ),

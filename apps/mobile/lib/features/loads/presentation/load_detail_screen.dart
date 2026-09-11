@@ -12,6 +12,7 @@ import '../../auth/domain/user.dart';
 import '../../offers/presentation/send_offer_sheet.dart';
 import '../domain/load.dart';
 import 'feed_screen.dart';
+import 'package:karvon/core/l10n/formatters.dart';
 
 /// Bitta yuk uchun tafsilotlar (`autoDispose` — ekran yopilganda tozalanadi).
 final loadDetailProvider =
@@ -43,7 +44,7 @@ class LoadDetailScreen extends ConsumerWidget {
     final user = ref.watch(currentUserProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Yuk tafsilotlari')),
+      appBar: AppBar(title: Text(context.l10n.loadDetailTitle)),
       body: load.when(
         loading: () => const LoadingState(),
         error: (error, _) => ErrorState(
@@ -68,6 +69,7 @@ class _Content extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
 
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -87,8 +89,8 @@ class _Content extends StatelessWidget {
                   children: [
                     Text(
                       load.hasPrice
-                          ? formatSoum(load.priceTiyin)
-                          : 'Kelishuv asosida',
+                          ? context.soum(load.priceTiyin)
+                          : l10n.priceNegotiable,
                       style: theme.textTheme.displayMedium?.copyWith(
                         color: AppColors.primaryDark,
                         fontFeatures: const [FontFeature.tabularFigures()],
@@ -96,7 +98,7 @@ class _Content extends StatelessWidget {
                     ),
                     if (load.distanceKm != null && load.hasPrice)
                       Text(
-                        _perKm(load),
+                        _perKm(context, load),
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: AppColors.primaryDark,
                         ),
@@ -105,14 +107,14 @@ class _Content extends StatelessWidget {
                 ),
               ),
               if (load.isEscrow)
-                const Column(
+                Column(
                   children: [
-                    Icon(Icons.verified_user_rounded, color: AppColors.primary),
-                    SizedBox(height: AppSpacing.xs),
+                    const Icon(Icons.verified_user_rounded, color: AppColors.primary),
+                    const SizedBox(height: AppSpacing.xs),
                     Text(
-                      'Kafolatli\ntoʻlov',
+                      l10n.escrowTwoLines,
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 11, color: AppColors.primaryDark),
+                      style: const TextStyle(fontSize: 11, color: AppColors.primaryDark),
                     ),
                   ],
                 ),
@@ -129,7 +131,7 @@ class _Content extends StatelessWidget {
               _RoutePoint(
                 icon: Icons.trip_origin_rounded,
                 color: AppColors.success,
-                label: 'Olish',
+                label: l10n.routePickup,
                 address: load.pickup.address,
                 region: load.pickup.regionName,
                 contactName: load.pickup.contactName,
@@ -144,7 +146,7 @@ class _Content extends StatelessWidget {
                     const SizedBox(width: AppSpacing.lg),
                     if (load.distanceKm != null)
                       Text(
-                        '${formatDistance(load.distanceKm)} · ${formatDuration(load.durationMin)}',
+                        '${context.distance(load.distanceKm)} · ${context.duration(load.durationMin)}',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: AppColors.textSecondary,
                         ),
@@ -155,7 +157,7 @@ class _Content extends StatelessWidget {
               _RoutePoint(
                 icon: Icons.place_rounded,
                 color: AppColors.danger,
-                label: 'Yetkazish',
+                label: l10n.routeDelivery,
                 address: load.delivery.address,
                 region: load.delivery.regionName,
                 contactName: load.delivery.contactName,
@@ -187,16 +189,16 @@ class _Content extends StatelessWidget {
                 spacing: AppSpacing.xxl,
                 runSpacing: AppSpacing.md,
                 children: [
-                  _Spec(label: 'Ogʻirlik', value: formatWeight(load.weightKg)),
+                  _Spec(label: l10n.specWeight, value: context.weight(load.weightKg)),
                   if (load.volumeM3 != null)
-                    _Spec(label: 'Hajm', value: '${load.volumeM3} m³'),
+                    _Spec(label: l10n.specVolume, value: '${load.volumeM3} m³'),
                   _Spec(
-                    label: 'Toʻlov',
+                    label: l10n.specPayment,
                     value: switch (load.paymentMethod) {
-                      'ESCROW' => 'Kafolatli',
-                      'CARD' => 'Karta',
-                      'BANK_TRANSFER' => 'Bank',
-                      _ => 'Naqd',
+                      'ESCROW' => l10n.paymentEscrow,
+                      'CARD' => l10n.paymentCard,
+                      'BANK_TRANSFER' => l10n.paymentBank,
+                      _ => l10n.paymentCash,
                     },
                   ),
                 ],
@@ -228,14 +230,14 @@ class _Content extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Yuklash vaqti', style: theme.textTheme.labelMedium),
+                    Text(l10n.pickupTime, style: theme.textTheme.labelMedium),
                     Text(
                       _window(load),
                       style: theme.textTheme.titleMedium,
                     ),
                     if (load.isUrgent)
                       Text(
-                        'Shoshilinch — tez qaror qiling',
+                        l10n.urgentHint,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: AppColors.warning,
                         ),
@@ -256,22 +258,22 @@ class _Content extends StatelessWidget {
               child: _Stat(
                 icon: Icons.visibility_outlined,
                 value: '${load.viewCount}',
-                label: 'koʻrildi',
+                label: l10n.statViews(load.viewCount),
               ),
             ),
             Expanded(
               child: _Stat(
                 icon: Icons.local_offer_outlined,
                 value: '${load.offerCount}',
-                label: 'taklif',
+                label: l10n.statOffers(load.offerCount),
               ),
             ),
             if (load.distanceToPickupKm != null)
               Expanded(
                 child: _Stat(
                   icon: Icons.near_me_outlined,
-                  value: formatDistance(load.distanceToPickupKm),
-                  label: 'sizga',
+                  value: context.distance(load.distanceToPickupKm),
+                  label: l10n.statToYou,
                 ),
               ),
           ],
@@ -282,13 +284,13 @@ class _Content extends StatelessWidget {
     );
   }
 
-  static String _perKm(Load load) {
+  static String _perKm(BuildContext context, Load load) {
     final tiyin = parseTiyin(load.priceTiyin);
     final km = load.distanceKm ?? 0;
     if (km <= 0) return '';
 
     final perKm = tiyin ~/ BigInt.from(km.round());
-    return '${formatSoum(perKm)}/km · ${formatDistance(km)}';
+    return '${context.soum(perKm)}/${context.l10n.unitKm} · ${context.distance(km)}';
   }
 
   static String _window(Load load) {
@@ -344,7 +346,7 @@ class _ActionBar extends ConsumerWidget {
           const SizedBox(width: AppSpacing.md),
           Expanded(
             child: AppButton(
-              label: 'Taklif yuborish',
+              label: context.l10n.offerSend,
               icon: Icons.send_rounded,
               onPressed: () async {
                 final sent = await SendOfferSheet.show(context, load);
@@ -352,8 +354,8 @@ class _ActionBar extends ConsumerWidget {
                   if (!context.mounted) return;
                   ref.invalidate(loadDetailProvider(load.id));
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Taklif yuborildi — javobni kuting'),
+                    SnackBar(
+                      content: Text(context.l10n.offerSent),
                     ),
                   );
                 }
@@ -474,7 +476,7 @@ class _RoutePoint extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(top: AppSpacing.xs),
                     child: Text(
-                      'Toʻliq raqam yuklash joyiga yetib borganingizda ochiladi',
+                      context.l10n.contactMaskedHint,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: AppColors.info,
                       ),

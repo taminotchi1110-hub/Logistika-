@@ -148,5 +148,206 @@
   "errInternal": "Serverda xatolik yuz berdi. Keyinroq urinib koʻring.",
   "@errInternal": {
     "description": "500 xatosi. Server matni koʻrsatilmaydi: u texnik boʻlishi mumkin va faqat oʻzbekcha."
-  }
+  },
+
+  "unitSoum": "soʻm",
+  "@unitSoum": {
+    "description": "Bundan keyingi `unit*` kalitlari — oʻlchov birliklari (`core/utils/money.dart`). Summa har doim probel bilan ajratiladi (240 000), bu qoida tilga bogʻliq emas."
+  },
+  "unitThousand": "ming",
+  "unitMillion": "mln",
+  "unitTon": "t",
+  "unitKg": "kg",
+  "unitKm": "km",
+  "unitMeter": "m",
+  "unitHour": "soat",
+  "unitMinute": "daq",
+
+  "actionConfirm": "Tasdiqlash",
+  "actionStart": "Boshlash",
+  "actionSupport": "Qoʻllab-quvvatlash",
+  "actionLogout": "Chiqish",
+
+  "otpTitle": "Tasdiqlash kodi",
+  "otpSentTo": "Kod yuborildi:",
+  "@otpSentTo": {
+    "description": "Undan keyin qalin shriftda telefon raqami keladi. Barcha uch tilda raqam jumla OXIRIDA turadi."
+  },
+  "otpResent": "Yangi kod yuborildi",
+  "otpDevCode": "Dev rejimi — kod: {code}",
+  "@otpDevCode": {
+    "description": "Faqat ishlab chiqish muhitida koʻrinadi",
+    "placeholders": { "code": { "type": "String" } }
+  },
+  "otpPaste": "Qoʻyish",
+  "otpResendIn": "Qayta yuborish: {seconds} soniya",
+  "@otpResendIn": {
+    "placeholders": { "seconds": { "type": "int" } }
+  },
+  "otpResend": "Kodni qayta yuborish",
+
+  "profileTitle": "Profil",
+  "profileAboutYou": "Oʻzingiz haqingizda",
+  "profileNameHint": "Hamkoringiz sizni shu nom bilan koʻradi",
+  "fieldFirstName": "Ism",
+  "fieldLastName": "Familiya",
+  "validationFirstName": "Ismni kiriting",
+  "validationLastName": "Familiyani kiriting",
+  "profileWhoAreYou": "Siz kimsiz?",
+  "profileRoleLater": "Keyinchalik sozlamalardan oʻzgartirishingiz mumkin",
+
+  "roleShipper": "Yuk beruvchi",
+  "roleShipperDesc": "Yuk eʼlon qilaman va haydovchi topaman",
+  "roleDriver": "Haydovchi",
+  "roleDriverDesc": "Yuk tashiyman va daromad qilaman",
+  "roleBoth": "Ikkalasi",
+  "roleBothDesc": "Yuk ham beraman, ham tashiyman",
+
+  "blockedSuspended": "Akkaunt vaqtincha toʻxtatilgan",
+  "blockedBanned": "Akkaunt bloklangan",
+  "blockedBody": "Batafsil maʼlumot uchun qoʻllab-quvvatlash xizmatiga murojaat qiling. Ular sizga sababni tushuntiradi va tiklash imkoniyatini koʻrib chiqadi.",
+  "@blockedBody": {
+    "description": "Bloklash SABABI ataylab aytilmaydi: firibgar tizim uni qanday aniqlaganini bilib olmasligi kerak."
+  },
+
+  "actionCancel": "Bekor qilish",
+  "actionSave": "Saqlash",
+
+  "modeShipper": "Yuk beruvchi rejimi",
+  "modeDriver": "Haydovchi rejimi",
+  "tabMyLoads": "Yuklarim",
+  "tabOrders": "Buyurtmalar",
+  "tabMessages": "Xabarlar",
+  "tabProfile": "Profil",
+  "tabFeed": "Lenta",
+  "tabTrips": "Reyslarim",
+  "@tabTrips": {
+    "description": "Haydovchi uchun buyurtmalar tabi. Bozorda haydovchi 'reys', mijoz 'buyurtma' deydi — ekran bir xil, atama boshqa."
+  },
+
+  "profileRatingSummary": "{rating} · {count} baho",
+  "@profileRatingSummary": {
+    "placeholders": {
+      "rating": { "type": "String", "example": "4.8" },
+      "count": { "type": "int" }
+    }
+  },
+  "profileNewUser": "Yangi foydalanuvchi",
+  "@profileNewUser": {
+    "description": "Bahosiz foydalanuvchida '0.0 ★' oʻrniga koʻrsatiladi — yangi odam eng yomon baholangandek koʻrinmasligi kerak."
+  },
+  "menuWallet": "Hamyon",
+  "menuWalletSubtitle": "Balans, toʻldirish va yechish",
+  "menuMyData": "Maʼlumotlarim",
+  "phoneNotEditable": "{phone} — oʻzgartirib boʻlmaydi",
+  "@phoneNotEditable": {
+    "placeholders": { "phone": { "type": "String" } }
+  },
+  "logoutConfirm": "Akkauntdan chiqmoqchimisiz?",
+  "driverProfileTitle": "Haydovchi profili",
+  "driverReadyAll": "Hammasi tayyor",
+  "driverStepsLeft": "{count} ta qadam qoldi",
+  "@driverStepsLeft": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "driverVehicleAndRoutes": "Transport va yoʻnalishlar",
+
+  "feedTitle": "Yuklar",
+  "feedFilter": "Filtr",
+  "feedEmptyFiltered": "Filtrga mos yuk yoʻq",
+  "feedEmpty": "Hozircha yuk yoʻq",
+  "feedEmptyFilteredHint": "Filtrni kengaytiring — masalan masofa yoki ogʻirlik chegarasini oshiring",
+  "feedEmptyHint": "Yangi eʼlonlar paydo boʻlishi bilan bu yerda koʻrinadi. Yoʻnalishlaringizni sozlasangiz mos yuklar haqida xabar beramiz.",
+  "feedClearFilter": "Filtrni tozalash",
+  "feedEnd": "Hammasi shu",
+  "feedFilterSoon": "Filtr oynasi tayyorlanmoqda",
+
+  "badgeUrgent": "Shoshilinch",
+  "badgeMatch": "{percent}% mos",
+  "@badgeMatch": {
+    "placeholders": { "percent": { "type": "int" } }
+  },
+  "badgeEscrow": "Kafolatli toʻlov",
+  "distanceToYou": "Sizga {distance}",
+  "@distanceToYou": {
+    "placeholders": { "distance": { "type": "String", "example": "12 km" } }
+  },
+  "dateToday": "Bugun",
+  "dateTomorrow": "Ertaga",
+  "dateDayMonth": "{day}-{month}",
+  "@dateDayMonth": {
+    "description": "Qisqa sana: '9-sent'. Tartib tilga bogʻliq (ruscha '9 сен').",
+    "placeholders": {
+      "day": { "type": "int" },
+      "month": { "type": "String" }
+    }
+  },
+  "monthsShort": "yan,fev,mar,apr,may,iyun,iyul,avg,sent,okt,noy,dek",
+  "@monthsShort": {
+    "description": "12 ta qisqa oy nomi, VERGUL bilan, probelsiz. Soni aynan 12 boʻlishi shart."
+  },
+  "offersCount": "{count} taklif",
+  "@offersCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "priceNegotiable": "Kelishuv asosida",
+  "priceNegotiableLine1": "Kelishuv",
+  "priceNegotiableLine2": "asosida",
+  "@priceNegotiableLine1": {
+    "description": "Kartochkada narx oʻrnida IKKI qatorda: tor ustunga sigʻishi uchun."
+  },
+
+  "loadDetailTitle": "Yuk tafsilotlari",
+  "escrowTwoLines": "Kafolatli\ntoʻlov",
+  "routePickup": "Olish",
+  "routeDelivery": "Yetkazish",
+  "specWeight": "Ogʻirlik",
+  "specVolume": "Hajm",
+  "specPayment": "Toʻlov",
+  "paymentEscrow": "Kafolatli",
+  "paymentCard": "Karta",
+  "paymentBank": "Bank",
+  "paymentCash": "Naqd",
+  "pickupTime": "Yuklash vaqti",
+  "urgentHint": "Shoshilinch — tez qaror qiling",
+  "statViews": "{count, plural, other{koʻrildi}}",
+  "@statViews": {
+    "description": "Son USTIDA alohida koʻrsatiladi, bu yerda faqat soʻz. Ruscha kelishik songa bogʻliq.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "statOffers": "{count, plural, other{taklif}}",
+  "@statOffers": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "statToYou": "sizga",
+  "offerSend": "Taklif yuborish",
+  "offerSent": "Taklif yuborildi — javobni kuting",
+  "contactMaskedHint": "Toʻliq raqam yuklash joyiga yetib borganingizda ochiladi",
+  "@contactMaskedHint": {
+    "description": "Nega raqam yashirilgani TUSHUNTIRILADI — aks holda haydovchi buni nosozlik deb oʻylaydi."
+  },
+
+  "loadStatusDraft": "Qoralama",
+  "loadStatusPublished": "Eʼlon qilingan",
+  "loadStatusMatching": "Haydovchi qidirilmoqda",
+  "loadStatusOffersReceived": "Takliflar bor",
+  "loadStatusAssigned": "Haydovchi topildi",
+  "loadStatusInProgress": "Yoʻlda",
+  "loadStatusCompleted": "Yakunlangan",
+  "loadStatusCancelled": "Bekor qilingan",
+  "loadStatusExpired": "Muddati oʻtgan",
+
+  "reasonNearPickup": "Sizga {km} km",
+  "@reasonNearPickup": {
+    "description": "Moslik sabablari: server KOD yuboradi, matnni mobil ilova tanlaydi.",
+    "placeholders": { "km": { "type": "String" } }
+  },
+  "reasonRegularRoute": "Doimiy yoʻnalishingiz",
+  "reasonRouteMatch": "Yoʻnalishingizga mos",
+  "reasonCapacityFit": "Transportingizga toʻliq mos",
+  "reasonHighRating": "Reytingingiz {rating}",
+  "@reasonHighRating": {
+    "placeholders": { "rating": { "type": "String" } }
+  },
+  "reasonPremium": "Premium"
 }
