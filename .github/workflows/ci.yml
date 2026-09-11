@@ -244,7 +244,10 @@ jobs:
       - name: API ni qurish va ishga tushirish
         run: |
           npm run build --workspace=@karvon/api
-          node apps/api/dist/main.js &
+          # Log faylga: yiqilganda uni annotatsiyaga chiqaramiz.
+          # Fon jarayonining chiqishi qadam logida qoladi, u esa
+          # tizimga kirmagan odamga koʻrinmaydi
+          node apps/api/dist/main.js > /tmp/api.log 2>&1 &
           # Sogʻliq tekshiruvi: `sleep 10` ishonchsiz — sekin ishda
           # yetmaydi, tez ishda esa behuda kutish
           for i in $(seq 1 60); do
@@ -270,15 +273,50 @@ jobs:
       - name: Mobil integratsiya testlari
         # MinIO ishlab turgani uchun hujjat yuklash testlari ham
         # HAQIQATAN ishga tushadi — lokal muhitda ular oʻtkazib
-        # yuborilardi (Docker koʻtarilmagan)
+        # yuborilardi (Docker koʻtarilmagan).
+        #
+        # YIQILGAN TESTLAR ANNOTATSIYA sifatida chiqadi: Actions
+        # loglarini koʻrish uchun GitHub'ga kirish kerak, annotatsiya
+        # esa ish sahifasida hammaga ochiq turadi. Usiz "31 ta test
+        # yiqildi" degan xabardan nariga oʻtib boʻlmaydi.
         run: |
+          set -o pipefail
           flutter pub get
-          flutter test test_integration --dart-define=API_BASE_URL=http://localhost:3000/v1 --dart-define=WS_URL=http://localhost:3000
+          if flutter test test_integration \
+              --dart-define=API_BASE_URL=http://localhost:3000/v1 \
+              --dart-define=WS_URL=http://localhost:3000 2>&1 | tee /tmp/mobile.log; then
+            exit 0
+          fi
+
+          echo "::error::Mobil integratsiya testlari yiqildi"
+          # `flutter test` yiqilgan testni `... [E]` bilan belgilaydi
+          grep -oE '\+[0-9]+ -[0-9]+: .*\[E\]' /tmp/mobile.log \
+            | sed -E 's/^\+[0-9]+ -[0-9]+: //; s/ \[E\]$//' \
+            | sort -u | head -12 \
+            | while IFS= read -r name; do echo "::error::YIQILDI — $name"; done
+
+          # Birinchi haqiqiy xato matni ham kerak: test nomi nima
+          # yiqilganini aytadi, sabab esa shu yerda
+          grep -A3 -m1 -E '\[E\]$' /tmp/mobile.log | tail -3 \
+            | while IFS= read -r line; do echo "::error::sabab: $line"; done
+
+          exit 1
         working-directory: apps/mobile
 
-      - name: API loglari (yiqilganda)
+      - name: API xatolari (yiqilganda)
         if: failure()
+        # Server tomonidagi sabab — koʻpincha hal qiluvchi dalil:
+        # 429 (limit) bilan 500 (kod xatosi) mijoz tomonidan bir xil
+        # koʻrinadi. Annotatsiya tizimga kirmasdan ham oʻqiladi
         run: |
-          echo "--- oxirgi audit yozuvlari ---"
-          PGPASSWORD=karvon_ci psql -h localhost -U karvon -d karvon \
-            -c "SELECT action, entity_type, created_at FROM audit_logs ORDER BY created_at DESC LIMIT 20" || true
+          echo "::group::API log (oxirgi 40 qator)"
+          tail -40 /tmp/api.log || true
+          echo "::endgroup::"
+
+          grep -oE '"(statusCode)":[0-9]+' /tmp/api.log 2>/dev/null \
+            | sort | uniq -c | sort -rn | head -6 \
+            | while IFS= read -r line; do echo "::error::API javoblari: $line"; done || true
+
+          grep -oE '"(code|message)":"[^"]{3,80}"' /tmp/api.log 2>/dev/null \
+            | sort -u | head -10 \
+            | while IFS= read -r line; do echo "::error::API: $line"; done || true

@@ -25,6 +25,16 @@ summary() {
   return 0
 }
 
+# Yiqilgan to'plam ANNOTATSIYA sifatida ham chiqadi.
+#
+# Sarhisob (`$GITHUB_STEP_SUMMARY`) tizimga kirmagan odamga
+# ko'rinmaydi — buni ikkinchi yiqilishda bilib oldik. Annotatsiya esa
+# ish sahifasining tepasida hammaga ochiq turadi.
+annotate() {
+  [ -n "${GITHUB_ACTIONS:-}" ] && echo "::error::$1"
+  return 0
+}
+
 summary "## Backend uchidan-uchiga"
 
 run() {
@@ -39,6 +49,7 @@ run() {
   else
     FAILED=1
     summary "- ❌ **$title**"
+    annotate "Toʻplam yiqildi: $title"
   fi
 }
 
