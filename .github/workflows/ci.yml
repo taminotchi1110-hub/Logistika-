@@ -186,7 +186,11 @@ jobs:
           # ---- CI ustidan yozadigan qiymatlar ----
           DATABASE_URL=postgresql://karvon:karvon_ci@localhost:5432/karvon
           S3_SECRET_KEY=karvon_ci_secret
-          LOG_LEVEL=warn
+          # `info` — `warn` emas: soʻrov loglari (status kodlari bilan)
+          # aynan `info` darajasida yoziladi va yiqilish sababini
+          # aniqlashda ular hal qiluvchi. `warn` da faqat xatolar
+          # koʻrinardi va 429 bilan 500 ni ajratib boʻlmasdi
+          LOG_LEVEL=info
 
           # Kunlik OTP chegarasi namunada 10 — bu bitta toʻplamga ham
           # yetmaydi. Sxemadagi maksimum 200 (`env.schema.ts`), undan
@@ -282,23 +286,29 @@ jobs:
         run: |
           set -o pipefail
           flutter pub get
-          if flutter test test_integration \
+          # `--reporter expanded` MAJBURIY: standart reporter progressni
+          # `\r` bilan bitta qatorga qayta yozadi va faylda hamma narsa
+          # bitta ulkan qator boʻlib qoladi — oldingi urinishda test
+          # nomlarini ajratib boʻlmagani shundan
+          if flutter test test_integration --reporter expanded \
               --dart-define=API_BASE_URL=http://localhost:3000/v1 \
               --dart-define=WS_URL=http://localhost:3000 2>&1 | tee /tmp/mobile.log; then
             exit 0
           fi
 
           echo "::error::Mobil integratsiya testlari yiqildi"
-          # `flutter test` yiqilgan testni `... [E]` bilan belgilaydi
-          grep -oE '\+[0-9]+ -[0-9]+: .*\[E\]' /tmp/mobile.log \
-            | sed -E 's/^\+[0-9]+ -[0-9]+: //; s/ \[E\]$//' \
-            | sort -u | head -12 \
+
+          grep -E '\[E\]$' /tmp/mobile.log \
+            | sed -E 's/^[0-9]+:[0-9]+ \+[0-9]+( -[0-9]+)?: //; s/ \[E\]$//' \
+            | sort -u | head -15 \
             | while IFS= read -r name; do echo "::error::YIQILDI — $name"; done
 
-          # Birinchi haqiqiy xato matni ham kerak: test nomi nima
-          # yiqilganini aytadi, sabab esa shu yerda
-          grep -A3 -m1 -E '\[E\]$' /tmp/mobile.log | tail -3 \
-            | while IFS= read -r line; do echo "::error::sabab: $line"; done
+          # Birinchi xatoning sababi: test nomi NIMA yiqilganini
+          # aytadi, bu esa NEGA ekanini
+          grep -A6 -m1 -E '\[E\]$' /tmp/mobile.log | tail -6 \
+            | while IFS= read -r line; do
+                [ -n "$(echo "$line" | tr -d '[:space:]')" ] && echo "::error::sabab: $line"
+              done
 
           exit 1
         working-directory: apps/mobile
@@ -313,10 +323,13 @@ jobs:
           tail -40 /tmp/api.log || true
           echo "::endgroup::"
 
-          grep -oE '"(statusCode)":[0-9]+' /tmp/api.log 2>/dev/null \
-            | sort | uniq -c | sort -rn | head -6 \
-            | while IFS= read -r line; do echo "::error::API javoblari: $line"; done || true
+          # Status kodlari SONI bilan: bitta 429 tasodif, ellikta 429 —
+          # sabab. Oldingi urinishda faqat kodlar roʻyxati chiqqan edi
+          # va ular orasida testlar ATAYLAB chaqiradiganlari ham bor edi
+          grep -oE '"statusCode":[0-9]+' /tmp/api.log 2>/dev/null \
+            | sort | uniq -c | sort -rn | head -8 \
+            | while IFS= read -r line; do echo "::error::javob kodlari: $line"; done || true
 
-          grep -oE '"(code|message)":"[^"]{3,80}"' /tmp/api.log 2>/dev/null \
-            | sort -u | head -10 \
-            | while IFS= read -r line; do echo "::error::API: $line"; done || true
+          grep -oE '"code":"[A-Z_]{3,40}"' /tmp/api.log 2>/dev/null \
+            | sort | uniq -c | sort -rn | head -10 \
+            | while IFS= read -r line; do echo "::error::xato kodlari: $line"; done || true
