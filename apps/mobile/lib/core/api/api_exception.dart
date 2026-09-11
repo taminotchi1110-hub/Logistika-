@@ -78,6 +78,9 @@ String localizeErrorWith(AppLocalizations l10n, ApiException error) {
     // --- tarmoq ---
     'NETWORK_ERROR' => l10n.errNetwork,
     'TIMEOUT' => l10n.errTimeout,
+    // Mijoz tomonida yasaladi (`documents_repository.dart`)
+    'FILE_TOO_LARGE' => l10n.errFileTooLarge,
+    'UPLOAD_FAILED' => l10n.errUploadFailed,
 
     // --- autentifikatsiya ---
     'AUTH_UNAUTHORIZED' => l10n.errAuthUnauthorized,

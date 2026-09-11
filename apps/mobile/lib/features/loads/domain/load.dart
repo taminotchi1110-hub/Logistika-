@@ -23,18 +23,6 @@ enum LoadStatus {
         _ => LoadStatus.draft,
       };
 
-  String get label => switch (this) {
-        LoadStatus.draft => 'Qoralama',
-        LoadStatus.published => 'Eʼlon qilingan',
-        LoadStatus.matching => 'Haydovchi qidirilmoqda',
-        LoadStatus.offersReceived => 'Takliflar bor',
-        LoadStatus.assigned => 'Haydovchi topildi',
-        LoadStatus.inProgress => 'Yoʻlda',
-        LoadStatus.completed => 'Yakunlangan',
-        LoadStatus.cancelled => 'Bekor qilingan',
-        LoadStatus.expired => 'Muddati oʻtgan',
-      };
-
   /// E'lon hali taklif qabul qiladimi.
   bool get isOpen =>
       this == LoadStatus.published ||

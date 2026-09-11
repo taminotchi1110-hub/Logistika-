@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:karvon/core/l10n/formatters.dart';
 
 import '../../features/auth/domain/user.dart';
 import '../../features/auth/presentation/blocked_screen.dart';
@@ -169,13 +170,13 @@ final routerProvider = Provider<GoRouter>((ref) {
             children: [
               const Icon(Icons.link_off_rounded, size: 48),
               const SizedBox(height: 16),
-              Text('Sahifa topilmadi', style: Theme.of(context).textTheme.titleMedium),
+              Text(context.l10n.notFoundTitle, style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
               Text(state.uri.toString(), textAlign: TextAlign.center),
               const SizedBox(height: 24),
               FilledButton(
                 onPressed: () => context.go('/'),
-                child: const Text('Bosh sahifaga'),
+                child: Text(context.l10n.actionGoHome),
               ),
             ],
           ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:karvon/core/l10n/formatters.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
@@ -17,7 +18,7 @@ class ConversationsScreen extends ConsumerWidget {
     final conversations = ref.watch(conversationsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Xabarlar')),
+      appBar: AppBar(title: Text(context.l10n.tabMessages)),
       body: RefreshIndicator(
         onRefresh: () async => ref.refresh(conversationsProvider.future),
         child: conversations.when(
@@ -38,12 +39,10 @@ class ConversationsScreen extends ConsumerWidget {
                 physics: const AlwaysScrollableScrollPhysics(),
                 children: [
                   SizedBox(height: MediaQuery.sizeOf(context).height * 0.15),
-                  const EmptyState(
+                  EmptyState(
                     icon: Icons.chat_bubble_outline_rounded,
-                    title: 'Suhbat yoʻq',
-                    message: 'Taklif qabul qilinganda chat avtomatik ochiladi. '
-                        'Butun muloqot shu yerda — telefon raqami haydovchi yuk '
-                        'olish nuqtasiga yetib borgach ochiladi.',
+                    title: context.l10n.conversationsEmpty,
+                    message: context.l10n.conversationsEmptyHint,
                   ),
                 ],
               );
@@ -110,7 +109,7 @@ class _ConversationTile extends StatelessWidget {
           ),
           if (conversation.lastMessageAt != null)
             Text(
-              _time(conversation.lastMessageAt!),
+              _time(context, conversation.lastMessageAt!),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: conversation.hasUnread
                     ? AppColors.primary
@@ -127,7 +126,7 @@ class _ConversationTile extends StatelessWidget {
           if (order != null) ...[
             const SizedBox(height: 2),
             Text(
-              '№${order.publicNo} · ${order.route}',
+              context.l10n.orderNumberRoute(order.publicNo, order.route),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: AppColors.textSecondary,
               ),
@@ -140,7 +139,7 @@ class _ConversationTile extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  conversation.lastMessageBody ?? 'Xabar yoʻq',
+                  conversation.lastMessageBody ?? context.l10n.conversationNoMessages,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: conversation.hasUnread
                         ? AppColors.textPrimary
@@ -181,7 +180,7 @@ class _ConversationTile extends StatelessWidget {
   }
 
   /// Bugun — vaqt, kecha — "kecha", undan oldin — sana.
-  static String _time(DateTime value) {
+  static String _time(BuildContext context, DateTime value) {
     final local = value.toLocal();
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -192,7 +191,7 @@ class _ConversationTile extends StatelessWidget {
       return '${local.hour.toString().padLeft(2, '0')}:'
           '${local.minute.toString().padLeft(2, '0')}';
     }
-    if (diff == 1) return 'kecha';
+    if (diff == 1) return context.l10n.dateYesterday;
     return '${local.day}.${local.month.toString().padLeft(2, '0')}';
   }
 }

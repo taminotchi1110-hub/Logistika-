@@ -21,12 +21,6 @@ enum UserRole {
         UserRole.both => 'BOTH',
       };
 
-  String get label => switch (this) {
-        UserRole.shipper => 'Yuk beruvchi',
-        UserRole.driver => 'Haydovchi',
-        UserRole.both => 'Ikkalasi',
-      };
-
   bool get canShip => this == UserRole.shipper || this == UserRole.both;
   bool get canDrive => this == UserRole.driver || this == UserRole.both;
 }

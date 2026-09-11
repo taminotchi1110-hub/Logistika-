@@ -112,20 +112,7 @@ enum LedgerEntryType {
         _ => LedgerEntryType.other,
       };
 
-  String get label => switch (this) {
-        LedgerEntryType.topup => 'Hisob toʻldirildi',
-        LedgerEntryType.escrowHold => 'Toʻlov bloklandi',
-        LedgerEntryType.escrowRelease => 'Toʻlov chiqarildi',
-        LedgerEntryType.escrowRefund => 'Pul qaytarildi',
-        LedgerEntryType.commission => 'Platforma komissiyasi',
-        LedgerEntryType.payout => 'Kartaga yechildi',
-        LedgerEntryType.payoutReversal => 'Yechish bekor qilindi',
-        LedgerEntryType.penalty => 'Jarima',
-        LedgerEntryType.bonus => 'Bonus',
-        LedgerEntryType.subscription => 'Obuna toʻlovi',
-        LedgerEntryType.adjustment => 'Administrator tuzatishi',
-        LedgerEntryType.other => 'Boshqa amal',
-      };
+  // Tur nomi joriy tilda — `presentation/wallet_l10n.dart`.
 }
 
 /// To'lov (hisob to'ldirish).
@@ -200,13 +187,4 @@ class Payout {
 
   bool get isDone => status == 'COMPLETED' || status == 'PAID';
   bool get isFailed => status == 'FAILED' || status == 'REJECTED';
-
-  String get statusLabel => switch (status) {
-        'REQUESTED' => 'Koʻrib chiqilmoqda',
-        'PROCESSING' => 'Bajarilmoqda',
-        'COMPLETED' || 'PAID' => 'Kartaga oʻtkazildi',
-        'FAILED' => 'Bajarilmadi',
-        'REJECTED' => 'Rad etildi',
-        _ => status,
-      };
 }

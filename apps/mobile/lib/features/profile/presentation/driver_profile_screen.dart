@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:karvon/core/l10n/formatters.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/utils/money.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_states.dart';
 import '../../reference/presentation/reference_providers.dart';
@@ -14,6 +14,9 @@ import '../../vehicles/domain/vehicle.dart';
 import '../domain/driver_readiness.dart';
 import 'profile_providers.dart';
 import 'widgets/readiness_card.dart';
+import '../../reference/domain/reference_data.dart';
+import '../../vehicles/presentation/vehicle_l10n.dart';
+import 'profile_l10n.dart';
 
 /// Haydovchi profili: tayyorlik, transport va yo'nalishlar.
 ///
@@ -40,7 +43,7 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
 
       ref.invalidate(driverReadinessProvider);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Hujjatlar tekshiruvga yuborildi')),
+        SnackBar(content: Text(context.l10n.verificationSubmitted)),
       );
     } on ApiException catch (error) {
       if (!mounted) return;
@@ -60,7 +63,7 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
     final readiness = ref.watch(driverReadinessProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Haydovchi profili')),
+      appBar: AppBar(title: Text(context.l10n.driverProfileTitle)),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(driverReadinessProvider);
@@ -94,8 +97,8 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.badge_outlined),
-                title: const Text('Hujjatlar'),
-                subtitle: const Text('Pasport, guvohnoma, sugʻurta'),
+                title: Text(context.l10n.documentsTitle),
+                subtitle: Text(context.l10n.documentsSubtitle),
                 trailing: const Icon(Icons.chevron_right_rounded),
                 onTap: () => context.push('/documents'),
               ),
@@ -129,11 +132,11 @@ class _VehiclesSection extends ConsumerWidget {
       children: [
         Row(
           children: [
-            Expanded(child: Text('Transport', style: theme.textTheme.titleSmall)),
+            Expanded(child: Text(context.l10n.vehiclesSectionTitle, style: theme.textTheme.titleSmall)),
             TextButton.icon(
               onPressed: () => _addVehicle(context, ref),
               icon: const Icon(Icons.add_rounded, size: AppSizes.iconSm),
-              label: const Text('Qoʻshish'),
+              label: Text(context.l10n.actionAdd),
             ),
           ],
         ),
@@ -150,11 +153,10 @@ class _VehiclesSection extends ConsumerWidget {
           ),
           data: (items) {
             if (items.isEmpty) {
-              return const _EmptyBlock(
+              return _EmptyBlock(
                 icon: Icons.local_shipping_outlined,
                 // Foyda aytiladi, talab emas
-                message: 'Transport qoʻshsangiz, tizim sizga sigʻadigan '
-                    'yuklarni oʻzi tanlab beradi.',
+                message: context.l10n.vehiclesEmptyHint,
               );
             }
 
@@ -216,7 +218,7 @@ class _VehicleTile extends StatelessWidget {
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   child: Text(
-                    'Asosiy',
+                    context.l10n.vehiclePrimary,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w600,
@@ -237,7 +239,7 @@ class _VehicleTile extends StatelessWidget {
               ),
               const SizedBox(width: AppSpacing.lg),
               Text(
-                formatWeight(vehicle.capacityKg),
+                context.weight(vehicle.capacityKg),
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: AppColors.textSecondary,
                 ),
@@ -256,7 +258,7 @@ class _VehicleTile extends StatelessWidget {
               ),
               const SizedBox(width: AppSpacing.xs),
               Text(
-                status.label,
+                status.localized(context.l10n),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: status.isVerified ? AppColors.success : AppColors.textSecondary,
                 ),
@@ -268,7 +270,7 @@ class _VehicleTile extends StatelessWidget {
           if (!status.isVerified) ...[
             const SizedBox(height: AppSpacing.xs),
             Text(
-              'Tasdiqlanmaguncha bu transport bilan taklif yuborib boʻlmaydi.',
+              context.l10n.vehicleNotVerifiedNote,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: AppColors.textSecondary,
               ),
@@ -291,6 +293,7 @@ class _RoutesSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final routes = ref.watch(driverRoutesProvider);
+    final bundle = ref.watch(referenceProvider).valueOrNull;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -298,12 +301,12 @@ class _RoutesSection extends ConsumerWidget {
         Row(
           children: [
             Expanded(
-              child: Text('Yoʻnalishlarim', style: theme.textTheme.titleSmall),
+              child: Text(context.l10n.routesSectionTitle, style: theme.textTheme.titleSmall),
             ),
             TextButton.icon(
               onPressed: () => _addRoute(context, ref),
               icon: const Icon(Icons.add_rounded, size: AppSizes.iconSm),
-              label: const Text('Qoʻshish'),
+              label: Text(context.l10n.actionAdd),
             ),
           ],
         ),
@@ -320,12 +323,10 @@ class _RoutesSection extends ConsumerWidget {
           ),
           data: (items) {
             if (items.isEmpty) {
-              return const _EmptyBlock(
+              return _EmptyBlock(
                 icon: Icons.route_outlined,
                 // MATCHING UCHUN ENG KUCHLI SIGNAL — foydani aytamiz
-                message: 'Doimiy yoʻnalishlaringizni koʻrsating: tizim shu '
-                    'yoʻnalishdagi yuklarni sizga birinchi navbatda '
-                    'taklif qiladi.',
+                message: context.l10n.routesEmptyHint,
               );
             }
 
@@ -334,6 +335,7 @@ class _RoutesSection extends ConsumerWidget {
                 for (final route in items)
                   _RouteTile(
                     route: route,
+                    bundle: bundle,
                     onRemove: () => _removeRoute(context, ref, route),
                   ),
               ],
@@ -374,10 +376,14 @@ class _RoutesSection extends ConsumerWidget {
 }
 
 class _RouteTile extends StatelessWidget {
-  const _RouteTile({required this.route, required this.onRemove});
+  const _RouteTile({required this.route, required this.onRemove, this.bundle});
 
   final DriverRoute route;
   final VoidCallback onRemove;
+
+  /// Viloyat nomlari joriy tilda shundan olinadi; spravochnik hali
+  /// yuklanmagan bo'lsa server nomi ko'rsatiladi.
+  final ReferenceBundle? bundle;
 
   @override
   Widget build(BuildContext context) {
@@ -406,10 +412,16 @@ class _RouteTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(route.label, style: theme.textTheme.bodyMedium),
+                Text(
+                  route.localizedLabel(
+                    context.l10n,
+                    regionName: (id) => bundle?.regionById(id)?.name.of(context.language),
+                  ),
+                  style: theme.textTheme.bodyMedium,
+                ),
                 if (route.isRegular)
                   Text(
-                    'Doimiy yoʻnalish',
+                    context.l10n.routeRegular,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: AppColors.primary,
                     ),
@@ -421,7 +433,7 @@ class _RouteTile extends StatelessWidget {
             icon: const Icon(Icons.close_rounded, size: AppSizes.iconSm),
             color: AppColors.gray400,
             onPressed: onRemove,
-            tooltip: 'Oʻchirish',
+            tooltip: context.l10n.actionDelete,
           ),
         ],
       ),
@@ -574,7 +586,7 @@ class _AddVehicleSheetState extends ConsumerState<_AddVehicleSheet> {
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
-            Text('Transport qoʻshish', style: theme.textTheme.titleMedium),
+            Text(context.l10n.addVehicleTitle, style: theme.textTheme.titleMedium),
             const SizedBox(height: AppSpacing.lg),
 
             reference.when(
@@ -590,18 +602,18 @@ class _AddVehicleSheetState extends ConsumerState<_AddVehicleSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _TypeChips(
-                    label: 'Transport turi',
+                    label: context.l10n.fieldVehicleType,
                     options: {
                       for (final type in bundle.vehicleTypes)
-                        type.id: '${type.name.uz} · ${type.capacityLabel}',
+                        type.id: '${type.name.of(context.language)} · ${type.capacityLabelFor(context.l10n.units)}',
                     },
                     selected: _vehicleTypeId,
                     onChanged: (id) => setState(() => _vehicleTypeId = id),
                   ),
                   _TypeChips(
-                    label: 'Kuzov turi',
+                    label: context.l10n.fieldBodyType,
                     options: {
-                      for (final type in bundle.bodyTypes) type.id: type.name.uz,
+                      for (final type in bundle.bodyTypes) type.id: type.name.of(context.language),
                     },
                     selected: _bodyTypeId,
                     onChanged: (id) => setState(() => _bodyTypeId = id),
@@ -611,26 +623,26 @@ class _AddVehicleSheetState extends ConsumerState<_AddVehicleSheet> {
             ),
 
             _Field(
-              label: 'Marka',
+              label: context.l10n.fieldBrand,
               controller: _brandController,
               hint: 'Isuzu',
               onChanged: () => setState(() {}),
             ),
             _Field(
-              label: 'Model',
+              label: context.l10n.fieldModel,
               controller: _modelController,
               hint: 'NPR',
               onChanged: () => setState(() {}),
             ),
             _Field(
-              label: 'Davlat raqami',
+              label: context.l10n.fieldPlate,
               controller: _plateController,
               hint: '01 A 123 BC',
               textCapitalization: TextCapitalization.characters,
               onChanged: () => setState(() {}),
             ),
             _Field(
-              label: 'Yuk koʻtarish quvvati (kg)',
+              label: context.l10n.fieldCapacityKg,
               controller: _capacityController,
               hint: '5000',
               keyboardType: TextInputType.number,
@@ -639,7 +651,7 @@ class _AddVehicleSheetState extends ConsumerState<_AddVehicleSheet> {
 
             const SizedBox(height: AppSpacing.md),
             AppButton(
-              label: 'Qoʻshish',
+              label: context.l10n.actionAdd,
               isLoading: _isSubmitting,
               onPressed: _isValid ? _submit : null,
             ),
@@ -725,10 +737,10 @@ class _AddRouteSheetState extends ConsumerState<_AddRouteSheet> {
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
-          Text('Yoʻnalish qoʻshish', style: theme.textTheme.titleMedium),
+          Text(context.l10n.addRouteTitle, style: theme.textTheme.titleMedium),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'Tizim shu yoʻnalishdagi yuklarni sizga birinchi navbatda taklif qiladi.',
+            context.l10n.addRouteHint,
             style: theme.textTheme.bodySmall?.copyWith(
               color: AppColors.textSecondary,
             ),
@@ -746,22 +758,22 @@ class _AddRouteSheetState extends ConsumerState<_AddRouteSheet> {
             ),
             data: (bundle) {
               final regions = {
-                for (final region in bundle.regions) region.id: region.name.uz,
+                for (final region in bundle.regions) region.id: region.name.of(context.language),
               };
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _TypeChips(
-                    label: 'Qayerdan',
+                    label: context.l10n.fieldFrom,
                     options: regions,
                     selected: _fromRegionId,
                     onChanged: (id) => setState(() => _fromRegionId = id),
                   ),
                   _TypeChips(
-                    label: 'Qayerga',
+                    label: context.l10n.fieldTo,
                     // Boʻsh tanlov — "istalgan yoʻnalishga"
-                    helper: 'Tanlamasangiz — istalgan yoʻnalishga',
+                    helper: context.l10n.fieldToHelper,
                     options: regions,
                     selected: _toRegionId,
                     onChanged: (id) => setState(
@@ -777,13 +789,13 @@ class _AddRouteSheetState extends ConsumerState<_AddRouteSheet> {
             contentPadding: EdgeInsets.zero,
             value: _isRegular,
             onChanged: (value) => setState(() => _isRegular = value),
-            title: const Text('Doimiy yoʻnalish'),
-            subtitle: const Text('Muntazam qatnaysiz — moslik foizi yuqoriroq'),
+            title: Text(context.l10n.routeRegular),
+            subtitle: Text(context.l10n.routeRegularHint),
           ),
           const SizedBox(height: AppSpacing.md),
 
           AppButton(
-            label: 'Qoʻshish',
+            label: context.l10n.actionAdd,
             isLoading: _isSubmitting,
             onPressed: _fromRegionId == null ? null : _submit,
           ),

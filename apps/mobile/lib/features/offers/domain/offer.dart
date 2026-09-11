@@ -15,14 +15,6 @@ enum OfferStatus {
         _ => OfferStatus.pending,
       };
 
-  String get label => switch (this) {
-        OfferStatus.pending => 'Kutilmoqda',
-        OfferStatus.accepted => 'Qabul qilindi',
-        OfferStatus.rejected => 'Rad etildi',
-        OfferStatus.withdrawn => 'Qaytarib olindi',
-        OfferStatus.expired => 'Muddati tugadi',
-      };
-
   bool get isActive => this == OfferStatus.pending;
 }
 

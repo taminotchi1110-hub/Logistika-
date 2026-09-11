@@ -1,6 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:karvon/features/profile/domain/driver_readiness.dart';
 import 'package:karvon/features/vehicles/domain/vehicle.dart';
+import 'package:karvon/features/profile/presentation/profile_l10n.dart';
+
+import '../../helpers/localized_app.dart';
 
 /// Haydovchining tayyorligi.
 ///
@@ -113,16 +116,16 @@ void main() {
     test('★ HAR BIR QADAM NEGA KERAKLIGI YOZILGAN', () {
       // Quruq talab qarshilik uygʻotadi; sababi aytilgani bajariladi
       for (final step in ReadinessStep.values) {
-        expect(step.label, isNotEmpty, reason: '$step');
+        expect(step.localized(l10nFor()), isNotEmpty, reason: '$step');
         if (step != ReadinessStep.other) {
-          expect(step.reason, isNotEmpty, reason: '$step sababi yoʻq');
+          expect(step.why(l10nFor()), isNotEmpty, reason: '$step sababi yoʻq');
         }
       }
     });
 
     test('yoʻnalish sababi foyda sifatida yozilgan', () {
       // "Koʻrsating" emas, "sizga mos yuklarni oʻzi topib beradi"
-      expect(ReadinessStep.routes.reason, contains('oʻzi topib beradi'));
+      expect(ReadinessStep.routes.why(l10nFor()), contains('oʻzi topib beradi'));
     });
   });
 
@@ -151,7 +154,7 @@ void main() {
         'priority': 5,
       });
 
-      expect(route.label, 'Toshkent shahri → Samarqand');
+      expect(route.localizedLabel(l10nFor()), 'Toshkent shahri → Samarqand');
       expect(route.isRegular, isTrue);
     });
 
@@ -168,7 +171,7 @@ void main() {
       });
 
       expect(route.toRegionId, isNull);
-      expect(route.label, 'Toshkent shahri → istalgan yoʻnalish');
+      expect(route.localizedLabel(l10nFor()), 'Toshkent shahri → istalgan yoʻnalish');
     });
   });
 }

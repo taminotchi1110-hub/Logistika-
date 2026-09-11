@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:karvon/core/l10n/formatters.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/providers.dart';
@@ -305,7 +306,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(widget.title ?? 'Suhbat', style: theme.textTheme.titleMedium),
+            Text(widget.title ?? context.l10n.chatTitleFallback, style: theme.textTheme.titleMedium),
             if (widget.subtitle != null)
               Text(
                 widget.subtitle!,
@@ -347,11 +348,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
 
     if (_messages.isEmpty) {
-      return const EmptyState(
+      return EmptyState(
         icon: Icons.chat_bubble_outline_rounded,
-        title: 'Hali xabar yoʻq',
-        message: 'Yozib, kelishuvni boshlang. Telefon raqami haydovchi yuk '
-            'olish nuqtasiga yetib borgach ochiladi.',
+        title: context.l10n.chatEmptyTitle,
+        message: context.l10n.chatEmptyHint,
       );
     }
 
@@ -412,8 +412,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 textCapitalization: TextCapitalization.sentences,
                 onChanged: (_) => setState(() {}),
                 onSubmitted: (_) => _send(),
-                decoration: const InputDecoration(
-                  hintText: 'Xabar yozing…',
+                decoration: InputDecoration(
+                  hintText: context.l10n.chatInputHint,
                   counterText: '',
                 ),
               ),
@@ -424,7 +424,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             IconButton.filled(
               onPressed: _inputController.text.trim().isEmpty ? null : _send,
               icon: const Icon(Icons.send_rounded),
-              tooltip: 'Yuborish',
+              tooltip: context.l10n.actionSend,
             ),
           ],
         ),
@@ -451,7 +451,7 @@ class _OfflineBar extends StatelessWidget {
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
-              'Aloqa yoʻq — xabar tiklanganda yuboriladi',
+              context.l10n.chatOffline,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColors.warning,
                   ),
@@ -479,8 +479,7 @@ class _ReadOnlyNotice extends StatelessWidget {
         top: false,
         child: Text(
           // Tarix oʻchirilmaydi: nizoda dalil sifatida kerak
-          'Buyurtma yopilgan — bu suhbatda yozib boʻlmaydi. '
-          'Yozishmalar tarixi saqlanadi.',
+          context.l10n.chatReadOnly,
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: AppColors.textSecondary,

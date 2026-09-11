@@ -13,6 +13,9 @@ import 'package:karvon/features/chat/domain/conversation.dart';
 import 'package:karvon/features/chat/presentation/chat_providers.dart';
 import 'package:karvon/features/chat/presentation/chat_screen.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:karvon/core/l10n/locale_controller.dart';
+
+import '../../helpers/localized_app.dart';
 
 class _MockChatRepository extends Mock implements ChatRepository {}
 
@@ -94,6 +97,7 @@ void main() {
     WidgetTester tester, {
     List<ChatMessage> history = const [],
     bool canWrite = true,
+    AppLocale locale = testLocale,
   }) async {
     when(() => repository.messages('c-1', cursor: any(named: 'cursor'), limit: any(named: 'limit')))
         .thenAnswer(
@@ -107,8 +111,9 @@ void main() {
           socketClientProvider.overrideWithValue(socket),
           currentUserProvider.overrideWithValue(me),
         ],
-        child: MaterialApp(
+        child: localizedApp(
           theme: AppTheme.light,
+          locale: locale,
           home: ChatScreen(
             conversationId: 'c-1',
             title: 'Anvar Karimov',
@@ -268,5 +273,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(socket.joined, isEmpty);
+  });
+
+  testWidgets('★ RUSCHA: BOʻSH SUHBAT VA MAYDON TARJIMA QILINGAN', (tester) async {
+    await pump(tester, locale: AppLocale.ru);
+
+    expect(find.text('Сообщений пока нет'), findsOneWidget);
+    expect(find.text('Напишите сообщение…'), findsOneWidget);
+    expect(find.textContaining('Hali xabar'), findsNothing);
   });
 }

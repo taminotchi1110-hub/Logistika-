@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:karvon/core/l10n/formatters.dart';
 
 import '../../../core/providers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/utils/money.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_states.dart';
 import '../domain/wallet.dart';
 import 'payout_sheet.dart';
 import 'topup_sheet.dart';
 import 'wallet_providers.dart';
+import 'wallet_l10n.dart';
 
 /// Hamyon.
 ///
@@ -28,7 +29,7 @@ class WalletScreen extends ConsumerWidget {
     final isDriver = ref.watch(currentUserProvider)?.role.canDrive ?? false;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Hamyon')),
+      appBar: AppBar(title: Text(context.l10n.menuWallet)),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(walletProvider);
@@ -67,7 +68,7 @@ class WalletScreen extends ConsumerWidget {
           children: [
             Expanded(
               child: AppButton(
-                label: 'Toʻldirish',
+                label: context.l10n.actionTopup,
                 icon: Icons.add_rounded,
                 onPressed: () => _openTopup(context, ref),
               ),
@@ -76,7 +77,7 @@ class WalletScreen extends ConsumerWidget {
               const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: AppButton.secondary(
-                  label: 'Yechish',
+                  label: context.l10n.actionWithdraw,
                   icon: Icons.account_balance_rounded,
                   onPressed: () => _openPayout(context, ref, wallet),
                 ),
@@ -91,7 +92,7 @@ class WalletScreen extends ConsumerWidget {
           const SizedBox(height: AppSpacing.xl),
         ],
 
-        Text('Harakatlar', style: Theme.of(context).textTheme.titleSmall),
+        Text(context.l10n.walletHistoryTitle, style: Theme.of(context).textTheme.titleSmall),
         const SizedBox(height: AppSpacing.md),
         const _HistorySection(),
       ],
@@ -138,14 +139,14 @@ class _BalanceCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Balans',
+            context.l10n.walletBalance,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: AppColors.white.withValues(alpha: 0.7),
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            formatSoum(wallet.balanceTiyin),
+            context.soum(wallet.balanceTiyin),
             style: theme.textTheme.headlineMedium?.copyWith(
               color: AppColors.white,
               fontWeight: FontWeight.w700,
@@ -157,8 +158,7 @@ class _BalanceCard extends StatelessWidget {
           if (negative && isDriver) ...[
             const SizedBox(height: AppSpacing.md),
             Text(
-              'Naqd buyurtmalardagi komissiya qarzi. '
-              'Ruxsat etilgan chegara: ${formatSoum(wallet.creditLimitTiyin)}.',
+              context.l10n.walletDebtNote(context.soum(wallet.creditLimitTiyin)),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: AppColors.white.withValues(alpha: 0.7),
               ),
@@ -180,8 +180,7 @@ class _BalanceCard extends StatelessWidget {
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Text(
-                      'Qarz chegaradan oshdi — yangi buyurtma olib boʻlmaydi. '
-                      'Toʻlash kerak: ${formatSoum(wallet.debtToPayTiyin)}',
+                      context.l10n.walletBlocked(context.soum(wallet.debtToPayTiyin)),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: AppColors.white,
                       ),
@@ -215,13 +214,12 @@ class _HistorySection extends ConsumerWidget {
       ),
       data: (entries) {
         if (entries.isEmpty) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: AppSpacing.xl),
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
             child: EmptyState(
               icon: Icons.receipt_long_outlined,
-              title: 'Harakat yoʻq',
-              message: 'Hisobni toʻldirsangiz yoki buyurtma yakunlansangiz '
-                  'bu yerda koʻrinadi.',
+              title: context.l10n.walletHistoryEmpty,
+              message: context.l10n.walletHistoryEmptyHint,
             ),
           );
         }
@@ -269,14 +267,14 @@ class _HistoryTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  entry.description.isEmpty ? entry.type.label : entry.description,
+                  entry.title(context.l10n),
                   style: theme.textTheme.bodyMedium,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  _date(entry.createdAt),
+                  _date(context, entry.createdAt),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: AppColors.textSecondary,
                   ),
@@ -289,7 +287,7 @@ class _HistoryTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '${income ? '+' : ''}${formatSoum(entry.amountTiyin)}',
+                '${income ? '+' : ''}${context.soum(entry.amountTiyin)}',
                 style: theme.textTheme.bodyLarge?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: income ? AppColors.success : AppColors.textPrimary,
@@ -298,7 +296,7 @@ class _HistoryTile extends StatelessWidget {
               const SizedBox(height: 2),
               // Amaldan keyingi balans — mijoz hisobni oʻzi tekshira oladi
               Text(
-                formatSoum(entry.balanceAfterTiyin, withSuffix: false),
+                context.soum(entry.balanceAfterTiyin, withSuffix: false),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: AppColors.textSecondary,
                 ),
@@ -310,15 +308,12 @@ class _HistoryTile extends StatelessWidget {
     );
   }
 
-  static String _date(DateTime value) {
+  static String _date(BuildContext context, DateTime value) {
     final local = value.toLocal();
-    const months = [
-      'yan', 'fev', 'mar', 'apr', 'may', 'iyun',
-      'iyul', 'avg', 'sent', 'okt', 'noy', 'dek',
-    ];
+    final months = context.l10n.monthsShort.split(',');
     final hh = local.hour.toString().padLeft(2, '0');
     final mm = local.minute.toString().padLeft(2, '0');
-    return '${local.day} ${months[local.month - 1]}, $hh:$mm';
+    return context.l10n.dateTimeFull(local.day, months[local.month - 1].trim(), '$hh:$mm');
   }
 }
 
@@ -338,7 +333,7 @@ class _PayoutSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Yechish soʻrovlari', style: theme.textTheme.titleSmall),
+        Text(context.l10n.payoutsTitle, style: theme.textTheme.titleSmall),
         const SizedBox(height: AppSpacing.md),
         for (final payout in pending)
           Container(
@@ -362,12 +357,12 @@ class _PayoutSection extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${formatSoum(payout.amountTiyin)} → ${payout.cardMask}',
+                        '${context.soum(payout.amountTiyin)} → ${payout.cardMask}',
                         style: theme.textTheme.bodyMedium,
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        payout.failureReason ?? payout.statusLabel,
+                        payout.failureReason ?? payout.statusText(context.l10n),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: payout.isFailed
                               ? AppColors.danger

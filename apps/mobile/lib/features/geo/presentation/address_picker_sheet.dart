@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:karvon/core/l10n/formatters.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/location/device_location.dart';
@@ -136,7 +137,7 @@ class _AddressPickerSheetState extends ConsumerState<_AddressPickerSheet> {
       if (position == null) {
         if (!mounted) return;
         setState(() => _isLocating = false);
-        _showMessage('Joylashuvga ruxsat berilmagan');
+        _showMessage(context.l10n.locationDenied);
         return;
       }
 
@@ -154,7 +155,7 @@ class _AddressPickerSheetState extends ConsumerState<_AddressPickerSheet> {
     } on Object {
       if (!mounted) return;
       setState(() => _isLocating = false);
-      _showMessage('Joylashuvni aniqlab boʻlmadi');
+      _showMessage(context.l10n.locationFailed);
     }
   }
 
@@ -195,6 +196,7 @@ class _AddressPickerSheetState extends ConsumerState<_AddressPickerSheet> {
                   Expanded(child: Text(widget.title, style: theme.textTheme.titleMedium)),
                   IconButton(
                     icon: const Icon(Icons.close_rounded),
+                    tooltip: context.l10n.actionClose,
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
@@ -209,7 +211,7 @@ class _AddressPickerSheetState extends ConsumerState<_AddressPickerSheet> {
                 onChanged: _onChanged,
                 onSubmitted: _search,
                 decoration: InputDecoration(
-                  hintText: 'Koʻcha, mahalla yoki obyekt nomi',
+                  hintText: context.l10n.addressSearchHint,
                   prefixIcon: const Icon(Icons.search_rounded),
                   suffixIcon: _controller.text.isEmpty
                       ? null
@@ -233,7 +235,7 @@ class _AddressPickerSheetState extends ConsumerState<_AddressPickerSheet> {
                       child: CircularProgressIndicator(strokeWidth: 2.5),
                     )
                   : const Icon(Icons.my_location_rounded, color: AppColors.primary),
-              title: const Text('Mening joylashuvim'),
+              title: Text(context.l10n.myLocation),
               onTap: _isLocating ? null : _useCurrentLocation,
             ),
             const Divider(height: 1),
@@ -266,15 +268,14 @@ class _AddressPickerSheetState extends ConsumerState<_AddressPickerSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Kamida 3 ta harf kiriting',
+              context.l10n.addressMinChars,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              'Masalan: "Chilonzor 19", "Yunusobod bozori" yoki '
-              '"Samarqand Registon".',
+              context.l10n.addressExamples,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: AppColors.textSecondary,
               ),
@@ -285,11 +286,10 @@ class _AddressPickerSheetState extends ConsumerState<_AddressPickerSheet> {
     }
 
     if (_results.isEmpty) {
-      return const EmptyState(
+      return EmptyState(
         icon: Icons.location_off_outlined,
-        title: 'Manzil topilmadi',
-        message: 'Nomni boshqacha yozib koʻring yoki yaqin obyekt nomini kiriting '
-            '— masalan bozor, bekat yoki koʻcha nomi.',
+        title: context.l10n.addressNotFound,
+        message: context.l10n.addressNotFoundHint,
       );
     }
 

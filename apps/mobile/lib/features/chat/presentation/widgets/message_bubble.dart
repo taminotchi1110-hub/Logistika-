@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:karvon/core/l10n/formatters.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -155,7 +156,7 @@ class _DaySeparator extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppRadius.pill),
           ),
           child: Text(
-            _label(date),
+            _label(context, date),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppColors.textSecondary,
                 ),
@@ -166,20 +167,19 @@ class _DaySeparator extends StatelessWidget {
   }
 
   /// "Bugun" / "Kecha" sanadan tezroq o'qiladi.
-  static String _label(DateTime value) {
+  static String _label(BuildContext context, DateTime value) {
     final local = value.toLocal();
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final day = DateTime(local.year, local.month, local.day);
     final diff = today.difference(day).inDays;
 
-    if (diff == 0) return 'Bugun';
-    if (diff == 1) return 'Kecha';
+    if (diff == 0) return context.l10n.dateToday;
+    if (diff == 1) return context.l10n.dateYesterday;
 
-    const months = [
-      'yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun',
-      'iyul', 'avgust', 'sentabr', 'oktabr', 'noyabr', 'dekabr',
-    ];
-    return '${local.day} ${months[local.month - 1]}';
+    // Ruschada oy qaratqich kelishigida ("9 сентября"), inglizchada oy
+    // kundan oldin — shuning uchun butun qolip tarjimada
+    final months = context.l10n.monthsFull.split(',');
+    return context.l10n.dayMonth(local.day, months[local.month - 1].trim());
   }
 }

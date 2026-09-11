@@ -31,15 +31,6 @@ enum DocumentType {
         DocumentType.other => 'OTHER',
       };
 
-  String get label => switch (this) {
-        DocumentType.passport => 'Pasport',
-        DocumentType.idCard => 'ID karta',
-        DocumentType.driverLicense => 'Haydovchilik guvohnomasi',
-        DocumentType.vehicleReg => 'Texnik pasport',
-        DocumentType.insurance => 'Sugʻurta',
-        DocumentType.other => 'Boshqa hujjat',
-      };
-
   /// Hujjat kimga tegishli — backend `ALLOWED_TYPES_BY_OWNER` bilan mos.
   ///
   /// Noto'g'ri egalik bilan yuborilgan hujjat serverda rad etiladi,
@@ -122,12 +113,6 @@ class UserDocument {
 
   bool get isExpired =>
       expiresAt != null && expiresAt!.isBefore(DateTime.now());
-
-  String get sideLabel => switch (pageSide) {
-        'FRONT' => 'Old tomoni',
-        'BACK' => 'Orqa tomoni',
-        _ => '',
-      };
 }
 
 /// Yuklash uchun vaqtinchalik havola.

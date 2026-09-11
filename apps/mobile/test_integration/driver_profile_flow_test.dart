@@ -9,6 +9,9 @@ import 'package:karvon/features/profile/data/profile_repository.dart';
 import 'package:karvon/features/profile/domain/driver_readiness.dart';
 import 'package:karvon/features/vehicles/data/vehicles_repository.dart';
 import 'package:karvon/features/vehicles/domain/vehicle.dart';
+import 'package:karvon/core/l10n/locale_controller.dart';
+import 'package:karvon/l10n/app_localizations.dart';
+import 'package:karvon/features/profile/presentation/profile_l10n.dart';
 
 import 'support/memory_token_storage.dart';
 
@@ -125,7 +128,7 @@ void main() {
     );
 
     expect(routes, hasLength(1));
-    expect(routes.first.label, 'Toshkent shahri → Samarqand');
+    expect(routes.first.localizedLabel(lookupAppLocalizations(AppLocale.uz.locale)), 'Toshkent shahri → Samarqand');
     expect(routes.first.isRegular, isTrue);
 
     readiness = await driver.profile.readiness();
@@ -139,7 +142,7 @@ void main() {
     final routes = await driver.profile.addRoute(fromRegionId: 1);
 
     expect(routes.first.toRegionId, isNull);
-    expect(routes.first.label, contains('istalgan yoʻnalish'));
+    expect(routes.first.localizedLabel(lookupAppLocalizations(AppLocale.uz.locale)), contains('istalgan yoʻnalish'));
   });
 
   test('yoʻnalish oʻchiriladi', () async {

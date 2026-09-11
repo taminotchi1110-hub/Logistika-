@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:karvon/core/l10n/formatters.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
@@ -124,10 +125,10 @@ class _PayoutSheetState extends ConsumerState<_PayoutSheet> {
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
-            Text('Kartaga yechish', style: theme.textTheme.titleMedium),
+            Text(context.l10n.payoutSheetTitle, style: theme.textTheme.titleMedium),
             const SizedBox(height: AppSpacing.xs),
             Text(
-              'Mavjud: ${formatSoum(widget.wallet.balanceTiyin)}',
+              context.l10n.payoutAvailable(context.soum(widget.wallet.balanceTiyin)),
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: AppColors.textSecondary,
               ),
@@ -143,7 +144,7 @@ class _PayoutSheetState extends ConsumerState<_PayoutSheet> {
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Text(
-                  'Yechish uchun kamida ${formatSoum(_minSoum * 100)} boʻlishi kerak.',
+                  context.l10n.payoutMinBalance(context.soum(_minSoum * 100)),
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: AppColors.warning,
                   ),
@@ -151,19 +152,19 @@ class _PayoutSheetState extends ConsumerState<_PayoutSheet> {
               )
             else ...[
               AppTextField(
-                label: 'Summa',
+                label: context.l10n.fieldAmount,
                 controller: _amountController,
                 hint: '200 000',
-                suffix: 'soʻm',
+                suffix: context.l10n.unitSoum,
                 isRequired: true,
                 keyboardType: TextInputType.number,
                 inputFormatters: const [SoumInputFormatter()],
                 onChanged: (_) => setState(() {}),
-                helper: 'Eng kam ${formatSoum(_minSoum * 100)}',
-                errorText: _amount > available ? 'Balansda yetarli mablagʻ yoʻq' : null,
+                helper: context.l10n.amountMinHelper(context.soum(_minSoum * 100)),
+                errorText: _amount > available ? context.l10n.payoutInsufficient : null,
               ),
               AppTextField(
-                label: 'Karta raqami',
+                label: context.l10n.fieldCardNumber,
                 controller: _cardController,
                 hint: '8600 1234 5678 1234',
                 isRequired: true,
@@ -182,8 +183,7 @@ class _PayoutSheetState extends ConsumerState<_PayoutSheet> {
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Text(
-                      'Karta raqami saqlanmaydi — faqat oxirgi 4 raqami '
-                      'koʻrinadi. Pul odatda 1 ish kuni ichida oʻtadi.',
+                      context.l10n.payoutCardNote,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: AppColors.textSecondary,
                       ),
@@ -193,7 +193,7 @@ class _PayoutSheetState extends ConsumerState<_PayoutSheet> {
               ),
               const SizedBox(height: AppSpacing.lg),
               AppButton(
-                label: 'Yechish',
+                label: context.l10n.actionWithdraw,
                 isLoading: _isSubmitting,
                 onPressed: _isValid ? _submit : null,
               ),

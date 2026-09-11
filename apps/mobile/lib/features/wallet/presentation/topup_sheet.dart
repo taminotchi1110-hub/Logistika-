@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:karvon/core/l10n/formatters.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
@@ -72,7 +73,7 @@ class _TopupSheetState extends ConsumerState<_TopupSheet> {
       final url = payment.checkoutUrl;
       if (url == null) {
         setState(() => _isSubmitting = false);
-        _showMessage('Toʻlov havolasi olinmadi');
+        _showMessage(context.l10n.topupNoLink);
         return;
       }
 
@@ -86,7 +87,7 @@ class _TopupSheetState extends ConsumerState<_TopupSheet> {
       if (!mounted) return;
       if (!opened) {
         setState(() => _isSubmitting = false);
-        _showMessage('Toʻlov sahifasini ochib boʻlmadi');
+        _showMessage(context.l10n.topupOpenFailed);
         return;
       }
 
@@ -128,19 +129,19 @@ class _TopupSheetState extends ConsumerState<_TopupSheet> {
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
-            Text('Hisobni toʻldirish', style: theme.textTheme.titleMedium),
+            Text(context.l10n.topupTitle, style: theme.textTheme.titleMedium),
             const SizedBox(height: AppSpacing.lg),
 
             AppTextField(
-              label: 'Summa',
+              label: context.l10n.fieldAmount,
               controller: _controller,
               hint: '100 000',
-              suffix: 'soʻm',
+              suffix: context.l10n.unitSoum,
               isRequired: true,
               keyboardType: TextInputType.number,
               inputFormatters: const [SoumInputFormatter()],
               onChanged: (_) => setState(() {}),
-              helper: 'Eng kam ${formatSoum(_minSoum * 100)}',
+              helper: context.l10n.amountMinHelper(context.soum(_minSoum * 100)),
             ),
 
             Wrap(
@@ -149,7 +150,7 @@ class _TopupSheetState extends ConsumerState<_TopupSheet> {
               children: [
                 for (final preset in _presets)
                   ActionChip(
-                    label: Text(formatSoumShort(preset * 100)),
+                    label: Text(context.soumShort(preset * 100)),
                     onPressed: () {
                       _controller.text = groupSoumInput('$preset');
                       setState(() {});
@@ -159,7 +160,7 @@ class _TopupSheetState extends ConsumerState<_TopupSheet> {
             ),
             const SizedBox(height: AppSpacing.xl),
 
-            Text('Toʻlov tizimi', style: theme.textTheme.labelLarge),
+            Text(context.l10n.topupProvider, style: theme.textTheme.labelLarge),
             const SizedBox(height: AppSpacing.sm),
             // O'zbekistonda ikkita asosiy tizim; ikkalasi ham
             // backend'da to'liq qo'llab-quvvatlanadi
@@ -195,8 +196,7 @@ class _TopupSheetState extends ConsumerState<_TopupSheet> {
                   child: Text(
                     // Karta maʼlumotlari ILOVAGA KIRITILMAYDI — bu
                     // PCI DSS talabi va foydalanuvchi uchun ham xavfsizroq
-                    'Karta maʼlumotlari toʻlov tizimining sahifasida '
-                    'kiritiladi — ilova ularni koʻrmaydi.',
+                    context.l10n.topupCardNote,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: AppColors.textSecondary,
                     ),
@@ -207,7 +207,7 @@ class _TopupSheetState extends ConsumerState<_TopupSheet> {
             const SizedBox(height: AppSpacing.lg),
 
             AppButton(
-              label: 'Toʻlash',
+              label: context.l10n.actionPay,
               isLoading: _isSubmitting,
               onPressed: _isValid ? _submit : null,
             ),

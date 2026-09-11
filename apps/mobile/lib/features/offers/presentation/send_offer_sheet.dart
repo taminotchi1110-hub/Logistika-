@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:karvon/core/l10n/formatters.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
@@ -12,6 +13,7 @@ import '../../loads/domain/load.dart';
 import '../../vehicles/data/vehicles_repository.dart';
 import '../../vehicles/domain/vehicle.dart';
 import '../data/offers_repository.dart';
+import '../../vehicles/presentation/vehicle_l10n.dart';
 
 /// Taklif yuborish oynasi.
 ///
@@ -97,8 +99,7 @@ class _SendOfferSheetState extends ConsumerState<SendOfferSheet> {
         (offered - listed).abs().toDouble() / listed.toDouble();
 
     if (deviation > _tolerance) {
-      return 'Eʼlon narxidan ${(_tolerance * 100).round()}% dan koʻp farq qilmasligi kerak '
-          '(${formatSoum(listed)})';
+      return context.l10n.offerPriceOutOfRange((_tolerance * 100).round(), context.soum(listed));
     }
     return null;
   }
@@ -169,18 +170,18 @@ class _SendOfferSheetState extends ConsumerState<SendOfferSheet> {
                   controller: scrollController,
                   padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                   children: [
-                    Text('Taklif yuborish', style: theme.textTheme.headlineMedium),
+                    Text(context.l10n.offerSheetTitle, style: theme.textTheme.headlineMedium),
                     const SizedBox(height: AppSpacing.xs),
                     Text(
                       '${widget.load.pickup.shortLabel} → ${widget.load.delivery.shortLabel}'
-                      ' · ${formatWeight(widget.load.weightKg)}',
+                      ' · ${context.weight(widget.load.weightKg)}',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: AppColors.textSecondary,
                       ),
                     ),
                     const SizedBox(height: AppSpacing.xl),
 
-                    Text('Transport', style: theme.textTheme.titleMedium),
+                    Text(context.l10n.offerVehicleSection, style: theme.textTheme.titleMedium),
                     const SizedBox(height: AppSpacing.md),
 
                     vehicles.when(
@@ -199,14 +200,14 @@ class _SendOfferSheetState extends ConsumerState<SendOfferSheet> {
                     _priceSection(theme),
 
                     const SizedBox(height: AppSpacing.xl),
-                    Text('Xabar (ixtiyoriy)', style: theme.textTheme.titleMedium),
+                    Text(context.l10n.offerMessageSection, style: theme.textTheme.titleMedium),
                     const SizedBox(height: AppSpacing.md),
                     TextField(
                       controller: _messageController,
                       maxLines: 3,
                       maxLength: 500,
-                      decoration: const InputDecoration(
-                        hintText: 'Masalan: 14:00 dan keyin boʻshman',
+                      decoration: InputDecoration(
+                        hintText: context.l10n.offerMessageHint,
                       ),
                     ),
 
@@ -233,7 +234,7 @@ class _SendOfferSheetState extends ConsumerState<SendOfferSheet> {
                   border: Border(top: BorderSide(color: AppColors.border)),
                 ),
                 child: AppButton(
-                  label: 'Taklifni yuborish',
+                  label: context.l10n.actionSendOffer,
                   isLoading: _loading,
                   onPressed: _canSubmit ? _submit : null,
                 ),
@@ -247,10 +248,10 @@ class _SendOfferSheetState extends ConsumerState<SendOfferSheet> {
 
   Widget _vehicleList(List<Vehicle> vehicles) {
     if (vehicles.isEmpty) {
-      return const EmptyState(
+      return EmptyState(
         icon: Icons.local_shipping_outlined,
-        title: 'Transport qoʻshilmagan',
-        message: 'Taklif yuborish uchun avval transportingizni qoʻshing va tasdiqlating',
+        title: context.l10n.offerNoVehicles,
+        message: context.l10n.offerNoVehiclesHint,
       );
     }
 
@@ -286,7 +287,7 @@ class _SendOfferSheetState extends ConsumerState<SendOfferSheet> {
       children: [
         Row(
           children: [
-            Text('Narx', style: theme.textTheme.titleMedium),
+            Text(context.l10n.priceSectionTitle, style: theme.textTheme.titleMedium),
             const Spacer(),
             if (widget.load.hasPrice)
               TextButton(
@@ -297,7 +298,7 @@ class _SendOfferSheetState extends ConsumerState<SendOfferSheet> {
                         formatSoum(widget.load.priceTiyin, withSuffix: false);
                   }
                 }),
-                child: Text(_customPrice ? 'Eʼlon narxi' : 'Oʻz narxim'),
+                child: Text(_customPrice ? context.l10n.offerUseListedPrice : context.l10n.offerUseOwnPrice),
               ),
           ],
         ),
@@ -319,13 +320,13 @@ class _SendOfferSheetState extends ConsumerState<SendOfferSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        formatSoum(widget.load.priceTiyin),
+                        context.soum(widget.load.priceTiyin),
                         style: theme.textTheme.titleLarge?.copyWith(
                           color: AppColors.primaryDark,
                         ),
                       ),
                       Text(
-                        'Eʼlon narxiga rozisiz',
+                        context.l10n.offerAgreeListed,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: AppColors.primaryDark,
                         ),
@@ -349,7 +350,7 @@ class _SendOfferSheetState extends ConsumerState<SendOfferSheet> {
             ),
             decoration: InputDecoration(
               hintText: '0',
-              suffixText: 'soʻm',
+              suffixText: context.l10n.unitSoum,
               errorText: warning,
             ),
             onChanged: (_) => setState(() {}),
@@ -358,7 +359,7 @@ class _SendOfferSheetState extends ConsumerState<SendOfferSheet> {
         if (!widget.load.hasPrice) ...[
           const SizedBox(height: AppSpacing.sm),
           Text(
-            'Bu eʼlon "kelishuv asosida" — oʻz narxingizni koʻrsating',
+            context.l10n.offerNegotiableHint,
             style: theme.textTheme.bodySmall?.copyWith(
               color: AppColors.textSecondary,
             ),
@@ -390,11 +391,11 @@ class _VehicleTile extends StatelessWidget {
 
     // Sabab aniq aytiladi — "nega tanlay olmayapman?" savoli qolmasin
     final blockedReason = !vehicle.verificationStatus.isVerified
-        ? vehicle.verificationStatus.label
+        ? vehicle.verificationStatus.localized(context.l10n)
         : !vehicle.isActive
-            ? 'Faol emas'
+            ? context.l10n.vehicleInactive
             : !fits
-                ? 'Quvvat yetarli emas (${formatWeight(vehicle.totalCapacityKg)})'
+                ? context.l10n.vehicleCapacityTooLow(context.weight(vehicle.totalCapacityKg))
                 : null;
 
     return Opacity(
@@ -427,7 +428,7 @@ class _VehicleTile extends StatelessWidget {
                     children: [
                       Text(vehicle.title, style: theme.textTheme.titleMedium),
                       Text(
-                        '${vehicle.plateFormatted} · ${formatWeight(vehicle.totalCapacityKg)}',
+                        '${vehicle.plateFormatted} · ${context.weight(vehicle.totalCapacityKg)}',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: AppColors.textSecondary,
                         ),

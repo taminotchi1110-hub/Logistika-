@@ -8,6 +8,8 @@ import 'package:karvon/features/ratings/presentation/rate_order_sheet.dart';
 import 'package:karvon/features/ratings/presentation/rating_providers.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../../helpers/localized_app.dart';
+
 class _MockRatingsRepository extends Mock implements RatingsRepository {}
 
 /// Baho berish oynasi.
@@ -40,7 +42,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [ratingsRepositoryProvider.overrideWithValue(repository)],
-        child: MaterialApp(
+        child: localizedApp(
           theme: AppTheme.light,
           home: Builder(
             builder: (context) => Scaffold(

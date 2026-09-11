@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:karvon/core/l10n/formatters.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../vehicles/domain/vehicle.dart';
 import '../../domain/driver_readiness.dart';
+import '../profile_l10n.dart';
 
 /// Haydovchining tayyorlik kartochkasi.
 ///
@@ -43,7 +45,7 @@ class ReadinessCard extends StatelessWidget {
             const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Text(
-                'Hammasi tayyor — yuklarga taklif yuborishingiz mumkin',
+                context.l10n.readinessAllSet,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: AppColors.success,
                   fontWeight: FontWeight.w600,
@@ -72,7 +74,7 @@ class ReadinessCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  pending ? 'Tekshiruvda' : 'Ishni boshlash uchun',
+                  pending ? context.l10n.readinessUnderReview : context.l10n.readinessToStart,
                   style: theme.textTheme.titleSmall,
                 ),
               ),
@@ -98,8 +100,7 @@ class ReadinessCard extends StatelessWidget {
 
           if (pending)
             Text(
-              'Hujjatlaringiz koʻrib chiqilmoqda. Odatda 1 ish kuni ichida '
-              'javob beramiz va xabar yuboramiz.',
+              context.l10n.readinessPendingNote,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: AppColors.textSecondary,
               ),
@@ -112,8 +113,7 @@ class ReadinessCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: Text(
-                'Verifikatsiya rad etildi. Hujjatlarni tekshirib qayta '
-                'yuboring — sabab bildirishnomada yozilgan.',
+                context.l10n.readinessRejectedNote,
                 style: theme.textTheme.bodySmall?.copyWith(color: AppColors.danger),
               ),
             )
@@ -135,7 +135,7 @@ class ReadinessCard extends StatelessWidget {
                           valueColor: AlwaysStoppedAnimation(AppColors.white),
                         ),
                       )
-                    : const Text('Tekshiruvga yuborish'),
+                    : Text(context.l10n.actionSubmitForReview),
               ),
             ),
           ],
@@ -169,11 +169,11 @@ class _StepRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(step.label, style: theme.textTheme.bodyMedium),
-                if (step.reason.isNotEmpty) ...[
+                Text(step.localized(context.l10n), style: theme.textTheme.bodyMedium),
+                if (step.why(context.l10n).isNotEmpty) ...[
                   const SizedBox(height: 2),
                   Text(
-                    step.reason,
+                    step.why(context.l10n),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: AppColors.textSecondary,
                     ),

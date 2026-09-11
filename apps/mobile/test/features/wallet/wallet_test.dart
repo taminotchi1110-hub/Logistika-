@@ -1,5 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:karvon/features/wallet/domain/wallet.dart';
+import 'package:karvon/features/wallet/presentation/wallet_l10n.dart';
+
+import '../../helpers/localized_app.dart';
 
 /// Hamyon modellari — serverning haqiqiy javob shakli bo'yicha.
 ///
@@ -98,14 +101,14 @@ void main() {
       };
 
       types.forEach((api, label) {
-        expect(LedgerEntryType.fromApi(api).label, label, reason: api);
+        expect(LedgerEntryType.fromApi(api).localized(l10nFor()), label, reason: api);
       });
     });
 
     test('★ NOMAʼLUM TUR ILOVANI BUZMAYDI', () {
       // Server yangi tur qoʻshsa eski ilova qulab tushmasligi kerak
       expect(LedgerEntryType.fromApi('SOMETHING_NEW'), LedgerEntryType.other);
-      expect(LedgerEntryType.other.label, 'Boshqa amal');
+      expect(LedgerEntryType.other.localized(l10nFor()), 'Boshqa amal');
       expect(LedgerEntryType.fromApi(null), LedgerEntryType.other);
     });
   });
@@ -160,7 +163,7 @@ void main() {
       expect(payout.cardMask, '8600 **** **** 1234');
       // Toʻliq raqam hech qachon qaytmaydi
       expect(payout.cardMask, contains('*'));
-      expect(payout.statusLabel, 'Koʻrib chiqilmoqda');
+      expect(payout.statusText(l10nFor()), 'Koʻrib chiqilmoqda');
       expect(payout.isDone, isFalse);
       expect(payout.isFailed, isFalse);
     });
@@ -174,12 +177,12 @@ void main() {
             'requestedAt': '2026-09-09T06:00:00.000Z',
           });
 
-      expect(withStatus('COMPLETED').statusLabel, 'Kartaga oʻtkazildi');
+      expect(withStatus('COMPLETED').statusText(l10nFor()), 'Kartaga oʻtkazildi');
       expect(withStatus('COMPLETED').isDone, isTrue);
       expect(withStatus('FAILED').isFailed, isTrue);
-      expect(withStatus('REJECTED').statusLabel, 'Rad etildi');
+      expect(withStatus('REJECTED').statusText(l10nFor()), 'Rad etildi');
       // Nomaʼlum holat oʻzi koʻrsatiladi — yashirishdan koʻra yaxshiroq
-      expect(withStatus('WEIRD').statusLabel, 'WEIRD');
+      expect(withStatus('WEIRD').statusText(l10nFor()), 'WEIRD');
     });
 
     test('bajarilmagan soʻrovda sabab koʻrsatiladi', () {

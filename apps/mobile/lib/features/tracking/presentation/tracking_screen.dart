@@ -4,13 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:karvon/core/l10n/formatters.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/utils/money.dart';
 import '../../../core/ws/socket_client.dart';
 import '../../../core/ws/ws_providers.dart';
 import '../../../shared/widgets/app_states.dart';
@@ -140,12 +140,12 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Kuzatuv'),
+        title: Text(context.l10n.trackingTitle),
         actions: [
           if (!_followDriver && _location != null)
             IconButton(
               icon: const Icon(Icons.my_location_rounded),
-              tooltip: 'Haydovchiga qaytish',
+              tooltip: context.l10n.trackingRecenter,
               onPressed: () {
                 setState(() => _followDriver = true);
                 _mapController.move(_location!.position, 14);
@@ -302,12 +302,8 @@ class _NotTrackingState extends StatelessWidget {
 
     return EmptyState(
       icon: notYet ? Icons.schedule_rounded : Icons.flag_rounded,
-      title: notYet ? 'Kuzatuv hali boshlanmagan' : 'Kuzatuv yakunlandi',
-      message: notYet
-          ? 'Haydovchi yoʻlga chiqqanda xarita jonlanadi. Unga qadar '
-              'joylashuv yozilmaydi — bu maxfiylik qoidasi.'
-          : 'Yuk topshirilgan, kuzatuv toʻxtadi. Bosib oʻtilgan yoʻl '
-              'buyurtma tarixida saqlanadi.',
+      title: notYet ? context.l10n.trackingNotStarted : context.l10n.trackingFinished,
+      message: notYet ? context.l10n.trackingNotStartedHint : context.l10n.trackingFinishedHint,
     );
   }
 }
@@ -340,7 +336,7 @@ class _EtaCard extends StatelessWidget {
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: Text(
-                      'Birinchi joylashuv kutilmoqda…',
+                      context.l10n.trackingWaitingFirst,
                       style: theme.textTheme.bodyMedium,
                     ),
                   ),
@@ -364,8 +360,8 @@ class _EtaCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           location!.isHeadingToPickup
-                              ? 'Yuk olish nuqtasiga ketyapti'
-                              : 'Yetkazish manziliga ketyapti',
+                              ? context.l10n.trackingHeadingPickup
+                              : context.l10n.trackingHeadingDelivery,
                           style: theme.textTheme.bodyMedium,
                         ),
                       ),
@@ -375,21 +371,21 @@ class _EtaCard extends StatelessWidget {
                   Row(
                     children: [
                       _Metric(
-                        label: 'Qolgan masofa',
-                        value: formatDistance(location!.distanceToTargetKm),
+                        label: context.l10n.trackingDistanceLeft,
+                        value: context.distance(location!.distanceToTargetKm),
                       ),
                       const SizedBox(width: AppSpacing.xl),
                       _Metric(
-                        label: 'Taxminan yetadi',
+                        label: context.l10n.trackingEta,
                         value: location!.etaMinutes == null
                             ? '—'
-                            : formatDuration(location!.etaMinutes),
+                            : context.duration(location!.etaMinutes),
                       ),
                       if (location!.speedKmh != null) ...[
                         const SizedBox(width: AppSpacing.xl),
                         _Metric(
-                          label: 'Tezlik',
-                          value: '${location!.speedKmh!.round()} km/soat',
+                          label: context.l10n.trackingSpeed,
+                          value: context.l10n.speedKmh(location!.speedKmh!.round()),
                         ),
                       ],
                     ],
@@ -409,8 +405,7 @@ class _EtaCard extends StatelessWidget {
                             // Eskirgan nuqtani jonli deb koʻrsatish
                             // "haydovchi qimirlamayapti" degan notoʻgʻri
                             // xulosaga olib keladi
-                            'Aloqa yoʻqolgan — oxirgi maʼlumot '
-                            '${_ago(location!.age)} oldin',
+                            context.l10n.trackingStale(_ago(context, location!.age)),
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: AppColors.warning,
                             ),
@@ -425,10 +420,10 @@ class _EtaCard extends StatelessWidget {
     );
   }
 
-  static String _ago(Duration age) {
-    if (age.inMinutes < 60) return '${age.inMinutes} daqiqa';
-    if (age.inHours < 24) return '${age.inHours} soat';
-    return '${age.inDays} kun';
+  static String _ago(BuildContext context, Duration age) {
+    if (age.inMinutes < 60) return context.l10n.agoMinutes(age.inMinutes);
+    if (age.inHours < 24) return context.l10n.agoHours(age.inHours);
+    return context.l10n.agoDays(age.inDays);
   }
 }
 

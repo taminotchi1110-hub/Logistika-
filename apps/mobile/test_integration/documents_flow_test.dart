@@ -11,6 +11,9 @@ import 'package:karvon/features/documents/domain/document.dart';
 // `VerificationStatus` transport modelida yashaydi: tekshiruv holati
 // hujjatda ham, transportda ham, haydovchi profilida ham bir xil
 import 'package:karvon/features/vehicles/domain/vehicle.dart';
+import 'package:karvon/core/l10n/locale_controller.dart';
+import 'package:karvon/l10n/app_localizations.dart';
+import 'package:karvon/features/documents/presentation/document_l10n.dart';
 
 import 'support/memory_token_storage.dart';
 
@@ -269,7 +272,7 @@ void main() {
 
       expect(document.type, DocumentType.passport);
       expect(document.verificationStatus, VerificationStatus.pending);
-      expect(document.sideLabel, 'Old tomoni');
+      expect(document.sideText(lookupAppLocalizations(AppLocale.uz.locale)), 'Old tomoni');
       // Havola qisqa muddatli va javob berilayotganda yasaladi
       expect(document.url, isNotEmpty);
 

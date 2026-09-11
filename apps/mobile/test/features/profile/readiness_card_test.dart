@@ -3,6 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:karvon/core/theme/app_theme.dart';
 import 'package:karvon/features/profile/domain/driver_readiness.dart';
 import 'package:karvon/features/profile/presentation/widgets/readiness_card.dart';
+import 'package:karvon/core/l10n/locale_controller.dart';
+
+import '../../helpers/localized_app.dart';
 
 /// Tayyorlik kartochkasi.
 ///
@@ -34,10 +37,12 @@ void main() {
     WidgetTester tester,
     DriverReadiness data, {
     VoidCallback? onSubmit,
+    AppLocale locale = testLocale,
   }) async {
     await tester.pumpWidget(
-      MaterialApp(
+      localizedApp(
         theme: AppTheme.light,
+        locale: locale,
         home: Scaffold(
           body: SingleChildScrollView(
             child: ReadinessCard(
@@ -146,5 +151,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tapped, isTrue);
+  });
+
+  testWidgets('★ RUSCHA: QADAM VA UNING SABABI TARJIMA QILINGAN', (tester) async {
+    await pump(tester, readiness(missing: const ['ROUTES']), locale: AppLocale.ru);
+
+    expect(find.text('Укажите ваши направления'), findsOneWidget);
+    expect(find.textContaining('система сама подберёт'), findsOneWidget);
+    expect(find.text('Yoʻnalishlaringizni koʻrsating'), findsNothing);
   });
 }

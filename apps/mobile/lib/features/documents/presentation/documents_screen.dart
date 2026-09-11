@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:karvon/core/l10n/formatters.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/providers.dart';
@@ -13,6 +14,8 @@ import '../../profile/presentation/profile_providers.dart';
 import '../../vehicles/data/vehicles_repository.dart';
 import '../data/documents_repository.dart';
 import '../domain/document.dart';
+import '../../vehicles/presentation/vehicle_l10n.dart';
+import 'document_l10n.dart';
 
 final documentsRepositoryProvider = Provider<DocumentsRepository>((ref) {
   return DocumentsRepository(ref.watch(apiClientProvider));
@@ -43,7 +46,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     final documents = ref.watch(myDocumentsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Hujjatlar')),
+      appBar: AppBar(title: Text(context.l10n.documentsTitle)),
       body: RefreshIndicator(
         onRefresh: () async => ref.refresh(myDocumentsProvider.future),
         child: documents.when(
@@ -96,9 +99,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
               Expanded(
                 child: Text(
                   // NEGA kerakligi — quruq talab qarshilik uygʻotadi
-                  'Hujjatlar mijozlar sizga ishonishi uchun kerak: yukini '
-                  'notanish odamga topshirayotgan odam kim bilan ishlayotganini '
-                  'bilishi shart. Hujjatlaringizni faqat administrator koʻradi.',
+                  context.l10n.documentsWhy,
                   style: theme.textTheme.bodySmall?.copyWith(color: AppColors.info),
                 ),
               ),
@@ -107,7 +108,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
         ),
         const SizedBox(height: AppSpacing.xl),
 
-        Text('Majburiy', style: theme.textTheme.titleSmall),
+        Text(context.l10n.documentsRequired, style: theme.textTheme.titleSmall),
         const SizedBox(height: AppSpacing.md),
         for (final type in required)
           _DocumentSlot(
@@ -119,10 +120,10 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
           ),
 
         const SizedBox(height: AppSpacing.lg),
-        Text('Qoʻshimcha', style: theme.textTheme.titleSmall),
+        Text(context.l10n.documentsOptional, style: theme.textTheme.titleSmall),
         const SizedBox(height: AppSpacing.xs),
         Text(
-          'Sugʻurta va texnik pasport boʻlsa, mijozlar sizni tezroq tanlaydi.',
+          context.l10n.documentsOptionalHint,
           style: theme.textTheme.bodySmall?.copyWith(
             color: AppColors.textSecondary,
           ),
@@ -197,12 +198,12 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.photo_camera_rounded),
-              title: const Text('Suratga olish'),
+              title: Text(context.l10n.sourceCamera),
               onTap: () => Navigator.pop(context, ImageSource.camera),
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_rounded),
-              title: const Text('Galereyadan tanlash'),
+              title: Text(context.l10n.sourceGallery),
               onTap: () => Navigator.pop(context, ImageSource.gallery),
             ),
           ],
@@ -226,7 +227,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
 
     if (vehicles.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Avval transport qoʻshing')),
+        SnackBar(content: Text(context.l10n.addVehicleFirst)),
       );
       return null;
     }
@@ -235,7 +236,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     return showDialog<String>(
       context: context,
       builder: (context) => SimpleDialog(
-        title: const Text('Qaysi transport?'),
+        title: Text(context.l10n.whichVehicle),
         children: [
           for (final vehicle in vehicles)
             SimpleDialogOption(
@@ -251,21 +252,18 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Hujjatni oʻchirish'),
-        content: Text(
-          '${document.type.label} oʻchiriladi. Verifikatsiya uchun uni '
-          'qayta yuklashingiz kerak boʻladi.',
-        ),
+        title: Text(context.l10n.deleteDocumentTitle),
+        content: Text(context.l10n.deleteDocumentBody(document.type.localized(context.l10n))),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Bekor qilish'),
+            child: Text(context.l10n.actionCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text(
-              'Oʻchirish',
-              style: TextStyle(color: AppColors.danger),
+            child: Text(
+              context.l10n.actionDelete,
+              style: const TextStyle(color: AppColors.danger),
             ),
           ),
         ],
@@ -324,14 +322,14 @@ class _DocumentSlot extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(child: Text(type.label, style: theme.textTheme.bodyLarge)),
+              Expanded(child: Text(type.localized(context.l10n), style: theme.textTheme.bodyLarge)),
               if (documents.isEmpty)
                 TextButton.icon(
                   onPressed: isUploading
                       ? null
                       : () => onUpload(type.hasTwoSides ? 'FRONT' : null),
                   icon: const Icon(Icons.upload_rounded, size: AppSizes.iconSm),
-                  label: const Text('Yuklash'),
+                  label: Text(context.l10n.actionUpload),
                 ),
             ],
           ),
@@ -339,8 +337,8 @@ class _DocumentSlot extends StatelessWidget {
           if (documents.isEmpty)
             Text(
               type.hasTwoSides
-                  ? 'Ikkala tomonini ham yuklang'
-                  : 'Rasm yoki PDF',
+                  ? context.l10n.documentBothSides
+                  : context.l10n.documentImageOrPdf,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: AppColors.textSecondary,
               ),
@@ -357,7 +355,7 @@ class _DocumentSlot extends StatelessWidget {
             TextButton.icon(
               onPressed: isUploading ? null : () => onUpload('BACK'),
               icon: const Icon(Icons.add_rounded, size: AppSizes.iconSm),
-              label: const Text('Orqa tomonini yuklash'),
+              label: Text(context.l10n.documentUploadBack),
             ),
           ],
         ],
@@ -400,7 +398,7 @@ class _DocumentRow extends StatelessWidget {
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
-                  [document.sideLabel, status.label]
+                  [document.sideText(context.l10n), status.localized(context.l10n)]
                       .where((part) => part.isNotEmpty)
                       .join(' · '),
                   style: theme.textTheme.bodyMedium,
@@ -414,7 +412,7 @@ class _DocumentRow extends StatelessWidget {
                   icon: const Icon(Icons.delete_outline_rounded, size: AppSizes.iconSm),
                   color: AppColors.gray400,
                   onPressed: onRemove,
-                  tooltip: 'Oʻchirish',
+                  tooltip: context.l10n.actionDelete,
                 ),
             ],
           ),
@@ -434,8 +432,8 @@ class _DocumentRow extends StatelessWidget {
               padding: const EdgeInsets.only(left: 26),
               child: Text(
                 document.isExpired
-                    ? 'Amal qilish muddati tugagan — yangisini yuklang'
-                    : 'Amal qilish muddati tugayapti',
+                    ? context.l10n.documentExpired
+                    : context.l10n.documentExpiring,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: document.isExpired ? AppColors.danger : AppColors.warning,
                 ),

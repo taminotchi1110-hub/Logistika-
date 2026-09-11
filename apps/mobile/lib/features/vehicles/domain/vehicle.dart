@@ -12,13 +12,6 @@ enum VerificationStatus {
         _ => VerificationStatus.notSubmitted,
       };
 
-  String get label => switch (this) {
-        VerificationStatus.notSubmitted => 'Yuborilmagan',
-        VerificationStatus.pending => 'Tekshirilmoqda',
-        VerificationStatus.verified => 'Tasdiqlangan',
-        VerificationStatus.rejected => 'Rad etilgan',
-      };
-
   bool get isVerified => this == VerificationStatus.verified;
 }
 

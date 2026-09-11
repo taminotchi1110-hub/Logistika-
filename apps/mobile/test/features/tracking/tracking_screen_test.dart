@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:karvon/core/theme/app_theme.dart';
@@ -12,6 +11,9 @@ import 'package:karvon/features/tracking/data/tracking_repository.dart';
 import 'package:karvon/features/tracking/domain/live_location.dart';
 import 'package:karvon/features/tracking/presentation/tracking_screen.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:karvon/core/l10n/locale_controller.dart';
+
+import '../../helpers/localized_app.dart';
 
 class _MockTrackingRepository extends Mock implements TrackingRepository {}
 
@@ -98,6 +100,7 @@ void main() {
     WidgetTester tester, {
     required String status,
     LiveLocation? live,
+    AppLocale locale = testLocale,
   }) async {
     when(() => repository.lastLocation(any())).thenAnswer((_) async => live);
 
@@ -108,8 +111,9 @@ void main() {
           socketClientProvider.overrideWithValue(socket),
           orderProvider('o-1').overrideWith((ref) => Future.value(order(status))),
         ],
-        child: MaterialApp(
+        child: localizedApp(
           theme: AppTheme.light,
+          locale: locale,
           home: const TrackingScreen(orderId: 'o-1'),
         ),
       ),
@@ -203,5 +207,15 @@ void main() {
     await tester.pump();
 
     expect(find.text('128 km'), findsOneWidget);
+  });
+
+  testWidgets('★ RUSCHA: BIRLIKLAR VA KOʻPLIK SHAKLI', (tester) async {
+    await pump(tester, status: 'IN_TRANSIT', live: location(isStale: true), locale: AppLocale.ru);
+
+    expect(find.text('Едет к получателю'), findsOneWidget);
+    expect(find.text('128 км'), findsOneWidget);
+    expect(find.text('72 км/ч'), findsOneWidget);
+    // "12 минут назад" — "12 минуты" yoki "12 daqiqa" emas
+    expect(find.textContaining('12 минут назад'), findsOneWidget);
   });
 }

@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:karvon/core/providers.dart';
@@ -6,6 +5,9 @@ import 'package:karvon/features/auth/domain/user.dart';
 import 'package:karvon/features/wallet/domain/wallet.dart';
 import 'package:karvon/features/wallet/presentation/wallet_providers.dart';
 import 'package:karvon/features/wallet/presentation/wallet_screen.dart';
+import 'package:karvon/core/l10n/locale_controller.dart';
+
+import '../../helpers/localized_app.dart';
 
 /// Hamyon ekrani.
 ///
@@ -43,11 +45,12 @@ void main() {
         'debtToPayTiyin': debt,
       });
 
-  LedgerEntry entry(String amount, String description) => LedgerEntry.fromJson({
+  LedgerEntry entry(String amount, String description, {String type = 'TOPUP'}) =>
+      LedgerEntry.fromJson({
         'id': '1',
         'amountTiyin': amount,
         'balanceAfterTiyin': '5000000',
-        'entryType': 'TOPUP',
+        'entryType': type,
         'description': description,
         'createdAt': '2026-09-09T05:59:00.000Z',
       });
@@ -58,6 +61,7 @@ void main() {
     Wallet? data,
     List<LedgerEntry> history = const [],
     List<Payout> payouts = const [],
+    AppLocale locale = testLocale,
   }) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -67,8 +71,9 @@ void main() {
           walletHistoryProvider.overrideWith((ref) => Future.value(history)),
           payoutsProvider.overrideWith((ref) => Future.value(payouts)),
         ],
-        child: const MaterialApp(
-          home: WalletScreen(),
+        child: localizedApp(
+          locale: locale,
+          home: const WalletScreen(),
         ),
       ),
     );
@@ -131,11 +136,12 @@ void main() {
       user: driver,
       history: [
         entry('5000000', 'Hamyon toʻldirildi'),
-        entry('-800000', 'Platforma komissiyasi'),
+        entry('-800000', 'Platforma komissiyasi', type: 'COMMISSION'),
       ],
     );
 
-    expect(find.text('Hamyon toʻldirildi'), findsOneWidget);
+    // Nom turdan olinadi (joriy tilda), server izohidan emas
+    expect(find.text('Hisob toʻldirildi'), findsOneWidget);
     expect(find.text('Platforma komissiyasi'), findsOneWidget);
     // Kirim oldiga plyus qoʻyiladi
     expect(find.text('+50 000 soʻm'), findsOneWidget);
@@ -198,5 +204,29 @@ void main() {
     );
 
     expect(find.text('Karta bloklangan'), findsOneWidget);
+  });
+
+  testWidgets('★ RUSCHA: SERVER IZOHI OʻZBEKCHA — NOM JORIY TILDA', (tester) async {
+    await pump(
+      tester,
+      user: driver,
+      locale: AppLocale.ru,
+      history: [entry('-800000', 'Platforma komissiyasi', type: 'COMMISSION')],
+    );
+
+    expect(find.text('Комиссия платформы'), findsOneWidget);
+    expect(find.text('Platforma komissiyasi'), findsNothing);
+    expect(find.text('Пополнить'), findsOneWidget);
+  });
+
+  testWidgets('administrator tuzatishida sabab — server izohi koʻrsatiladi', (tester) async {
+    // Tuzatishda nima boʻlganini faqat izoh aytadi
+    await pump(
+      tester,
+      user: driver,
+      history: [entry('100000', 'Nizo №195 boʻyicha qaytarildi', type: 'ADJUSTMENT')],
+    );
+
+    expect(find.text('Nizo №195 boʻyicha qaytarildi'), findsOneWidget);
   });
 }

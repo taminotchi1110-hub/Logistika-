@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:karvon/core/l10n/formatters.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
@@ -95,12 +96,12 @@ class _RateOrderSheetState extends ConsumerState<_RateOrderSheet> {
 
   /// Yulduzlar soniga mos matn — raqam o'zi hech narsa demaydi.
   String get _scoreLabel => switch (_draft.score) {
-        1 => 'Juda yomon',
-        2 => 'Yomon',
-        3 => 'Oʻrtacha',
-        4 => 'Yaxshi',
-        5 => 'Aʼlo',
-        _ => 'Yulduzni tanlang',
+        1 => context.l10n.scoreTerrible,
+        2 => context.l10n.scoreBad,
+        3 => context.l10n.scoreOk,
+        4 => context.l10n.scoreGood,
+        5 => context.l10n.scoreExcellent,
+        _ => context.l10n.scorePick,
       };
 
   @override
@@ -131,8 +132,8 @@ class _RateOrderSheetState extends ConsumerState<_RateOrderSheet> {
             Center(
               child: Text(
                 widget.isRatingDriver
-                    ? 'Haydovchini baholang'
-                    : 'Yuk beruvchini baholang',
+                    ? context.l10n.rateDriverTitle
+                    : context.l10n.rateShipperTitle,
                 style: theme.textTheme.titleMedium,
               ),
             ),
@@ -165,20 +166,20 @@ class _RateOrderSheetState extends ConsumerState<_RateOrderSheet> {
 
             // Mezonlar IXTIYORIY: majburiy qilinsa foydalanuvchi
             // hammasiga "5" qoʻyib qutuladi va baho maʼnosini yoʻqotadi
-            Text('Batafsil (ixtiyoriy)', style: theme.textTheme.labelLarge),
+            Text(context.l10n.ratingDetailsOptional, style: theme.textTheme.labelLarge),
             const SizedBox(height: AppSpacing.md),
 
             CriterionRating(
-              label: 'Vaqtida',
+              label: context.l10n.criterionPunctuality,
               hint: widget.isRatingDriver
-                  ? 'Kelishilgan vaqtda yetib keldimi'
-                  : 'Yuk tayyor holda kutdimi',
+                  ? context.l10n.criterionPunctualityDriverHint
+                  : context.l10n.criterionPunctualityShipperHint,
               value: _draft.punctuality,
               onChanged: (value) =>
                   setState(() => _draft = _draft.copyWith(punctuality: value)),
             ),
             CriterionRating(
-              label: 'Muomala',
+              label: context.l10n.criterionCommunication,
               value: _draft.communication,
               onChanged: (value) =>
                   setState(() => _draft = _draft.copyWith(communication: value)),
@@ -187,14 +188,14 @@ class _RateOrderSheetState extends ConsumerState<_RateOrderSheet> {
             // yukini baholay olmaydi — u yukni koʻrgan, lekin tayyorlamagan
             if (widget.isRatingDriver)
               CriterionRating(
-                label: 'Yuk holati',
-                hint: 'Yuk butun va shikastsiz yetib keldimi',
+                label: context.l10n.criterionCargo,
+                hint: context.l10n.criterionCargoHint,
                 value: _draft.cargoCondition,
                 onChanged: (value) =>
                     setState(() => _draft = _draft.copyWith(cargoCondition: value)),
               ),
             CriterionRating(
-              label: 'Ishonchlilik',
+              label: context.l10n.criterionReliability,
               value: _draft.reliability,
               onChanged: (value) =>
                   setState(() => _draft = _draft.copyWith(reliability: value)),
@@ -207,8 +208,8 @@ class _RateOrderSheetState extends ConsumerState<_RateOrderSheet> {
               minLines: 2,
               maxLength: 1000,
               textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
-                hintText: 'Izoh (ixtiyoriy)',
+              decoration: InputDecoration(
+                hintText: context.l10n.noteOptionalHint,
                 counterText: '',
               ),
             ),
@@ -227,8 +228,7 @@ class _RateOrderSheetState extends ConsumerState<_RateOrderSheet> {
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
-                    'Bahongiz hamkor ham baho bermaguncha yashirin turadi. '
-                    'Shu tufayli ikkalangiz ham halol baho bera olasiz.',
+                    context.l10n.ratingBlindNote,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: AppColors.textSecondary,
                     ),
@@ -239,7 +239,7 @@ class _RateOrderSheetState extends ConsumerState<_RateOrderSheet> {
             const SizedBox(height: AppSpacing.lg),
 
             AppButton(
-              label: 'Baho berish',
+              label: context.l10n.actionRate,
               isLoading: _isSubmitting,
               onPressed: _draft.isValid ? _submit : null,
             ),

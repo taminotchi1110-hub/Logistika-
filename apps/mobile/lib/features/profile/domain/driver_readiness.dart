@@ -85,28 +85,7 @@ enum ReadinessStep {
         _ => ReadinessStep.other,
       };
 
-  String get label => switch (this) {
-        ReadinessStep.profile => 'Profilni toʻldiring',
-        ReadinessStep.identityDocument => 'Pasport yuklang',
-        ReadinessStep.driverLicense => 'Haydovchilik guvohnomasini yuklang',
-        ReadinessStep.verifiedVehicle => 'Transport qoʻshing va tasdiqlating',
-        ReadinessStep.routes => 'Yoʻnalishlaringizni koʻrsating',
-        ReadinessStep.other => 'Qoʻshimcha maʼlumot kerak',
-      };
-
-  /// NEGA kerakligi — quruq talab qarshilik uyg'otadi.
-  String get reason => switch (this) {
-        ReadinessStep.profile => 'Mijoz kim bilan ishlayotganini bilishi kerak',
-        ReadinessStep.identityDocument =>
-          'Shaxsni tasdiqlash — mijozlar uchun asosiy xavfsizlik chorasi',
-        ReadinessStep.driverLicense =>
-          'Guvohnomasiz haydovchi platformada ishlay olmaydi',
-        ReadinessStep.verifiedVehicle =>
-          'Yuk qaysi transportda ketishini mijoz oldindan bilishi kerak',
-        ReadinessStep.routes =>
-          'Yoʻnalish koʻrsatilsa, tizim sizga mos yuklarni oʻzi topib beradi',
-        ReadinessStep.other => '',
-      };
+  // Qadam nomi va nega kerakligi joriy tilda — `presentation/profile_l10n.dart`.
 }
 
 /// Haydovchining doimiy yo'nalishi.
@@ -149,7 +128,4 @@ class DriverRoute {
   /// Doimiy yo'nalish — matchingda qo'shimcha ustunlik beradi.
   final bool isRegular;
   final int priority;
-
-  String get label =>
-      '$fromRegionName → ${toRegionName ?? 'istalgan yoʻnalish'}';
 }

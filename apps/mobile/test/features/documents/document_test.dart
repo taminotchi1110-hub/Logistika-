@@ -1,6 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:karvon/features/documents/domain/document.dart';
 import 'package:karvon/features/vehicles/domain/vehicle.dart';
+import 'package:karvon/features/documents/presentation/document_l10n.dart';
+
+import '../../helpers/localized_app.dart';
 
 /// Hujjat modellari.
 ///
@@ -38,7 +41,7 @@ void main() {
     test('API qiymatlari va tarjimalar', () {
       for (final type in DocumentType.values) {
         expect(type.api, isNotEmpty);
-        expect(type.label, isNotEmpty);
+        expect(type.localized(l10nFor()), isNotEmpty);
         // Aylanma: API qiymati oʻqilganda oʻsha turga qaytadi
         expect(DocumentType.fromApi(type.api), type);
       }
@@ -77,13 +80,13 @@ void main() {
       expect(doc.id, 'd-1');
       expect(doc.type, DocumentType.passport);
       expect(doc.verificationStatus, VerificationStatus.pending);
-      expect(doc.sideLabel, 'Old tomoni');
+      expect(doc.sideText(l10nFor()), 'Old tomoni');
       expect(doc.url, isNotEmpty);
     });
 
     test('orqa tomon yorligʻi', () {
-      expect(document(side: 'BACK').sideLabel, 'Orqa tomoni');
-      expect(document().sideLabel, isEmpty);
+      expect(document(side: 'BACK').sideText(l10nFor()), 'Orqa tomoni');
+      expect(document().sideText(l10nFor()), isEmpty);
     });
 
     test('★ RAD ETILGAN HUJJATDA SABAB BOʻLADI', () {
