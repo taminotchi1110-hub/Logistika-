@@ -255,7 +255,15 @@ export interface ScoredCandidate {
   components: ScoreComponents;
   distanceToPickupKm: number | null;
   weightsVersion: string;
-  /** Foydalanuvchiga ko'rsatiladigan sabablar ("Sizning yo'nalishingiz"). */
+  /**
+   * Nima uchun mos — KOD sifatida: `"NEAR_PICKUP:12"`, `"REGULAR_ROUTE"`.
+   *
+   * Avval bu yerda tayyor o'zbekcha jumla edi ("Sizga 12 km") va ruscha
+   * interfeysda o'zbekcha matn chiqardi. Matnni endi mobil ilova o'z
+   * tilida tanlaydi — xato kodlari bilan bir xil yondashuv. Parametr
+   * ikki nuqtadan keyin: kodni tahlil qilish uchun JSON obyekt kerak
+   * emas va `string[]` turi o'zgarmaydi (push ma'lumotida ham shu).
+   */
   reasons: string[];
 }
 
@@ -364,21 +372,21 @@ function buildReasons(candidate: DriverCandidate, components: ScoreComponents): 
   const reasons: string[] = [];
 
   if (candidate.distanceToPickupKm !== null && candidate.distanceToPickupKm <= 25) {
-    reasons.push(`Sizga ${Math.round(candidate.distanceToPickupKm)} km`);
+    reasons.push(`NEAR_PICKUP:${Math.round(candidate.distanceToPickupKm)}`);
   }
   if (candidate.routeMatch === 'REGULAR_EXACT') {
-    reasons.push('Doimiy yoʻnalishingiz');
+    reasons.push('REGULAR_ROUTE');
   } else if (candidate.routeMatch === 'EXACT' || candidate.routeMatch === 'FROM_ANY') {
-    reasons.push('Yoʻnalishingizga mos');
+    reasons.push('ROUTE_MATCH');
   }
   if (components.capacityFit >= 0.95) {
-    reasons.push('Transportingizga toʻliq mos');
+    reasons.push('CAPACITY_FIT');
   }
   if (candidate.ratingCount >= 5 && candidate.ratingAvg >= 4.5) {
-    reasons.push(`Reytingingiz ${candidate.ratingAvg.toFixed(1)}`);
+    reasons.push(`HIGH_RATING:${candidate.ratingAvg.toFixed(1)}`);
   }
   if (candidate.isPremium) {
-    reasons.push('Premium');
+    reasons.push('PREMIUM');
   }
 
   return reasons;

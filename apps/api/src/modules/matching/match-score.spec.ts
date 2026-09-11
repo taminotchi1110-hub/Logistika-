@@ -286,8 +286,11 @@ describe('resolveWeights', () => {
       load,
       candidate({ distanceToPickupKm: 12, routeMatch: 'REGULAR_EXACT' }),
     );
-    expect(result.reasons).toContain('Doimiy yoʻnalishingiz');
-    expect(result.reasons.some((r) => r.includes('12 km'))).toBe(true);
+    expect(result.reasons).toContain('REGULAR_ROUTE');
+    // Masofa parametr sifatida — matnni mobil ilova oʻz tilida yasaydi
+    expect(result.reasons).toContain('NEAR_PICKUP:12');
+    // Tayyor jumla QAYTMASLIGI kerak: u faqat oʻzbekcha boʻlardi
+    expect(result.reasons.every((reason) => /^[A-Z_]+(:[\d.]+)?$/.test(reason))).toBe(true);
   });
 
   it('versiya yoziladi', () => {
