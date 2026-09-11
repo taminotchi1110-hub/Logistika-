@@ -14,13 +14,32 @@ node scripts/reset-rate-limits.js || exit 1
 
 FAILED=0
 
+# Har bir to'plamning natijasi GitHub ishining SARHISOBIGA ham
+# yoziladi (`$GITHUB_STEP_SUMMARY`).
+#
+# NEGA: Actions loglarini ko'rish uchun GitHub'ga kirish kerak, sarhisob
+# esa hammaga ochiq. Qaysi to'plam yiqilganini bilish uchun log ochish
+# shart bo'lmaydi — birinchi CI yiqilishida aynan shu muammo bo'ldi.
+summary() {
+  [ -n "${GITHUB_STEP_SUMMARY:-}" ] && echo "$1" >> "$GITHUB_STEP_SUMMARY"
+  return 0
+}
+
+summary "## Backend uchidan-uchiga"
+
 run() {
   echo ""
   echo "############################################################"
   echo "#  $1"
   echo "############################################################"
+  local title="$1"
   shift
-  "$@" || FAILED=1
+  if "$@"; then
+    summary "- ✅ $title"
+  else
+    FAILED=1
+    summary "- ❌ **$title**"
+  fi
 }
 
 run "1. Asosiy oqim (auth, park, hujjatlar, yuklar)" bash scripts/smoke-test.sh

@@ -29,9 +29,9 @@ jobs:
     name: API (lint, tsc, 213 unit test)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -54,9 +54,9 @@ jobs:
     name: Admin panel (lint, tsc, 188 test)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -83,7 +83,7 @@ jobs:
     name: Mobil (analyze, 256 test)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: subosito/flutter-action@v2
         with:
@@ -153,9 +153,9 @@ jobs:
         # tasvir oʻzgarsa CI tushunarsiz sababdan yiqilardi.
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -168,54 +168,58 @@ jobs:
       - run: npm ci
 
       - name: Muhit sozlamalari
-        # JWT kalitlari BOʻSH qoldiriladi: dev rejimida ilova
-        # vaqtinchalik RS256 juftligini oʻzi generatsiya qiladi.
-        # Bu yerdagi parollar CI ga xos va har ishda yangi bazaga
-        # tegishli — ular maxfiy emas.
         run: |
-          cat > .env <<'ENVFILE'
-          NODE_ENV=development
-          PORT=3000
-          API_PREFIX=v1
-          CORS_ORIGINS=http://localhost:5173,http://localhost:8090
+          # `.env.example` DAN BOSHLAYMIZ, noldan yozmaymiz.
+          #
+          # Birinchi urinishda aynan shu xato boʻldi: fayl qoʻlda
+          # yozilgan va Click/Payme kalitlari unutilgan edi. Server
+          # imzoni boʻsh kalit bilan hisobladi, test skripti esa oʻz
+          # zaxira qiymati bilan — imzolar mos kelmadi va toʻlov
+          # toʻplami yiqildi. Namunadan nusxa olinsa, sxemaga yangi
+          # oʻzgaruvchi qoʻshilganda CI uni AVTOMATIK oladi.
+          cp .env.example .env
+
+          # Faqat farq qiladigan joylar ustidan yoziladi.
+          # `dotenv` da takroriy kalitda OXIRGISI gʻolib boʻladi.
+          cat >> .env <<'ENVFILE'
+
+          # ---- CI ustidan yozadigan qiymatlar ----
           DATABASE_URL=postgresql://karvon:karvon_ci@localhost:5432/karvon
-          DATABASE_POOL_MAX=10
-          REDIS_URL=redis://localhost:6379
-          JWT_PRIVATE_KEY=
-          JWT_PUBLIC_KEY=
-          JWT_ISSUER=karvon.uz
-          JWT_ACCESS_TTL=15m
-          JWT_REFRESH_TTL_DAYS=30
-          OTP_PEPPER=ci-pepper-not-a-secret
-          OTP_LENGTH=6
-          OTP_TTL_SECONDS=300
-          OTP_MAX_ATTEMPTS=5
-          OTP_RESEND_COOLDOWN_SECONDS=60
-          # Sxemadagi CHEGARALAR: soatiga max 20, kuniga max 200
-          # (`env.schema.ts`). Kattaroq qiymat yozilsa ilova umuman
-          # ishga tushmaydi. Testlar orasida limitlar tozalanadi.
-          OTP_MAX_PER_HOUR_PER_PHONE=3
-          OTP_MAX_PER_DAY_PER_IP=200
-          OTP_EXPOSE_CODE_IN_DEV=true
-          SMS_PROVIDER=console
-          FIELD_ENCRYPTION_KEY=0123456789abcdef0123456789abcdef
-          S3_ENDPOINT=http://localhost:9000
-          S3_REGION=us-east-1
-          S3_BUCKET=karvon
-          S3_ACCESS_KEY=karvon
           S3_SECRET_KEY=karvon_ci_secret
-          S3_FORCE_PATH_STYLE=true
-          S3_UPLOAD_URL_TTL_SECONDS=600
-          S3_DOWNLOAD_URL_TTL_SECONDS=300
-          S3_MAX_UPLOAD_BYTES=20971520
-          PAYMENTS_ALLOW_SIMULATION=true
-          # Kamida 32 belgi (`env.schema.ts`)
-          ADMIN_JWT_SECRET=ci-admin-jwt-secret-32-belgidan-uzun
           LOG_LEVEL=warn
-          GEOCODER_PROVIDER=nominatim
-          NOMINATIM_BASE_URL=https://nominatim.openstreetmap.org
-          GEO_HTTP_TIMEOUT_MS=8000
+
+          # Kunlik OTP chegarasi namunada 10 — bu bitta toʻplamga ham
+          # yetmaydi. Sxemadagi maksimum 200 (`env.schema.ts`), undan
+          # kattasi yozilsa ilova umuman ishga tushmaydi.
+          OTP_MAX_PER_DAY_PER_IP=200
+
+          # Admin paneli kalitsiz ishlamaydi ("Admin paneli sozlanmagan"),
+          # namunada esa u boʻsh. Kamida 32 belgi.
+          ADMIN_JWT_SECRET=ci-admin-jwt-secret-32-belgidan-uzun
+
+          # PSP imzolari: test skripti aynan shu qiymatlarni zaxira
+          # sifatida ishlatadi (`payments-test.js`), server ham
+          # shularni bilishi kerak — aks holda imzo mos kelmaydi
+          CLICK_SERVICE_ID=12345
+          CLICK_MERCHANT_ID=54321
+          CLICK_SECRET_KEY=test_click_secret
+          PAYME_MERCHANT_ID=test_merchant
+          PAYME_MERCHANT_KEY=test_payme_key
+          PAYMENTS_ALLOW_SIMULATION=true
+
+          # Mobil ilova web-server rejimida shu portdan keladi
+          CORS_ORIGINS=http://localhost:5173,http://localhost:3001,http://localhost:8090
           ENVFILE
+
+          # Sozlamalar toʻgʻri oʻqilishini DARHOL tekshiramiz: aks holda
+          # xato faqat testlar yiqilganda maʼlum boʻladi
+          node -e "
+            const env = require('dotenv').parse(require('fs').readFileSync('.env'));
+            const required = ['DATABASE_URL','REDIS_URL','ADMIN_JWT_SECRET','CLICK_SECRET_KEY','PAYME_MERCHANT_KEY'];
+            const missing = required.filter((key) => !env[key]);
+            if (missing.length) { console.error('Yetishmayapti:', missing.join(', ')); process.exit(1); }
+            console.log('.env tayyor:', Object.keys(env).length, 'ta oʻzgaruvchi');
+          "
 
       - name: MinIO tayyorligini kutish
         run: |
