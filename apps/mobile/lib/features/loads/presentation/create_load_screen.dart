@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/utils/money.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_states.dart';
 import '../../geo/presentation/address_picker_sheet.dart';
@@ -15,6 +14,7 @@ import '../domain/load.dart';
 import '../domain/load_draft.dart';
 import 'feed_screen.dart' show loadsRepositoryProvider;
 import 'widgets/create_load_steps.dart';
+import 'package:karvon/core/l10n/formatters.dart';
 
 /// Yuk e'lon qilish.
 ///
@@ -45,7 +45,11 @@ class _CreateLoadScreenState extends ConsumerState<CreateLoadScreen> {
   PriceEstimate? _estimate;
   bool _isEstimating = false;
 
-  static const _stepTitles = ['Yuk', 'Manzil va vaqt', 'Narx va talablar'];
+  String _stepTitle(BuildContext context) => switch (_step) {
+        0 => context.l10n.createStepCargo,
+        1 => context.l10n.createStepRoute,
+        _ => context.l10n.createStepPrice,
+      };
 
   @override
   void dispose() {
@@ -139,9 +143,7 @@ class _CreateLoadScreenState extends ConsumerState<CreateLoadScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            publishNow
-                ? 'Eʼlon joylandi — mos haydovchilarga xabar ketdi'
-                : 'Qoralama saqlandi',
+            publishNow ? context.l10n.loadPublished : context.l10n.draftSaved,
           ),
         ),
       );
@@ -182,7 +184,7 @@ class _CreateLoadScreenState extends ConsumerState<CreateLoadScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_stepTitles[_step]),
+        title: Text(_stepTitle(context)),
         leading: IconButton(
           icon: Icon(_step == 0 ? Icons.close_rounded : Icons.arrow_back_rounded),
           onPressed: _isSubmitting ? null : _back,
@@ -197,7 +199,7 @@ class _CreateLoadScreenState extends ConsumerState<CreateLoadScreen> {
         ),
       ),
       body: reference.when(
-        loading: () => const LoadingState(message: 'Maʼlumotlar yuklanmoqda'),
+        loading: () => LoadingState(message: context.l10n.loadingReference),
         error: (error, _) => ErrorState(
           error: error,
           onRetry: () => ref.invalidate(referenceProvider),
@@ -255,14 +257,14 @@ class _CreateLoadScreenState extends ConsumerState<CreateLoadScreen> {
                   Expanded(
                     child: Text(
                       _draft.priceTiyin == null
-                          ? 'Kelishuv asosida'
-                          : formatSoum(_draft.priceTiyin),
+                          ? context.l10n.priceNegotiable
+                          : context.soum(_draft.priceTiyin),
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                   ),
                   if (_draft.weightKg != null)
                     Text(
-                      formatWeight(_draft.weightKg!),
+                      context.weight(_draft.weightKg!),
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: AppColors.textSecondary,
                           ),
@@ -276,7 +278,7 @@ class _CreateLoadScreenState extends ConsumerState<CreateLoadScreen> {
                 if (_step == 2)
                   Expanded(
                     child: AppButton.secondary(
-                      label: 'Qoralama',
+                      label: context.l10n.actionSaveDraft,
                       onPressed: _isSubmitting
                           ? null
                           : () => _submit(publishNow: false),
@@ -286,7 +288,7 @@ class _CreateLoadScreenState extends ConsumerState<CreateLoadScreen> {
                 Expanded(
                   flex: 2,
                   child: AppButton(
-                    label: _step == 2 ? 'Eʼlon qilish' : 'Davom etish',
+                    label: _step == 2 ? context.l10n.actionPublish : context.l10n.actionContinue,
                     isLoading: _isSubmitting,
                     onPressed: _canContinue ? _next : null,
                   ),
@@ -303,7 +305,7 @@ class _CreateLoadScreenState extends ConsumerState<CreateLoadScreen> {
   Future<void> _pickAddress({required bool isPickup}) async {
     final place = await showAddressPicker(
       context,
-      title: isPickup ? 'Yuk olish manzili' : 'Yetkazish manzili',
+      title: isPickup ? context.l10n.pickupAddressTitle : context.l10n.deliveryAddressTitle,
       initialQuery: isPickup ? _draft.pickup?.label : _draft.delivery?.label,
     );
 

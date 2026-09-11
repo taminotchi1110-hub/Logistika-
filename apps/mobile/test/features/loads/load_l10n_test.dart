@@ -4,6 +4,7 @@ import 'package:karvon/core/l10n/locale_controller.dart';
 import 'package:karvon/core/utils/money.dart';
 import 'package:karvon/features/loads/domain/load.dart';
 import 'package:karvon/features/loads/presentation/load_l10n.dart';
+import 'package:karvon/features/reference/domain/reference_data.dart';
 
 import '../../helpers/localized_app.dart';
 
@@ -75,13 +76,42 @@ void main() {
     });
   });
 
+  group('transport sigʻimi', () {
+    const truck = VehicleType(
+      id: 1,
+      code: 'TRUCK_3T',
+      name: LocalizedName(uz: 'Yuk mashinasi', ru: 'Грузовик', en: 'Truck'),
+      minCapacityKg: 1500,
+      maxCapacityKg: 3000,
+      typicalVolumeM3: 16,
+    );
+
+    test('★ BIRLIK JORIY TILDA', () {
+      expect(truck.capacityLabelFor(l10nFor(AppLocale.ru).units), '1.5–3 т');
+      expect(truck.capacityLabelFor(l10nFor(AppLocale.en).units), '1.5–3 t');
+    });
+
+    test('eski getter oʻzbekcha birlik bilan qoladi', () {
+      expect(truck.capacityLabel, '1.5–3 t');
+    });
+  });
+
   group('oy nomlari', () {
     test('★ HAR TILDA AYNAN 12 TA OY', () {
       // Vergul bilan bitta kalit: tarjimon bittasini tushirib qoldirsa,
       // dekabr "noyabr" boʻlib chiqardi
       for (final locale in AppLocale.values) {
-        expect(l10nFor(locale).monthsShort.split(','), hasLength(12), reason: locale.code);
+        final l10n = l10nFor(locale);
+        expect(l10n.monthsShort.split(','), hasLength(12), reason: '${locale.code} qisqa');
+        expect(l10n.monthsFull.split(','), hasLength(12), reason: '${locale.code} toʻliq');
       }
+    });
+
+    test('★ SANA TARTIBI TILGA BOGʻLIQ', () {
+      // Inglizchada oy kundan oldin keladi — faqat oy nomini tarjima
+      // qilish "9 September" degan g'alati yozuv berardi
+      expect(l10nFor(AppLocale.uz).dateTimeFull(9, 'sentabr', '14:00'), '9 sentabr, 14:00');
+      expect(l10nFor(AppLocale.en).dateTimeFull(9, 'September', '14:00'), 'September 9, 14:00');
     });
   });
 }

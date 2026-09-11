@@ -1,5 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:karvon/features/orders/domain/order.dart';
+import 'package:karvon/core/l10n/locale_controller.dart';
+import 'package:karvon/features/orders/presentation/order_l10n.dart';
+
+import '../../helpers/localized_app.dart';
 
 /// Buyurtma modeli — serverning haqiqiy javob shakli bo'yicha.
 ///
@@ -98,6 +102,20 @@ void main() {
       expect(order.status, OrderStatus.assigned);
     });
 
+    test('★ SERVER MATNI OʻZBEKCHA, EKRAN — JORIY TILDA', () {
+      // Server `statusLabel` ni hozircha doim oʻzbekcha yuboradi
+      final order = Order.fromJson(json());
+      expect(order.hasKnownStatus, isTrue);
+      expect(order.statusText(l10nFor(AppLocale.ru)), 'Водитель выбран');
+    });
+
+    test('★ NOTANISH STATUSDA SERVER MATNI KOʻRSATILADI', () {
+      final order = Order.fromJson({...json(status: 'SOMETHING_NEW'), 'statusLabel': 'Yangi holat'});
+      expect(order.hasKnownStatus, isFalse);
+      // "Haydovchi tanlandi" deb yolgʻon aytgandan server matni yaxshiroq
+      expect(order.statusText(l10nFor(AppLocale.ru)), 'Yangi holat');
+    });
+
     test('boʻsh javobdan ham obyekt quriladi', () {
       final order = Order.fromJson(const {});
       expect(order.id, '');
@@ -126,10 +144,19 @@ void main() {
     });
 
     test('tugma matni buyruq shaklida', () {
+      final l10n = l10nFor();
       // Status "Yuk ortildi", tugma esa "Yukni ortdim"
-      expect(OrderStatus.loaded.label, 'Yuk ortildi');
-      expect(OrderStatus.loaded.actionLabel, 'Yukni ortdim');
-      expect(OrderStatus.completed.actionLabel, 'Qabul qildim');
+      expect(OrderStatus.loaded.localized(l10n), 'Yuk ortildi');
+      expect(OrderStatus.loaded.action(l10n), 'Yukni ortdim');
+      expect(OrderStatus.completed.action(l10n), 'Qabul qildim');
+    });
+
+    test('★ HAR BIR HOLAT UCH TILDA VA TAKRORLANMAYDI', () {
+      for (final locale in AppLocale.values) {
+        final labels = OrderStatus.values.map((status) => status.localized(l10nFor(locale)));
+        // Ikki holat bir xil nom olsa, vaqt chizig'ida ular ajralmaydi
+        expect(labels.toSet(), hasLength(OrderStatus.values.length), reason: locale.code);
+      }
     });
   });
 

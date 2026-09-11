@@ -28,12 +28,17 @@ enum OrderStatus {
 
   final String apiValue;
 
-  static OrderStatus fromApi(String? value) {
+  static OrderStatus fromApi(String? value) =>
+      // Server yangi status qo'shsa ilova qulab tushmasligi kerak
+      tryFromApi(value) ?? OrderStatus.assigned;
+
+  /// Ilova tanimaydigan status uchun `null` — shunda ekran server
+  /// matnini ko'rsatadi va "Haydovchi tanlandi" deb yolg'on aytmaydi.
+  static OrderStatus? tryFromApi(String? value) {
     for (final status in OrderStatus.values) {
       if (status.apiValue == value) return status;
     }
-    // Server yangi status qo'shsa ilova qulab tushmasligi kerak
-    return OrderStatus.assigned;
+    return null;
   }
 
   /// Reys hali davom etyaptimi.
@@ -95,46 +100,8 @@ enum OrderStatus {
         _ => 0,
       };
 
-  /// TUGMA matni — statusning o'zining nomi EMAS.
-  ///
-  /// Status "Yuk ortildi" deb o'qiladi, lekin tugmada "Yukni ortdim"
-  /// yozilishi kerak: foydalanuvchi o'zi bajaradigan ishni buyruq
-  /// shaklida ko'radi.
-  String get actionLabel => switch (this) {
-        OrderStatus.confirmed => 'Tasdiqlayman',
-        OrderStatus.enRouteToPickup => 'Yoʻlga chiqdim',
-        OrderStatus.arrivedAtPickup => 'Yetib keldim',
-        OrderStatus.loaded => 'Yukni ortdim',
-        OrderStatus.inTransit => 'Yoʻlga chiqdim',
-        OrderStatus.arrivedAtDelivery => 'Manzilga yetdim',
-        OrderStatus.delivered => 'Yukni topshirdim',
-        OrderStatus.completed => 'Qabul qildim',
-        OrderStatus.closed => 'Yopish',
-        OrderStatus.disputed => 'Nizo ochish',
-        OrderStatus.cancelledByShipper ||
-        OrderStatus.cancelledByDriver ||
-        OrderStatus.cancelledByAdmin =>
-          'Bekor qilish',
-        OrderStatus.assigned => 'Qabul qilish',
-      };
-
-  /// Vaqt chizig'idagi qadam nomi.
-  String get label => switch (this) {
-        OrderStatus.assigned => 'Haydovchi tanlandi',
-        OrderStatus.confirmed => 'Buyurtma tasdiqlandi',
-        OrderStatus.enRouteToPickup => 'Haydovchi yoʻlga chiqdi',
-        OrderStatus.arrivedAtPickup => 'Yuk olish nuqtasida',
-        OrderStatus.loaded => 'Yuk ortildi',
-        OrderStatus.inTransit => 'Yoʻlda',
-        OrderStatus.arrivedAtDelivery => 'Manzilga yaqinlashdi',
-        OrderStatus.delivered => 'Yetkazib berildi',
-        OrderStatus.completed => 'Tasdiqlandi',
-        OrderStatus.closed => 'Yopildi',
-        OrderStatus.disputed => 'Nizo',
-        OrderStatus.cancelledByShipper => 'Yuk beruvchi bekor qildi',
-        OrderStatus.cancelledByDriver => 'Haydovchi bekor qildi',
-        OrderStatus.cancelledByAdmin => 'Administrator bekor qildi',
-      };
+  // Holat nomi va tugma matni — `presentation/order_l10n.dart`: domen
+  // enumi tilni bilmaydi va faqat API bilan ishlaydi.
 
   IconData get icon => switch (this) {
         OrderStatus.assigned => Icons.handshake_outlined,
@@ -356,6 +323,7 @@ class Order {
     this.conversationId,
     this.confirmedAt,
     this.deliveredAt,
+    this.hasKnownStatus = true,
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
@@ -363,10 +331,10 @@ class Order {
       id: json['id'] as String? ?? '',
       publicNo: json['publicNo']?.toString() ?? '',
       status: OrderStatus.fromApi(json['status'] as String?),
-      // Server tarjimasi ustuvor: statuslar ro'yxati o'zgarsa ilovani
-      // yangilash shart bo'lmaydi
-      statusLabel: json['statusLabel'] as String? ??
-          OrderStatus.fromApi(json['status'] as String?).label,
+      hasKnownStatus: OrderStatus.tryFromApi(json['status'] as String?) != null,
+      // Server matni faqat ZAXIRA: u hozircha doim o'zbekcha. Tanilgan
+      // statusni ilova o'zi tarjima qiladi (`order_l10n.dart`)
+      statusLabel: json['statusLabel'] as String? ?? json['status'] as String? ?? '',
       nextAllowed: (json['nextAllowed'] as List<dynamic>? ?? const [])
           .map((item) => OrderStatus.fromApi(item as String?))
           .toList(),
@@ -393,6 +361,9 @@ class Order {
   final String publicNo;
   final OrderStatus status;
   final String statusLabel;
+
+  /// `false` — server ilova bilmaydigan yangi status yubordi.
+  final bool hasKnownStatus;
 
   /// Serverdan kelgan ruxsat etilgan keyingi holatlar.
   final List<OrderStatus> nextAllowed;
@@ -439,11 +410,13 @@ class OrderHistoryEntry {
     this.note,
     this.lat,
     this.lng,
+    this.hasKnownStatus = true,
   });
 
   factory OrderHistoryEntry.fromJson(Map<String, dynamic> json) => OrderHistoryEntry(
         status: OrderStatus.fromApi(json['status'] as String?),
         statusLabel: json['statusLabel'] as String? ?? '',
+        hasKnownStatus: OrderStatus.tryFromApi(json['status'] as String?) != null,
         at: DateTime.tryParse('${json['at']}') ?? DateTime.now(),
         fromStatus: json['fromStatus'] == null
             ? null
@@ -457,6 +430,7 @@ class OrderHistoryEntry {
 
   final OrderStatus status;
   final String statusLabel;
+  final bool hasKnownStatus;
   final DateTime at;
   final OrderStatus? fromStatus;
   final String? actorRole;

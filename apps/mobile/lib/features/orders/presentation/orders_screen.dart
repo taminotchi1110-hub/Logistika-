@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:karvon/core/l10n/formatters.dart';
 
 import '../../../core/providers.dart';
 import '../../../core/theme/app_colors.dart';
@@ -44,9 +45,10 @@ final orderHistoryEntriesProvider =
 /// ma'lumot, lekin ikki tomon uchun boshqacha ma'no. Sarlavha
 /// tashqaridan beriladi.
 class OrdersScreen extends ConsumerWidget {
-  const OrdersScreen({this.title = 'Buyurtmalar', super.key});
+  const OrdersScreen({this.title, super.key});
 
-  final String title;
+  /// `null` — standart sarlavha ("Buyurtmalar") joriy tilda.
+  final String? title;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -54,9 +56,12 @@ class OrdersScreen extends ConsumerWidget {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(title),
-          bottom: const TabBar(
-            tabs: [Tab(text: 'Faol'), Tab(text: 'Tarix')],
+          title: Text(title ?? context.l10n.tabOrders),
+          bottom: TabBar(
+            tabs: [
+              Tab(text: context.l10n.ordersTabActive),
+              Tab(text: context.l10n.ordersTabHistory),
+            ],
           ),
         ),
         body: Column(
@@ -111,11 +116,10 @@ class _OrderList extends ConsumerWidget {
                   icon: isActive
                       ? Icons.local_shipping_outlined
                       : Icons.history_rounded,
-                  title: isActive ? 'Faol reys yoʻq' : 'Tarix boʻsh',
+                  title: isActive ? context.l10n.ordersEmptyActive : context.l10n.ordersEmptyHistory,
                   message: isActive
-                      ? 'Taklif qabul qilinganda reys shu yerda paydo boʻladi '
-                          'va butun yoʻl davomida shu yerdan boshqariladi.'
-                      : 'Yakunlangan va bekor qilingan reyslar shu yerda qoladi.',
+                      ? context.l10n.ordersEmptyActiveHint
+                      : context.l10n.ordersEmptyHistoryHint,
                 ),
               ],
             );
@@ -175,8 +179,8 @@ class _PendingRatingsBanner extends ConsumerWidget {
                   children: [
                     Text(
                       pending.length == 1
-                          ? '№${first.publicNo} reysga baho bering'
-                          : '${pending.length} ta reys baho kutmoqda',
+                          ? context.l10n.ratingPendingOne(first.publicNo)
+                          : context.l10n.ratingPendingMany(pending.length),
                       style: theme.textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
@@ -186,8 +190,8 @@ class _PendingRatingsBanner extends ConsumerWidget {
                       // Muddat aytiladi: "keyinroq" deb qoldirgan
                       // foydalanuvchi qancha vaqti borligini bilishi kerak
                       first.daysLeft <= 0
-                          ? 'Bugun oxirgi kun'
-                          : '${first.counterpartyName} · ${first.daysLeft} kun qoldi',
+                          ? context.l10n.ratingLastDay
+                          : context.l10n.ratingDaysLeft(first.counterpartyName, first.daysLeft),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: AppColors.textSecondary,
                       ),

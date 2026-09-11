@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:karvon/core/l10n/formatters.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/utils/money.dart';
 import '../../domain/order.dart';
+import '../order_l10n.dart';
 
 /// Reys kartochkasi.
 ///
@@ -46,7 +47,7 @@ class OrderCard extends StatelessWidget {
                         Icon(order.status.icon, size: 14, color: order.status.color),
                         const SizedBox(width: AppSpacing.xs),
                         Text(
-                          order.statusLabel,
+                          order.statusText(context.l10n),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: order.status.color,
                             fontWeight: FontWeight.w600,
@@ -119,7 +120,7 @@ class OrderCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    formatSoum(order.priceTiyin),
+                    context.soum(order.priceTiyin),
                     style: theme.textTheme.titleSmall,
                   ),
                 ],

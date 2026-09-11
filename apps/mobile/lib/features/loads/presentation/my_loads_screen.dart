@@ -8,6 +8,8 @@ import '../../../shared/widgets/app_states.dart';
 import '../domain/load.dart';
 import 'feed_screen.dart' show loadsRepositoryProvider;
 import 'widgets/load_card.dart';
+import 'package:karvon/core/l10n/formatters.dart';
+import 'package:karvon/l10n/app_localizations.dart';
 
 /// "Yuklarim" bandlari.
 ///
@@ -15,15 +17,21 @@ import 'widgets/load_card.dart';
 /// takrorlanmaydi. Statuslar roʻyxati kelajakda oʻzgarsa, ilovani
 /// yangilash shart boʻlmaydi.
 enum MyLoadsTab {
-  active('active', 'Faol'),
-  draft('draft', 'Qoralama'),
-  completed('completed', 'Yakunlangan'),
-  cancelled('cancelled', 'Bekor qilingan');
+  active('active'),
+  draft('draft'),
+  completed('completed'),
+  cancelled('cancelled');
 
-  const MyLoadsTab(this.apiValue, this.label);
+  const MyLoadsTab(this.apiValue);
 
   final String apiValue;
-  final String label;
+
+  String label(AppLocalizations l10n) => switch (this) {
+        MyLoadsTab.active => l10n.myLoadsTabActive,
+        MyLoadsTab.draft => l10n.myLoadsTabDraft,
+        MyLoadsTab.completed => l10n.myLoadsTabCompleted,
+        MyLoadsTab.cancelled => l10n.myLoadsTabCancelled,
+      };
 }
 
 class MyLoadsState {
@@ -147,13 +155,13 @@ class _MyLoadsScreenState extends ConsumerState<MyLoadsScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Yuklarim'),
+        title: Text(context.l10n.tabMyLoads),
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
           tabAlignment: TabAlignment.start,
           tabs: [
-            for (final tab in MyLoadsTab.values) Tab(text: tab.label),
+            for (final tab in MyLoadsTab.values) Tab(text: tab.label(context.l10n)),
           ],
         ),
       ),
@@ -166,7 +174,7 @@ class _MyLoadsScreenState extends ConsumerState<MyLoadsScreen>
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _createLoad(context),
         icon: const Icon(Icons.add_rounded),
-        label: const Text('Yuk qoʻshish'),
+        label: Text(context.l10n.actionAddLoad),
       ),
     );
   }
@@ -289,22 +297,16 @@ class _TabViewState extends ConsumerState<_TabView>
       };
 
   String get _emptyTitle => switch (widget.tab) {
-        MyLoadsTab.active => 'Faol eʼlon yoʻq',
-        MyLoadsTab.draft => 'Qoralama yoʻq',
-        MyLoadsTab.completed => 'Yakunlangan reys yoʻq',
-        MyLoadsTab.cancelled => 'Bekor qilingan eʼlon yoʻq',
+        MyLoadsTab.active => context.l10n.myLoadsEmptyActive,
+        MyLoadsTab.draft => context.l10n.myLoadsEmptyDraft,
+        MyLoadsTab.completed => context.l10n.myLoadsEmptyCompleted,
+        MyLoadsTab.cancelled => context.l10n.myLoadsEmptyCancelled,
       };
 
   String get _emptyMessage => switch (widget.tab) {
-        MyLoadsTab.active =>
-          'Yuk eʼlon qiling — tizim mos haydovchilarni oʻzi topib xabar beradi.',
-        MyLoadsTab.draft =>
-          'Toʻldirilmagan eʼlonlar shu yerda saqlanadi va istalgan vaqtda '
-              'eʼlon qilinadi.',
-        MyLoadsTab.completed =>
-          'Yakunlangan reyslar tarixi shu yerda toʻplanadi — hisobot va '
-              'takroriy buyurtma uchun qulay.',
-        MyLoadsTab.cancelled =>
-          'Bekor qilingan va muddati oʻtgan eʼlonlar shu yerda qoladi.',
+        MyLoadsTab.active => context.l10n.myLoadsEmptyActiveHint,
+        MyLoadsTab.draft => context.l10n.myLoadsEmptyDraftHint,
+        MyLoadsTab.completed => context.l10n.myLoadsEmptyCompletedHint,
+        MyLoadsTab.cancelled => context.l10n.myLoadsEmptyCancelledHint,
       };
 }

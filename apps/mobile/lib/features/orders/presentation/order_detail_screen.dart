@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:karvon/core/l10n/formatters.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/location/device_location.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/utils/money.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_states.dart';
 import '../../ratings/domain/rating.dart';
@@ -17,6 +17,7 @@ import '../../ratings/presentation/widgets/star_rating.dart';
 import '../domain/order.dart';
 import 'orders_screen.dart';
 import 'widgets/status_timeline.dart';
+import 'order_l10n.dart';
 
 /// Buyurtma tafsiloti — reysning boshqaruv paneli.
 ///
@@ -43,8 +44,8 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     return Scaffold(
       appBar: AppBar(
         title: order.maybeWhen(
-          data: (value) => Text('Buyurtma №${value.publicNo}'),
-          orElse: () => const Text('Buyurtma'),
+          data: (value) => Text(context.l10n.orderTitle(value.publicNo)),
+          orElse: () => Text(context.l10n.orderTitleFallback),
         ),
       ),
       body: order.when(
@@ -78,7 +79,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
           const SizedBox(height: AppSpacing.lg),
 
           _Section(
-            title: 'Yoʻl',
+            title: context.l10n.orderSectionRoute,
             child: _RouteBlock(order: order),
           ),
           // Xarita tugmasi FAQAT kuzatuv ishlayotganda: boshqa paytda
@@ -87,7 +88,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
           if (order.status.isTracking) ...[
             const SizedBox(height: AppSpacing.md),
             AppButton.secondary(
-              label: 'Xaritada kuzatish',
+              label: context.l10n.actionTrackOnMap,
               icon: Icons.map_rounded,
               onPressed: () => context.push('/order/${order.id}/track'),
             ),
@@ -95,7 +96,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
           const SizedBox(height: AppSpacing.lg),
 
           _Section(
-            title: order.counterparty.isDriver ? 'Haydovchi' : 'Yuk beruvchi',
+            title: order.counterparty.isDriver ? context.l10n.roleDriver : context.l10n.roleShipper,
             child: _CounterpartyBlock(
               order: order,
               onCall: _call,
@@ -104,21 +105,21 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
           ),
           const SizedBox(height: AppSpacing.lg),
 
-          _Section(title: 'Moliya', child: _MoneyBlock(order: order)),
+          _Section(title: context.l10n.orderSectionFinance, child: _MoneyBlock(order: order)),
           const SizedBox(height: AppSpacing.lg),
 
           // Baho FAQAT yuk topshirilgandan keyin: undan oldin baholash
           // uchun asos yoʻq va server ham rad etadi
           if (order.status.step >= OrderStatus.delivered.step) ...[
             _Section(
-              title: 'Baho',
+              title: context.l10n.orderSectionRating,
               child: _RatingBlock(order: order, onRate: _rate),
             ),
             const SizedBox(height: AppSpacing.lg),
           ],
 
           _Section(
-            title: 'Bosqichlar',
+            title: context.l10n.orderSectionSteps,
             child: StatusTimeline(
               current: order.status,
               history: history.valueOrNull ?? const [],
@@ -154,7 +155,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
           children: [
             if (forward.isNotEmpty)
               AppButton(
-                label: forward.first.actionLabel,
+                label: forward.first.action(context.l10n),
                 icon: forward.first.icon,
                 isLoading: _isSubmitting,
                 onPressed: _isSubmitting ? null : () => _confirmAndChange(order, forward.first),
@@ -165,7 +166,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
               for (final status in forward.skip(1))
                 TextButton(
                   onPressed: _isSubmitting ? null : () => _confirmAndChange(order, status),
-                  child: Text(status.actionLabel),
+                  child: Text(status.action(context.l10n)),
                 ),
             ],
             if (cancels.isNotEmpty) ...[
@@ -173,7 +174,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
               TextButton(
                 onPressed: _isSubmitting ? null : () => _confirmAndChange(order, cancels.first),
                 child: Text(
-                  cancels.first.actionLabel,
+                  cancels.first.action(context.l10n),
                   style: const TextStyle(color: AppColors.danger),
                 ),
               ),
@@ -215,12 +216,12 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: Text(next.actionLabel),
+          title: Text(next.action(context.l10n)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(_confirmationMessage(next)),
+              Text(_confirmationMessage(context, next)),
               const SizedBox(height: AppSpacing.lg),
               TextField(
                 controller: controller,
@@ -228,7 +229,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                 maxLines: 3,
                 minLines: 1,
                 decoration: InputDecoration(
-                  hintText: needsReason ? 'Sabab (majburiy)' : 'Izoh (ixtiyoriy)',
+                  hintText: needsReason ? context.l10n.reasonRequiredHint : context.l10n.noteOptionalHint,
                 ),
               ),
             ],
@@ -236,7 +237,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Yopish'),
+              child: Text(context.l10n.actionClose),
             ),
             TextButton(
               // Sabab majburiy bo'lsa 5 belgidan kam matn qabul qilinmaydi:
@@ -245,7 +246,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                   ? null
                   : () => Navigator.pop(context, true),
               child: Text(
-                next.isCancellation ? 'Bekor qilish' : 'Tasdiqlash',
+                next.isCancellation ? context.l10n.orderActionCancel : context.l10n.actionConfirm,
                 style: TextStyle(
                   color: next.isCancellation ? AppColors.danger : AppColors.primary,
                 ),
@@ -260,19 +261,11 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     return controller.text.trim();
   }
 
-  String _confirmationMessage(OrderStatus next) => switch (next) {
-        OrderStatus.delivered =>
-          'Yuk qabul qiluvchiga topshirilganini tasdiqlaysizmi? Bundan '
-              'keyin marshrutni oʻzgartirib boʻlmaydi.',
-        OrderStatus.completed =>
-          'Yuk toʻliq va butun yetkazilganini tasdiqlaysizmi? Tasdiqdan '
-              'keyin toʻlov haydovchiga oʻtadi.',
-        OrderStatus.disputed =>
-          'Nizo ochilsa buyurtma toʻxtaydi va admin koʻrib chiqadi. '
-              'Muammoni batafsil yozing.',
-        _ =>
-          'Buyurtmani bekor qilmoqchimisiz? Bekor qilish reytingingizga '
-              'taʼsir qiladi va jarima yozilishi mumkin.',
+  String _confirmationMessage(BuildContext context, OrderStatus next) => switch (next) {
+        OrderStatus.delivered => context.l10n.confirmDelivered,
+        OrderStatus.completed => context.l10n.confirmCompleted,
+        OrderStatus.disputed => context.l10n.confirmDisputed,
+        _ => context.l10n.confirmCancelOrder,
       };
 
   Future<void> _changeStatus(Order order, OrderStatus next, {String? note}) async {
@@ -294,7 +287,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
       _refreshAll();
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(next.label)),
+        SnackBar(content: Text(next.localized(context.l10n))),
       );
     } on ApiException catch (error) {
       if (!mounted) return;
@@ -341,7 +334,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     if (!await launchUrl(uri)) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Qoʻngʻiroq qilib boʻlmadi')),
+        SnackBar(content: Text(context.l10n.callFailed)),
       );
     }
   }
@@ -354,24 +347,20 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Bogʻlana olmayapman'),
+          title: Text(context.l10n.emergencyTitle),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Telefon raqami odatda yuk olish nuqtasiga yetib borgach '
-                'ochiladi. Muhim sabab boʻlsa uni hozir ochish mumkin — '
-                'sabab yoziladi va ikkala tomonga xabar ketadi.',
-              ),
+              Text(context.l10n.emergencyBody),
               const SizedBox(height: AppSpacing.lg),
               TextField(
                 controller: controller,
                 onChanged: (_) => setDialogState(() {}),
                 maxLines: 3,
                 minLines: 1,
-                decoration: const InputDecoration(
-                  hintText: 'Masalan: manzilni topa olmayapman',
+                decoration: InputDecoration(
+                  hintText: context.l10n.emergencyHint,
                 ),
               ),
             ],
@@ -379,13 +368,13 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Yopish'),
+              child: Text(context.l10n.actionClose),
             ),
             TextButton(
               onPressed: controller.text.trim().length < 5
                   ? null
                   : () => Navigator.pop(context, true),
-              child: const Text('Ochish'),
+              child: Text(context.l10n.actionReveal),
             ),
           ],
         ),
@@ -450,7 +439,7 @@ class _StatusHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  order.statusLabel,
+                  order.statusText(context.l10n),
                   style: theme.textTheme.titleMedium?.copyWith(
                     color: order.status.color,
                   ),
@@ -515,13 +504,13 @@ class _RouteBlock extends StatelessWidget {
             children: [
               const Icon(Icons.route_rounded, size: AppSizes.iconSm, color: AppColors.gray400),
               const SizedBox(width: AppSpacing.xs),
-              Text(formatDistance(order.load.distanceKm), style: theme.textTheme.bodyMedium),
+              Text(context.distance(order.load.distanceKm), style: theme.textTheme.bodyMedium),
               const SizedBox(width: AppSpacing.lg),
               const Icon(Icons.schedule_rounded, size: AppSizes.iconSm, color: AppColors.gray400),
               const SizedBox(width: AppSpacing.xs),
-              Text(formatDuration(order.load.durationMin), style: theme.textTheme.bodyMedium),
+              Text(context.duration(order.load.durationMin), style: theme.textTheme.bodyMedium),
               const Spacer(),
-              Text(formatWeight(order.load.weightKg), style: theme.textTheme.bodyMedium),
+              Text(context.weight(order.load.weightKg), style: theme.textTheme.bodyMedium),
             ],
           ),
         ],
@@ -623,14 +612,14 @@ class _CounterpartyBlock extends StatelessWidget {
                         const Icon(Icons.star_rounded, size: 14, color: AppColors.accent),
                         const SizedBox(width: 2),
                         Text(
-                          '${party.ratingAvg.toStringAsFixed(1)} · ${party.ratingCount} baho',
+                          context.l10n.profileRatingSummary(party.ratingAvg.toStringAsFixed(1), party.ratingCount),
                           style: theme.textTheme.bodySmall,
                         ),
                       ],
                     )
                   else
                     Text(
-                      'Yangi foydalanuvchi',
+                      context.l10n.profileNewUser,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: AppColors.textSecondary,
                       ),
@@ -674,7 +663,7 @@ class _CounterpartyBlock extends StatelessWidget {
             if (revealed)
               Expanded(
                 child: AppButton.secondary(
-                  label: 'Qoʻngʻiroq',
+                  label: context.l10n.actionCall,
                   icon: Icons.call_rounded,
                   onPressed: () => onCall(party.phone),
                 ),
@@ -683,7 +672,7 @@ class _CounterpartyBlock extends StatelessWidget {
               // Raqam hali yopiq — sababli ochish klapani
               Expanded(
                 child: AppButton.secondary(
-                  label: 'Bogʻlana olmayapman',
+                  label: context.l10n.emergencyTitle,
                   icon: Icons.phone_disabled_rounded,
                   onPressed: () => onEmergencyReveal(order),
                 ),
@@ -692,7 +681,7 @@ class _CounterpartyBlock extends StatelessWidget {
               const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: AppButton(
-                  label: 'Xabar',
+                  label: context.l10n.actionMessage,
                   icon: Icons.chat_bubble_rounded,
                   // Chat buyurtma qabul qilinganda ochiladi va telefon
                   // ochilgunicha yagona muloqot yoʻli boʻladi
@@ -707,8 +696,7 @@ class _CounterpartyBlock extends StatelessWidget {
         if (!revealed && order.visibility.chatEnabled) ...[
           const SizedBox(height: AppSpacing.md),
           Text(
-            'Telefon raqami haydovchi yuk olish nuqtasiga yetib borgach '
-            'ochiladi. Unga qadar muloqot chat orqali.',
+            context.l10n.phoneHiddenUntilPickup,
             style: theme.textTheme.bodySmall?.copyWith(
               color: AppColors.textSecondary,
             ),
@@ -746,7 +734,7 @@ class _RatingBlock extends ConsumerWidget {
         child: Center(child: CircularProgressIndicator(strokeWidth: 2.5)),
       ),
       error: (_, __) => Text(
-        'Baholarni yuklab boʻlmadi',
+        context.l10n.ratingsLoadFailed,
         style: theme.textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
       ),
       data: (items) {
@@ -765,15 +753,14 @@ class _RatingBlock extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Reys qanday oʻtdi? Bahongiz hamkorga keyingi buyurtmalarda '
-                'yordam beradi.',
+                context.l10n.ratingPrompt,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: AppColors.textSecondary,
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
               AppButton(
-                label: 'Baho berish',
+                label: context.l10n.actionRate,
                 icon: Icons.star_rounded,
                 onPressed: () => onRate(order),
               ),
@@ -784,7 +771,7 @@ class _RatingBlock extends ConsumerWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _RatingRow(title: 'Sizning bahongiz', rating: mine.first),
+            _RatingRow(title: context.l10n.ratingMine, rating: mine.first),
             const SizedBox(height: AppSpacing.md),
             if (theirs.isEmpty)
               Row(
@@ -797,8 +784,7 @@ class _RatingBlock extends ConsumerWidget {
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Text(
-                      'Hamkor hali baho bermagan. Bahongiz u javob berganda '
-                      'yoki 14 kundan keyin ochiladi.',
+                      context.l10n.ratingTheirsHidden,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: AppColors.textSecondary,
                       ),
@@ -807,7 +793,7 @@ class _RatingBlock extends ConsumerWidget {
                 ],
               )
             else
-              _RatingRow(title: 'Hamkor bahosi', rating: theirs.first),
+              _RatingRow(title: context.l10n.ratingTheirs, rating: theirs.first),
           ],
         );
       },
@@ -864,23 +850,23 @@ class _MoneyBlock extends StatelessWidget {
     return Column(
       children: [
         _MoneyRow(
-          label: 'Buyurtma narxi',
-          value: formatSoum(order.priceTiyin),
+          label: context.l10n.moneyOrderPrice,
+          value: context.soum(order.priceTiyin),
           isBold: !isDriver,
         ),
         if (isDriver) ...[
           const SizedBox(height: AppSpacing.sm),
           _MoneyRow(
-            label: 'Platforma komissiyasi',
-            value: '− ${formatSoum(order.commissionTiyin)}',
+            label: context.l10n.moneyCommission,
+            value: '− ${context.soum(order.commissionTiyin)}',
             color: AppColors.textSecondary,
           ),
           const SizedBox(height: AppSpacing.sm),
           const Divider(height: 1),
           const SizedBox(height: AppSpacing.sm),
           _MoneyRow(
-            label: 'Sizga tushadi',
-            value: formatSoum(order.driverPayoutTiyin),
+            label: context.l10n.moneyYouGet,
+            value: context.soum(order.driverPayoutTiyin),
             isBold: true,
           ),
         ],
@@ -895,10 +881,7 @@ class _MoneyBlock extends StatelessWidget {
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Text(
-                order.isEscrow
-                    ? 'Himoyalangan toʻlov — pul KARVON hisobida turadi va '
-                        'yuk qabul qilingach chiqariladi'
-                    : _paymentLabel(order.paymentMethod),
+                paymentMethodNote(context.l10n, order.paymentMethod),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: AppColors.textSecondary,
                 ),
@@ -909,13 +892,6 @@ class _MoneyBlock extends StatelessWidget {
       ],
     );
   }
-
-  static String _paymentLabel(String method) => switch (method) {
-        'CASH' => 'Naqd toʻlov — yetkazilgach haydovchiga beriladi',
-        'CARD' => 'Karta orqali toʻlov',
-        'BANK_TRANSFER' => 'Bank oʻtkazmasi',
-        _ => 'Toʻlov usuli koʻrsatilmagan',
-      };
 }
 
 class _MoneyRow extends StatelessWidget {

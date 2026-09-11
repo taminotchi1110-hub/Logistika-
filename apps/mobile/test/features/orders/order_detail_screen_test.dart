@@ -10,6 +10,9 @@ import 'package:karvon/features/orders/presentation/orders_screen.dart';
 import 'package:karvon/features/ratings/domain/rating.dart';
 import 'package:karvon/features/ratings/presentation/rating_providers.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:karvon/core/l10n/locale_controller.dart';
+
+import '../../helpers/localized_app.dart';
 
 class _MockOrdersRepository extends Mock implements OrdersRepository {}
 
@@ -105,6 +108,7 @@ void main() {
     List<OrderHistoryEntry>? entries,
     DeviceLocation? location,
     List<Rating> ratings = const [],
+    AppLocale locale = testLocale,
   }) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -120,8 +124,9 @@ void main() {
           // chaqiruvi javob qaytarmaydi
           locationResolverProvider.overrideWithValue(() async => location),
         ],
-        child: MaterialApp(
+        child: localizedApp(
           theme: AppTheme.light,
+          locale: locale,
           home: const OrderDetailScreen(orderId: 'o-1'),
         ),
       ),
@@ -351,5 +356,18 @@ void main() {
     expect(find.text('Hamkor bahosi'), findsOneWidget);
     expect(find.text('Yaxshi mijoz'), findsOneWidget);
     expect(find.textContaining('Hamkor hali baho bermagan'), findsNothing);
+  });
+
+  testWidgets('★ SERVER MATNI OʻZBEKCHA — EKRAN JORIY TILDA', (tester) async {
+    // Server `statusLabel` ni hozircha doim oʻzbekcha yuboradi: ilova
+    // tanilgan statusni oʻzi tarjima qiladi
+    await pump(tester, order(), locale: AppLocale.ru);
+
+    expect(find.text('Заказ №195'), findsOneWidget);
+    expect(find.text('Водитель выбран'), findsWidgets);
+    expect(find.text('Haydovchi tanlandi'), findsNothing);
+    // Tugmalar ham buyruq shaklida va ruscha
+    expect(find.text('Подтверждаю'), findsOneWidget);
+    expect(find.text('Отменить заказ'), findsOneWidget);
   });
 }

@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:karvon/l10n/app_localizations.dart';
 
 import '../../features/auth/domain/user.dart';
+import '../../features/reference/domain/reference_data.dart';
 import '../utils/money.dart';
 
 /// Tarjimali formatlash — ekranlar uchun yagona kirish nuqtasi.
@@ -52,5 +53,18 @@ extension UserRoleL10n on UserRole {
         UserRole.shipper => l10n.roleShipper,
         UserRole.driver => l10n.roleDriver,
         UserRole.both => l10n.roleBoth,
+      };
+}
+
+/// Spravochnik nomlari uchun joriy til.
+///
+/// Backend kategoriya, transport turi va viloyat nomlarini UCH TILDA
+/// beradi (`LocalizedName`), lekin ekranlar `name.uz` ni qotib
+/// o'qiyotgan edi — ruscha interfeysda kategoriya o'zbekcha chiqardi.
+extension ReferenceLanguage on BuildContext {
+  AppLanguage get language => switch (Localizations.localeOf(this).languageCode) {
+        'ru' => AppLanguage.ru,
+        'en' => AppLanguage.en,
+        _ => AppLanguage.uz,
       };
 }

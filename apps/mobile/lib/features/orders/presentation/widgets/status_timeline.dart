@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:karvon/core/l10n/formatters.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/order.dart';
+import '../order_l10n.dart';
 
 /// Reysning 13 bosqichli yo'li.
 ///
@@ -79,7 +81,7 @@ class StatusTimeline extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: AppSpacing.sm),
             child: Text(
-              'Tarix yuklanmoqda…',
+              context.l10n.timelineLoading,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: AppColors.textSecondary,
               ),
@@ -154,7 +156,7 @@ class _Step extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          entry?.statusLabel ?? status.label,
+                          entry?.statusText(context.l10n) ?? status.localized(context.l10n),
                           style: theme.textTheme.bodyLarge?.copyWith(
                             fontWeight: isCurrent ? FontWeight.w600 : FontWeight.w400,
                             color: isDone ? AppColors.textPrimary : AppColors.textDisabled,
@@ -190,7 +192,7 @@ class _Step extends StatelessWidget {
                         ),
                         const SizedBox(width: 2),
                         Text(
-                          'Joylashuv qayd etildi',
+                          context.l10n.timelineLocationRecorded,
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: AppColors.gray400,
                           ),

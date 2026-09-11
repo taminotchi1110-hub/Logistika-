@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:karvon/core/l10n/locale_controller.dart';
 import 'package:karvon/core/theme/app_theme.dart';
 import 'package:karvon/features/loads/data/loads_repository.dart';
 import 'package:karvon/features/loads/domain/load.dart';
@@ -10,6 +11,8 @@ import 'package:karvon/features/loads/presentation/feed_screen.dart'
 import 'package:karvon/features/reference/domain/reference_data.dart';
 import 'package:karvon/features/reference/presentation/reference_providers.dart';
 import 'package:mocktail/mocktail.dart';
+
+import '../../helpers/localized_app.dart';
 
 class _MockLoadsRepository extends Mock implements LoadsRepository {}
 
@@ -28,7 +31,7 @@ void main() {
       Region(
         id: 1,
         code: 'TAS_C',
-        name: LocalizedName(uz: 'Toshkent shahri', ru: '', en: ''),
+        name: LocalizedName(uz: 'Toshkent shahri', ru: 'Ташкент', en: ''),
         lat: 41.3,
         lng: 69.24,
         districts: [],
@@ -38,7 +41,7 @@ void main() {
       VehicleType(
         id: 4,
         code: 'TRUCK_5T',
-        name: LocalizedName(uz: 'Yuk mashinasi 5t', ru: '', en: ''),
+        name: LocalizedName(uz: 'Yuk mashinasi 5t', ru: 'Грузовик 5т', en: ''),
         minCapacityKg: 3000,
         maxCapacityKg: 5000,
         typicalVolumeM3: 25,
@@ -48,7 +51,7 @@ void main() {
       BodyType(
         id: 1,
         code: 'TENT',
-        name: LocalizedName(uz: 'Tentli', ru: '', en: ''),
+        name: LocalizedName(uz: 'Tentli', ru: 'Тент', en: ''),
         isTemperatureControlled: false,
       ),
     ],
@@ -56,13 +59,13 @@ void main() {
       CargoCategory(
         id: 3,
         code: 'FURNITURE',
-        name: LocalizedName(uz: 'Mebel', ru: '', en: ''),
+        name: LocalizedName(uz: 'Mebel', ru: 'Мебель', en: ''),
         requiresSpecialPermit: false,
       ),
       CargoCategory(
         id: 9,
         code: 'DANGEROUS',
-        name: LocalizedName(uz: 'Xavfli yuk', ru: '', en: ''),
+        name: LocalizedName(uz: 'Xavfli yuk', ru: 'Опасный груз', en: ''),
         requiresSpecialPermit: true,
       ),
     ],
@@ -73,7 +76,7 @@ void main() {
     repository = _MockLoadsRepository();
   });
 
-  Future<void> pump(WidgetTester tester) async {
+  Future<void> pump(WidgetTester tester, {AppLocale locale = testLocale}) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -82,8 +85,9 @@ void main() {
           // testda tarmoq so'rovi bo'lmasligi kerak
           referenceProvider.overrideWith((ref) => Future.value(bundle)),
         ],
-        child: MaterialApp(
+        child: localizedApp(
           theme: AppTheme.light,
+          locale: locale,
           home: const CreateLoadScreen(),
         ),
       ),
@@ -219,7 +223,7 @@ void main() {
           loadsRepositoryProvider.overrideWithValue(repository),
           referenceProvider.overrideWith((ref) => Future.value(bundle)),
         ],
-        child: MaterialApp(
+        child: localizedApp(
           theme: AppTheme.light,
           home: Builder(
             builder: (context) => Scaffold(
@@ -266,5 +270,44 @@ void main() {
 
     expect(find.text('Yuk haqida'), findsOneWidget);
     expect(canContinue(tester), isTrue, reason: 'toʻldirilgan maʼlumot saqlandi');
+  });
+
+  group('ruscha interfeys', () {
+    testWidgets('★ SPRAVOCHNIK NOMLARI HAM JORIY TILDA', (tester) async {
+      // Avval `name.uz` qotib yozilgan edi: interfeys ruscha, lekin
+      // kategoriya va transport nomlari o'zbekcha chiqardi
+      await pump(tester, locale: AppLocale.ru);
+
+      expect(find.text('Груз'), findsWidgets);
+      expect(find.text('О грузе'), findsOneWidget);
+      expect(find.text('Мебель'), findsOneWidget);
+      expect(find.text('Mebel'), findsNothing);
+
+      await tester.enterText(find.widgetWithText(TextField, '4000'), '4000');
+      await tester.pump();
+
+      expect(find.text('Подходящий транспорт: Грузовик 5т'), findsOneWidget);
+    });
+
+    testWidgets('★ OQIM RUSCHA HAM ISHLAYDI', (tester) async {
+      await pump(tester, locale: AppLocale.ru);
+
+      // Har kiritishdan keyin kadr chiziladi: aks holda keyingi maydon
+      // eski qoralamani ushlab qoladi va oldingi qiymatni o'chiradi
+      // (haqiqiy foydalanuvchida kadrlar orasida doim vaqt bor)
+      // Nom maydoni — birinchi matn maydoni
+      await tester.enterText(find.byType(TextField).first, 'Шкафы');
+      await tester.pump();
+      await tester.tap(find.text('Мебель'));
+      await tester.pump();
+      await tester.enterText(find.widgetWithText(TextField, '4000'), '4000');
+      await tester.pump();
+
+      await tester.tap(find.text('Продолжить'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Адрес и время'), findsOneWidget);
+      expect(find.text('Погрузка'), findsOneWidget);
+    });
   });
 }

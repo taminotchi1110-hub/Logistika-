@@ -5,9 +5,13 @@
 /// internetsiz qolsa — qayta so'rov kerak emas.
 library;
 
-/// Ilovaning joriy tili. Hozircha faqat o'zbekcha ishlatiladi, lekin
-/// modellar boshidan uch tilni ko'taradi — keyin til qo'shish uchun
-/// ma'lumot modelini qayta yozish kerak bo'lmaydi.
+import '../../../core/utils/money.dart';
+
+/// Spravochnik nomi qaysi tilda olinadi.
+///
+/// Interfeys tili (`AppLocale`) bilan aralashtirilmaydi: bu enum
+/// ma'lumot modeliga tegishli va Flutter'ni bilmaydi. Ular orasidagi
+/// ko'prik — `core/l10n/formatters.dart` dagi `context.language`.
 enum AppLanguage { uz, ru, en }
 
 /// Uch tilli nom.
@@ -113,8 +117,11 @@ class VehicleType {
   /// Shu og'irlikdagi yuk uchun mos transportmi.
   bool fits(int weightKg) => weightKg <= maxCapacityKg;
 
-  /// "1.5–3 t" ko'rinishidagi qisqa yozuv.
-  String get capacityLabel {
+  /// "1.5–3 t" ko'rinishidagi qisqa yozuv (o'zbekcha birliklar).
+  String get capacityLabel => capacityLabelFor(UnitLabels.uz);
+
+  /// Joriy til birliklari bilan: ruscha "1.5–3 т".
+  String capacityLabelFor(UnitLabels units) {
     String t(int kg) {
       final tons = kg / 1000;
       return tons >= 1
@@ -122,7 +129,7 @@ class VehicleType {
           : '$kg';
     }
 
-    final unit = maxCapacityKg >= 1000 ? ' t' : ' kg';
+    final unit = maxCapacityKg >= 1000 ? ' ${units.ton}' : ' ${units.kg}';
     return '${t(minCapacityKg)}–${t(maxCapacityKg)}$unit';
   }
 }
