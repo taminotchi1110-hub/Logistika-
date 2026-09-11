@@ -20,5 +20,96 @@
   "termsAgreement": "By continuing you agree to the {terms} and {privacy}",
 
   "termsOfUse": "terms of use",
-  "privacyPolicy": "privacy policy"
+  "privacyPolicy": "privacy policy",
+
+  "errNetwork": "No internet connection. Check your network.",
+  "errTimeout": "The server did not respond. Please try again.",
+
+  "errAuthUnauthorized": "Please sign in again",
+  "errAuthTokenExpired": "Your session has expired",
+  "errAuthTokenInvalid": "Session is invalid. Please sign in again.",
+  "errAuthSessionRevoked": "Session was closed. Please sign in again.",
+
+  "errOtpInvalidPhone": "Invalid phone number",
+  "errOtpCooldownWait": "Please wait a moment and try again",
+  "errOtpCooldownSeconds": "You can resend in {seconds} s",
+  "errOtpTooManyRequests": "Too many attempts. Please try again later.",
+  "errOtpNotFound": "Code not found. Request a new one.",
+  "errOtpExpired": "The code has expired. Request a new one.",
+  "errOtpIncorrect": "Incorrect code",
+  "errOtpIncorrectAttempts": "Incorrect code. Attempts left: {attempts}",
+  "errOtpTooManyAttempts": "Too many incorrect attempts. Request a new code.",
+  "errOtpSendFailed": "SMS was not sent. Please try again later.",
+
+  "errUserBanned": "Your account is blocked. Please contact support.",
+  "errUserSuspended": "Your account is temporarily suspended",
+  "errUserProfileIncomplete": "Please complete your profile first",
+  "errUserRoleNotAllowed": "This action is not available for your role",
+
+  "errDriverNotVerified": "Please complete verification first",
+  "errVehicleNotVerified": "The vehicle is not verified yet",
+  "errVehicleCapacityExceeded": "Vehicle capacity is not enough for this load",
+  "errVehiclePlateTaken": "This licence plate is already registered",
+  "errVehiclePlateInvalid": "Invalid licence plate. Example: 01 A 123 BC",
+  "errVehicleLockedAfterVerify": "A verified vehicle's details cannot be changed",
+  "errVehicleLimitReached": "You have reached the vehicle limit",
+
+  "errLoadNotAcceptingOffers": "This load no longer accepts offers",
+  "errLoadAlreadyAssigned": "The load is already taken",
+  "errLoadAlreadyClosed": "The load is closed",
+  "errLoadHasOrder": "An order was created. Cancel through the order.",
+  "errLoadPickupTimePassed": "The pickup time has passed",
+  "errLoadTimeWindowInvalid": "Invalid date range",
+  "errLoadPriceRequired": "Set a price or mark it as negotiable",
+  "errLoadNotPublishable": "Only a draft can be published",
+  "errLoadNotEditable": "A load in this state cannot be edited",
+  "errLoadActiveLimitReached": "You have reached the active listings limit",
+
+  "errOfferOwnLoad": "You cannot send an offer on your own load",
+  "errOfferDuplicate": "You have already sent an offer for this load",
+  "errOfferAlreadyHandled": "The offer has already been reviewed",
+  "errOfferExpired": "The offer has expired",
+  "errOfferPriceRequired": "Enter your price",
+  "errOfferPriceOutOfRange": "The offer price differs too much from the listed price",
+
+  "errOrderInvalidTransition": "This action is not possible right now",
+  "errOrderActorNotAllowed": "Your counterparty performs this action",
+  "errOrderContactsAlreadyVisible": "Phone numbers are already visible",
+
+  "errChatClosed": "You cannot write in this chat",
+  "errChatMessageEmpty": "The message cannot be empty",
+  "errChatAttachmentMissing": "No file selected",
+
+  "errTrackingNotActive": "Tracking works only during an active trip",
+
+  "errWalletInsufficientFunds": "Not enough funds in the wallet",
+  "errWalletLocked": "The wallet is locked",
+  "errPaymentAmountInvalid": "Invalid amount",
+  "errPaymentAlreadyPaid": "The payment has already been made",
+  "errPaymentProviderError": "Payment system error. Please try again later.",
+  "errPayoutTooSmall": "The amount is too small to withdraw",
+  "errPayoutAlreadyPending": "You already have a pending request",
+
+  "errRatingNotAllowedYet": "You can rate after the cargo is delivered",
+  "errRatingAlreadyGiven": "You have already given a rating",
+  "errRatingWindowClosed": "The rating period has ended",
+
+  "errFileKeyNotOwned": "The file does not belong to you",
+  "errFileNotUploaded": "The file was not uploaded",
+  "errFileDeleteForbidden": "A verified document cannot be deleted",
+
+  "errValidationFields": "There is an error in the entered data",
+  "errValidation": "The entered data is invalid",
+  "errNotFound": "Not found",
+  "errForbidden": "No access",
+  "errRateLimited": "Too many requests. Please wait a moment.",
+  "errServiceUnavailable": "The service is temporarily unavailable",
+  "errReferenceNotFound": "Data not found",
+  "errUnexpected": "Unexpected error",
+
+  "stateErrorTitle": "Error",
+  "stateNetworkTitle": "No internet connection",
+  "actionRetry": "Retry",
+
+  "errInternal": "Something went wrong on the server. Please try again later."
 }

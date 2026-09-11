@@ -86,7 +86,7 @@ class _RateOrderSheetState extends ConsumerState<_RateOrderSheet> {
       setState(() => _isSubmitting = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(localizeError(error)),
+          content: Text(localizeError(context, error)),
           backgroundColor: AppColors.danger,
         ),
       );

@@ -64,7 +64,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       if (mounted) context.go('/');
     } on ApiException catch (error) {
       if (!mounted) return;
-      setState(() => _error = localizeError(error));
+      setState(() => _error = localizeError(context, error));
     } finally {
       if (mounted) setState(() => _loading = false);
     }

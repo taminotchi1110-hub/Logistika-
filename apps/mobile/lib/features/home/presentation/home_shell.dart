@@ -358,7 +358,7 @@ class ProfileTab extends ConsumerWidget {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(localizeError(error)),
+          content: Text(localizeError(context, error)),
           backgroundColor: AppColors.danger,
         ),
       );

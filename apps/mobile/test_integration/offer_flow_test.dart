@@ -10,6 +10,8 @@ import 'package:karvon/features/offers/data/offers_repository.dart';
 import 'package:karvon/features/vehicles/data/vehicles_repository.dart';
 
 import 'support/memory_token_storage.dart';
+import 'package:karvon/core/l10n/locale_controller.dart';
+import 'package:karvon/l10n/app_localizations.dart';
 
 /// Yuk → lenta → taklif oqimi HAQIQIY backend bilan.
 ///
@@ -166,7 +168,10 @@ void main() {
     try {
       await offers.send(loadId: load.id, vehicleId: vehicle.id);
     } on ApiException catch (error) {
-      expect(localizeError(error), isNot(contains('_')));
+      expect(
+        localizeErrorWith(lookupAppLocalizations(AppLocale.uz.locale), error),
+        isNot(contains('_')),
+      );
     }
   });
 

@@ -150,7 +150,7 @@ class _AddressPickerSheetState extends ConsumerState<_AddressPickerSheet> {
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() => _isLocating = false);
-      _showMessage(localizeError(error));
+      _showMessage(localizeError(context, error));
     } on Object {
       if (!mounted) return;
       setState(() => _isLocating = false);

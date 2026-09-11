@@ -45,5 +45,108 @@
   },
 
   "termsOfUse": "foydalanish shartlari",
-  "privacyPolicy": "maxfiylik siyosati"
+  "privacyPolicy": "maxfiylik siyosati",
+
+  "errNetwork": "Internet aloqasi yoʻq. Ulanishni tekshiring.",
+  "@errNetwork": {
+    "description": "Bundan keyingi barcha `err*` kalitlari — server xato KODLARI tarjimasi. Ular `apps/api/src/common/errors/error-codes.ts` bilan mos boʻlishi kerak."
+  },
+  "errTimeout": "Server javob bermadi. Qayta urinib koʻring.",
+
+  "errAuthUnauthorized": "Iltimos, qaytadan kiring",
+  "errAuthTokenExpired": "Sessiya muddati tugadi",
+  "errAuthTokenInvalid": "Sessiya yaroqsiz. Qaytadan kiring.",
+  "errAuthSessionRevoked": "Sessiya yopilgan. Qaytadan kiring.",
+
+  "errOtpInvalidPhone": "Telefon raqami notoʻgʻri",
+  "errOtpCooldownWait": "Biroz kuting va qayta urinib koʻring",
+  "errOtpCooldownSeconds": "{seconds} soniyadan keyin qayta yuborish mumkin",
+  "@errOtpCooldownSeconds": {
+    "placeholders": { "seconds": { "type": "int" } }
+  },
+  "errOtpTooManyRequests": "Juda koʻp urinish. Keyinroq qayta urinib koʻring.",
+  "errOtpNotFound": "Kod topilmadi. Yangi kod soʻrang.",
+  "errOtpExpired": "Kod muddati tugadi. Yangi kod soʻrang.",
+  "errOtpIncorrect": "Kod notoʻgʻri",
+  "errOtpIncorrectAttempts": "Kod notoʻgʻri. Qolgan urinishlar: {attempts}",
+  "@errOtpIncorrectAttempts": {
+    "placeholders": { "attempts": { "type": "int" } }
+  },
+  "errOtpTooManyAttempts": "Juda koʻp notoʻgʻri urinish. Yangi kod soʻrang.",
+  "errOtpSendFailed": "SMS yuborilmadi. Keyinroq urinib koʻring.",
+
+  "errUserBanned": "Akkauntingiz bloklangan. Qoʻllab-quvvatlashga murojaat qiling.",
+  "errUserSuspended": "Akkauntingiz vaqtincha toʻxtatilgan",
+  "errUserProfileIncomplete": "Avval profilni toʻldiring",
+  "errUserRoleNotAllowed": "Bu amal sizning rolingiz uchun mavjud emas",
+
+  "errDriverNotVerified": "Avval verifikatsiyani yakunlang",
+  "errVehicleNotVerified": "Transport hali tasdiqlanmagan",
+  "errVehicleCapacityExceeded": "Transport quvvati bu yuk uchun yetarli emas",
+  "errVehiclePlateTaken": "Bu davlat raqami allaqachon roʻyxatdan oʻtgan",
+  "errVehiclePlateInvalid": "Davlat raqami notoʻgʻri. Namuna: 01 A 123 BC",
+  "errVehicleLockedAfterVerify": "Tasdiqlangan transport parametrlarini oʻzgartirib boʻlmaydi",
+  "errVehicleLimitReached": "Transport soni chegarasiga yetdingiz",
+
+  "errLoadNotAcceptingOffers": "Bu yuk endi takliflar qabul qilmaydi",
+  "errLoadAlreadyAssigned": "Yuk allaqachon band",
+  "errLoadAlreadyClosed": "Yuk yopilgan",
+  "errLoadHasOrder": "Buyurtma tuzilgan. Bekor qilish buyurtma orqali.",
+  "errLoadPickupTimePassed": "Yuklash vaqti oʻtib ketgan",
+  "errLoadTimeWindowInvalid": "Sana oraligʻi notoʻgʻri",
+  "errLoadPriceRequired": "Narxni koʻrsating yoki “kelishuv asosida” belgilang",
+  "errLoadNotPublishable": "Faqat qoralamani eʼlon qilish mumkin",
+  "errLoadNotEditable": "Bu holatdagi yukni tahrirlab boʻlmaydi",
+  "errLoadActiveLimitReached": "Faol eʼlonlar soni chegarasiga yetdingiz",
+
+  "errOfferOwnLoad": "Oʻz yukingizga taklif yubora olmaysiz",
+  "errOfferDuplicate": "Siz bu yukka allaqachon taklif yuborgansiz",
+  "errOfferAlreadyHandled": "Taklif allaqachon koʻrib chiqilgan",
+  "errOfferExpired": "Taklif muddati tugagan",
+  "errOfferPriceRequired": "Oʻz narxingizni koʻrsating",
+  "errOfferPriceOutOfRange": "Taklif narxi eʼlon narxidan juda farq qiladi",
+
+  "errOrderInvalidTransition": "Bu amalni hozir bajarib boʻlmaydi",
+  "errOrderActorNotAllowed": "Bu amalni hamkoringiz bajaradi",
+  "errOrderContactsAlreadyVisible": "Telefon raqamlari allaqachon ochiq",
+
+  "errChatClosed": "Bu suhbatda yozib boʻlmaydi",
+  "errChatMessageEmpty": "Xabar boʻsh boʻlishi mumkin emas",
+  "errChatAttachmentMissing": "Fayl tanlanmagan",
+
+  "errTrackingNotActive": "Kuzatuv faqat faol reys davomida ishlaydi",
+
+  "errWalletInsufficientFunds": "Hamyonda mablagʻ yetarli emas",
+  "errWalletLocked": "Hamyon bloklangan",
+  "errPaymentAmountInvalid": "Summa notoʻgʻri",
+  "errPaymentAlreadyPaid": "Toʻlov allaqachon amalga oshirilgan",
+  "errPaymentProviderError": "Toʻlov tizimida xatolik. Keyinroq urinib koʻring.",
+  "errPayoutTooSmall": "Yechish uchun summa juda kichik",
+  "errPayoutAlreadyPending": "Sizda hali koʻrib chiqilmagan soʻrov bor",
+
+  "errRatingNotAllowedYet": "Baho yuk topshirilgandan keyin beriladi",
+  "errRatingAlreadyGiven": "Siz allaqachon baho bergansiz",
+  "errRatingWindowClosed": "Baho berish muddati tugagan",
+
+  "errFileKeyNotOwned": "Fayl sizga tegishli emas",
+  "errFileNotUploaded": "Fayl yuklanmagan",
+  "errFileDeleteForbidden": "Tasdiqlangan hujjatni oʻchirib boʻlmaydi",
+
+  "errValidationFields": "Kiritilgan maʼlumotda xatolik bor",
+  "errValidation": "Kiritilgan maʼlumot notoʻgʻri",
+  "errNotFound": "Topilmadi",
+  "errForbidden": "Ruxsat yoʻq",
+  "errRateLimited": "Juda koʻp soʻrov. Biroz kuting.",
+  "errServiceUnavailable": "Xizmat vaqtincha ishlamayapti",
+  "errReferenceNotFound": "Maʼlumot topilmadi",
+  "errUnexpected": "Kutilmagan xatolik",
+
+  "stateErrorTitle": "Xatolik",
+  "stateNetworkTitle": "Internet aloqasi yoʻq",
+  "actionRetry": "Qayta urinish",
+
+  "errInternal": "Serverda xatolik yuz berdi. Keyinroq urinib koʻring.",
+  "@errInternal": {
+    "description": "500 xatosi. Server matni koʻrsatilmaydi: u texnik boʻlishi mumkin va faqat oʻzbekcha."
+  }
 }

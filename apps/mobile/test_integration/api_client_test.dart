@@ -10,6 +10,8 @@ import 'package:karvon/features/auth/data/auth_repository.dart';
 import 'package:karvon/features/auth/domain/user.dart';
 
 import 'support/memory_token_storage.dart';
+import 'package:karvon/core/l10n/locale_controller.dart';
+import 'package:karvon/l10n/app_localizations.dart';
 
 
 /// HAQIQIY BACKEND bilan integratsiya testi.
@@ -153,7 +155,7 @@ void main() {
       await repository.requestOtp('+99871${random.nextInt(9000000) + 1000000}');
       fail('xato kutilgan edi');
     } on ApiException catch (error) {
-      final message = localizeError(error);
+      final message = localizeErrorWith(lookupAppLocalizations(AppLocale.uz.locale), error);
       // Server matni emas, bizning tarjimamiz qaytishi kerak
       expect(message, isNotEmpty);
       expect(message, isNot(contains('must be')));

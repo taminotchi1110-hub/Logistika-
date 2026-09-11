@@ -20,5 +20,96 @@
   "termsAgreement": "Продолжая, вы соглашаетесь с {terms} и {privacy}",
 
   "termsOfUse": "условиями использования",
-  "privacyPolicy": "политикой конфиденциальности"
+  "privacyPolicy": "политикой конфиденциальности",
+
+  "errNetwork": "Нет интернета. Проверьте подключение.",
+  "errTimeout": "Сервер не ответил. Попробуйте ещё раз.",
+
+  "errAuthUnauthorized": "Пожалуйста, войдите заново",
+  "errAuthTokenExpired": "Сессия истекла",
+  "errAuthTokenInvalid": "Сессия недействительна. Войдите заново.",
+  "errAuthSessionRevoked": "Сессия закрыта. Войдите заново.",
+
+  "errOtpInvalidPhone": "Неверный номер телефона",
+  "errOtpCooldownWait": "Подождите немного и попробуйте снова",
+  "errOtpCooldownSeconds": "Повторная отправка через {seconds} сек.",
+  "errOtpTooManyRequests": "Слишком много попыток. Попробуйте позже.",
+  "errOtpNotFound": "Код не найден. Запросите новый.",
+  "errOtpExpired": "Срок действия кода истёк. Запросите новый.",
+  "errOtpIncorrect": "Неверный код",
+  "errOtpIncorrectAttempts": "Неверный код. Осталось попыток: {attempts}",
+  "errOtpTooManyAttempts": "Слишком много неверных попыток. Запросите новый код.",
+  "errOtpSendFailed": "SMS не отправлено. Попробуйте позже.",
+
+  "errUserBanned": "Ваш аккаунт заблокирован. Обратитесь в поддержку.",
+  "errUserSuspended": "Ваш аккаунт временно приостановлен",
+  "errUserProfileIncomplete": "Сначала заполните профиль",
+  "errUserRoleNotAllowed": "Это действие недоступно для вашей роли",
+
+  "errDriverNotVerified": "Сначала завершите верификацию",
+  "errVehicleNotVerified": "Транспорт ещё не подтверждён",
+  "errVehicleCapacityExceeded": "Грузоподъёмности транспорта недостаточно для этого груза",
+  "errVehiclePlateTaken": "Этот госномер уже зарегистрирован",
+  "errVehiclePlateInvalid": "Неверный госномер. Пример: 01 A 123 BC",
+  "errVehicleLockedAfterVerify": "Параметры подтверждённого транспорта изменить нельзя",
+  "errVehicleLimitReached": "Достигнут лимит количества транспорта",
+
+  "errLoadNotAcceptingOffers": "Этот груз больше не принимает предложения",
+  "errLoadAlreadyAssigned": "Груз уже занят",
+  "errLoadAlreadyClosed": "Груз закрыт",
+  "errLoadHasOrder": "Заказ создан. Отмена — через заказ.",
+  "errLoadPickupTimePassed": "Время погрузки прошло",
+  "errLoadTimeWindowInvalid": "Неверный диапазон дат",
+  "errLoadPriceRequired": "Укажите цену или отметьте «по договорённости»",
+  "errLoadNotPublishable": "Опубликовать можно только черновик",
+  "errLoadNotEditable": "Груз в этом статусе редактировать нельзя",
+  "errLoadActiveLimitReached": "Достигнут лимит активных объявлений",
+
+  "errOfferOwnLoad": "Нельзя отправить предложение на свой груз",
+  "errOfferDuplicate": "Вы уже отправили предложение на этот груз",
+  "errOfferAlreadyHandled": "Предложение уже рассмотрено",
+  "errOfferExpired": "Срок предложения истёк",
+  "errOfferPriceRequired": "Укажите свою цену",
+  "errOfferPriceOutOfRange": "Цена предложения слишком отличается от цены объявления",
+
+  "errOrderInvalidTransition": "Это действие сейчас невозможно",
+  "errOrderActorNotAllowed": "Это действие выполняет ваш партнёр",
+  "errOrderContactsAlreadyVisible": "Номера телефонов уже открыты",
+
+  "errChatClosed": "В этом чате нельзя писать",
+  "errChatMessageEmpty": "Сообщение не может быть пустым",
+  "errChatAttachmentMissing": "Файл не выбран",
+
+  "errTrackingNotActive": "Отслеживание работает только во время активного рейса",
+
+  "errWalletInsufficientFunds": "Недостаточно средств на кошельке",
+  "errWalletLocked": "Кошелёк заблокирован",
+  "errPaymentAmountInvalid": "Неверная сумма",
+  "errPaymentAlreadyPaid": "Платёж уже выполнен",
+  "errPaymentProviderError": "Ошибка платёжной системы. Попробуйте позже.",
+  "errPayoutTooSmall": "Сумма слишком мала для вывода",
+  "errPayoutAlreadyPending": "У вас есть нерассмотренный запрос",
+
+  "errRatingNotAllowedYet": "Оценка ставится после сдачи груза",
+  "errRatingAlreadyGiven": "Вы уже поставили оценку",
+  "errRatingWindowClosed": "Срок для оценки истёк",
+
+  "errFileKeyNotOwned": "Файл вам не принадлежит",
+  "errFileNotUploaded": "Файл не загружен",
+  "errFileDeleteForbidden": "Подтверждённый документ удалить нельзя",
+
+  "errValidationFields": "В введённых данных есть ошибка",
+  "errValidation": "Введённые данные неверны",
+  "errNotFound": "Не найдено",
+  "errForbidden": "Нет доступа",
+  "errRateLimited": "Слишком много запросов. Подождите немного.",
+  "errServiceUnavailable": "Сервис временно недоступен",
+  "errReferenceNotFound": "Данные не найдены",
+  "errUnexpected": "Непредвиденная ошибка",
+
+  "stateErrorTitle": "Ошибка",
+  "stateNetworkTitle": "Нет интернета",
+  "actionRetry": "Повторить",
+
+  "errInternal": "На сервере произошла ошибка. Попробуйте позже."
 }

@@ -12,6 +12,9 @@
 /// Serverdagi `message` faqat zaxira: noma'lum kod kelganda.
 library;
 
+import 'package:flutter/widgets.dart';
+import 'package:karvon/l10n/app_localizations.dart';
+
 class ApiException implements Exception {
   const ApiException({
     required this.code,
@@ -61,129 +64,162 @@ class ApiException implements Exception {
 /// Bu jadval `apps/api/src/common/errors/error-codes.ts` bilan mos
 /// bo'lishi kerak. Yangi kod qo'shilganda bu yerga ham qo'shiladi —
 /// aks holda foydalanuvchi serverning texnik matnini ko'radi.
-String localizeError(ApiException error) {
+///
+/// `BuildContext` QABUL QILADI, `AppLocalizations` emas: chaqiruv
+/// joylari (21 ta) vidjetlar ichida va ularning hammasida kontekst
+/// bor. `AppLocalizations.of(context)` ni har bir joyda yozish
+/// takrorlanuvchi shovqin bo'lardi.
+String localizeError(BuildContext context, ApiException error) =>
+    localizeErrorWith(AppLocalizations.of(context), error);
+
+/// Kontekstsiz variant — testlar va kontekstdan tashqari kod uchun.
+String localizeErrorWith(AppLocalizations l10n, ApiException error) {
   return switch (error.code) {
     // --- tarmoq ---
-    'NETWORK_ERROR' => 'Internet aloqasi yoʻq. Ulanishni tekshiring.',
-    'TIMEOUT' => 'Server javob bermadi. Qayta urinib koʻring.',
+    'NETWORK_ERROR' => l10n.errNetwork,
+    'TIMEOUT' => l10n.errTimeout,
 
     // --- autentifikatsiya ---
-    'AUTH_UNAUTHORIZED' => 'Iltimos, qaytadan kiring',
-    'AUTH_TOKEN_EXPIRED' => 'Sessiya muddati tugadi',
-    'AUTH_TOKEN_INVALID' => 'Sessiya yaroqsiz. Qaytadan kiring.',
-    'AUTH_SESSION_REVOKED' => 'Sessiya yopilgan. Qaytadan kiring.',
+    'AUTH_UNAUTHORIZED' => l10n.errAuthUnauthorized,
+    'AUTH_TOKEN_EXPIRED' => l10n.errAuthTokenExpired,
+    'AUTH_TOKEN_INVALID' => l10n.errAuthTokenInvalid,
+    'AUTH_SESSION_REVOKED' => l10n.errAuthSessionRevoked,
 
     // --- OTP ---
-    'OTP_INVALID_PHONE' => 'Telefon raqami notoʻgʻri',
-    'OTP_COOLDOWN' => _cooldownMessage(error),
-    'OTP_TOO_MANY_REQUESTS' => 'Juda koʻp urinish. Keyinroq qayta urinib koʻring.',
-    'OTP_NOT_FOUND' => 'Kod topilmadi. Yangi kod soʻrang.',
-    'OTP_EXPIRED' => 'Kod muddati tugadi. Yangi kod soʻrang.',
-    'OTP_INCORRECT' => _attemptsMessage(error),
-    'OTP_TOO_MANY_ATTEMPTS' => 'Juda koʻp notoʻgʻri urinish. Yangi kod soʻrang.',
-    'OTP_SEND_FAILED' => 'SMS yuborilmadi. Keyinroq urinib koʻring.',
+    'OTP_INVALID_PHONE' => l10n.errOtpInvalidPhone,
+    'OTP_COOLDOWN' => _cooldownMessage(l10n, error),
+    'OTP_TOO_MANY_REQUESTS' => l10n.errOtpTooManyRequests,
+    'OTP_NOT_FOUND' => l10n.errOtpNotFound,
+    'OTP_EXPIRED' => l10n.errOtpExpired,
+    'OTP_INCORRECT' => _attemptsMessage(l10n, error),
+    'OTP_TOO_MANY_ATTEMPTS' => l10n.errOtpTooManyAttempts,
+    'OTP_SEND_FAILED' => l10n.errOtpSendFailed,
 
     // --- foydalanuvchi ---
-    'USER_BANNED' => 'Akkauntingiz bloklangan. Qoʻllab-quvvatlashga murojaat qiling.',
-    'USER_SUSPENDED' => 'Akkauntingiz vaqtincha toʻxtatilgan',
-    'USER_PROFILE_INCOMPLETE' => 'Avval profilni toʻldiring',
-    'USER_ROLE_NOT_ALLOWED' => 'Bu amal sizning rolingiz uchun mavjud emas',
+    'USER_BANNED' => l10n.errUserBanned,
+    'USER_SUSPENDED' => l10n.errUserSuspended,
+    'USER_PROFILE_INCOMPLETE' => l10n.errUserProfileIncomplete,
+    'USER_ROLE_NOT_ALLOWED' => l10n.errUserRoleNotAllowed,
 
     // --- haydovchi va transport ---
-    'DRIVER_NOT_VERIFIED' => 'Avval verifikatsiyani yakunlang',
-    'VEHICLE_NOT_VERIFIED' => 'Transport hali tasdiqlanmagan',
-    'VEHICLE_CAPACITY_EXCEEDED' => 'Transport quvvati bu yuk uchun yetarli emas',
-    'VEHICLE_PLATE_TAKEN' => 'Bu davlat raqami allaqachon roʻyxatdan oʻtgan',
-    'VEHICLE_PLATE_INVALID' => 'Davlat raqami notoʻgʻri. Namuna: 01 A 123 BC',
-    'VEHICLE_LOCKED_AFTER_VERIFY' =>
-      'Tasdiqlangan transport parametrlarini oʻzgartirib boʻlmaydi',
-    'VEHICLE_LIMIT_REACHED' => 'Transport soni chegarasiga yetdingiz',
+    'DRIVER_NOT_VERIFIED' => l10n.errDriverNotVerified,
+    'VEHICLE_NOT_VERIFIED' => l10n.errVehicleNotVerified,
+    'VEHICLE_CAPACITY_EXCEEDED' => l10n.errVehicleCapacityExceeded,
+    'VEHICLE_PLATE_TAKEN' => l10n.errVehiclePlateTaken,
+    'VEHICLE_PLATE_INVALID' => l10n.errVehiclePlateInvalid,
+    'VEHICLE_LOCKED_AFTER_VERIFY' => l10n.errVehicleLockedAfterVerify,
+    'VEHICLE_LIMIT_REACHED' => l10n.errVehicleLimitReached,
 
     // --- yuk ---
-    'LOAD_NOT_ACCEPTING_OFFERS' => 'Bu yuk endi takliflar qabul qilmaydi',
-    'LOAD_ALREADY_ASSIGNED' => 'Yuk allaqachon band',
-    'LOAD_ALREADY_CLOSED' => 'Yuk yopilgan',
-    'LOAD_HAS_ORDER' => 'Buyurtma tuzilgan. Bekor qilish buyurtma orqali.',
-    'LOAD_PICKUP_TIME_PASSED' => 'Yuklash vaqti oʻtib ketgan',
-    'LOAD_TIME_WINDOW_INVALID' => 'Sana oraligʻi notoʻgʻri',
-    'LOAD_PRICE_REQUIRED' => 'Narxni koʻrsating yoki "kelishuv asosida" belgilang',
-    'LOAD_NOT_PUBLISHABLE' => 'Faqat qoralamani eʼlon qilish mumkin',
-    'LOAD_NOT_EDITABLE' => 'Bu holatdagi yukni tahrirlab boʻlmaydi',
-    'LOAD_ACTIVE_LIMIT_REACHED' => 'Faol eʼlonlar soni chegarasiga yetdingiz',
+    'LOAD_NOT_ACCEPTING_OFFERS' => l10n.errLoadNotAcceptingOffers,
+    'LOAD_ALREADY_ASSIGNED' => l10n.errLoadAlreadyAssigned,
+    'LOAD_ALREADY_CLOSED' => l10n.errLoadAlreadyClosed,
+    'LOAD_HAS_ORDER' => l10n.errLoadHasOrder,
+    'LOAD_PICKUP_TIME_PASSED' => l10n.errLoadPickupTimePassed,
+    'LOAD_TIME_WINDOW_INVALID' => l10n.errLoadTimeWindowInvalid,
+    'LOAD_PRICE_REQUIRED' => l10n.errLoadPriceRequired,
+    'LOAD_NOT_PUBLISHABLE' => l10n.errLoadNotPublishable,
+    'LOAD_NOT_EDITABLE' => l10n.errLoadNotEditable,
+    'LOAD_ACTIVE_LIMIT_REACHED' => l10n.errLoadActiveLimitReached,
 
     // --- taklif ---
-    'OFFER_OWN_LOAD' => 'Oʻz yukingizga taklif yubora olmaysiz',
-    'OFFER_DUPLICATE' => 'Siz bu yukka allaqachon taklif yuborgansiz',
-    'OFFER_ALREADY_HANDLED' => 'Taklif allaqachon koʻrib chiqilgan',
-    'OFFER_EXPIRED' => 'Taklif muddati tugagan',
-    'OFFER_PRICE_REQUIRED' => 'Oʻz narxingizni koʻrsating',
-    'OFFER_PRICE_OUT_OF_RANGE' => 'Taklif narxi eʼlon narxidan juda farq qiladi',
+    'OFFER_OWN_LOAD' => l10n.errOfferOwnLoad,
+    'OFFER_DUPLICATE' => l10n.errOfferDuplicate,
+    'OFFER_ALREADY_HANDLED' => l10n.errOfferAlreadyHandled,
+    'OFFER_EXPIRED' => l10n.errOfferExpired,
+    'OFFER_PRICE_REQUIRED' => l10n.errOfferPriceRequired,
+    'OFFER_PRICE_OUT_OF_RANGE' => l10n.errOfferPriceOutOfRange,
 
     // --- buyurtma ---
-    'ORDER_INVALID_TRANSITION' => 'Bu amalni hozir bajarib boʻlmaydi',
-    'ORDER_ACTOR_NOT_ALLOWED' => 'Bu amalni hamkoringiz bajaradi',
-    'ORDER_CONTACTS_ALREADY_VISIBLE' => 'Telefon raqamlari allaqachon ochiq',
+    'ORDER_INVALID_TRANSITION' => l10n.errOrderInvalidTransition,
+    'ORDER_ACTOR_NOT_ALLOWED' => l10n.errOrderActorNotAllowed,
+    'ORDER_CONTACTS_ALREADY_VISIBLE' => l10n.errOrderContactsAlreadyVisible,
 
     // --- chat ---
-    'CHAT_CLOSED' => 'Bu suhbatda yozib boʻlmaydi',
-    'CHAT_MESSAGE_EMPTY' => 'Xabar boʻsh boʻlishi mumkin emas',
-    'CHAT_ATTACHMENT_MISSING' => 'Fayl tanlanmagan',
+    'CHAT_CLOSED' => l10n.errChatClosed,
+    'CHAT_MESSAGE_EMPTY' => l10n.errChatMessageEmpty,
+    'CHAT_ATTACHMENT_MISSING' => l10n.errChatAttachmentMissing,
 
     // --- kuzatuv ---
-    'TRACKING_NOT_ACTIVE' => 'Kuzatuv faqat faol reys davomida ishlaydi',
+    'TRACKING_NOT_ACTIVE' => l10n.errTrackingNotActive,
 
     // --- hamyon va toʻlov ---
-    'WALLET_INSUFFICIENT_FUNDS' => 'Hamyonda mablagʻ yetarli emas',
-    'WALLET_LOCKED' => 'Hamyon bloklangan',
-    'PAYMENT_AMOUNT_INVALID' => 'Summa notoʻgʻri',
-    'PAYMENT_ALREADY_PAID' => 'Toʻlov allaqachon amalga oshirilgan',
-    'PAYMENT_PROVIDER_ERROR' => 'Toʻlov tizimida xatolik. Keyinroq urinib koʻring.',
-    'PAYOUT_TOO_SMALL' => 'Yechish uchun summa juda kichik',
-    'PAYOUT_ALREADY_PENDING' => 'Sizda hali koʻrib chiqilmagan soʻrov bor',
+    'WALLET_INSUFFICIENT_FUNDS' => l10n.errWalletInsufficientFunds,
+    'WALLET_LOCKED' => l10n.errWalletLocked,
+    'PAYMENT_AMOUNT_INVALID' => l10n.errPaymentAmountInvalid,
+    'PAYMENT_ALREADY_PAID' => l10n.errPaymentAlreadyPaid,
+    'PAYMENT_PROVIDER_ERROR' => l10n.errPaymentProviderError,
+    'PAYOUT_TOO_SMALL' => l10n.errPayoutTooSmall,
+    'PAYOUT_ALREADY_PENDING' => l10n.errPayoutAlreadyPending,
 
     // --- reyting ---
-    'RATING_NOT_ALLOWED_YET' => 'Baho yuk topshirilgandan keyin beriladi',
-    'RATING_ALREADY_GIVEN' => 'Siz allaqachon baho bergansiz',
-    'RATING_WINDOW_CLOSED' => 'Baho berish muddati tugagan',
+    'RATING_NOT_ALLOWED_YET' => l10n.errRatingNotAllowedYet,
+    'RATING_ALREADY_GIVEN' => l10n.errRatingAlreadyGiven,
+    'RATING_WINDOW_CLOSED' => l10n.errRatingWindowClosed,
 
     // --- fayl ---
-    'FILE_KEY_NOT_OWNED' => 'Fayl sizga tegishli emas',
-    'FILE_NOT_UPLOADED' => 'Fayl yuklanmagan',
-    'FILE_DELETE_FORBIDDEN' => 'Tasdiqlangan hujjatni oʻchirib boʻlmaydi',
+    'FILE_KEY_NOT_OWNED' => l10n.errFileKeyNotOwned,
+    'FILE_NOT_UPLOADED' => l10n.errFileNotUploaded,
+    'FILE_DELETE_FORBIDDEN' => l10n.errFileDeleteForbidden,
 
     // --- umumiy ---
-    'VALIDATION_FAILED' => _validationMessage(error),
-    'NOT_FOUND' => 'Topilmadi',
-    'FORBIDDEN' => 'Ruxsat yoʻq',
-    'RATE_LIMITED' => 'Juda koʻp soʻrov. Biroz kuting.',
-    'SERVICE_UNAVAILABLE' => 'Xizmat vaqtincha ishlamayapti',
-    'REFERENCE_NOT_FOUND' => 'Maʼlumot topilmadi',
+    'VALIDATION_FAILED' => _validationMessage(l10n, error),
+    'NOT_FOUND' => l10n.errNotFound,
+    'FORBIDDEN' => l10n.errForbidden,
+    'RATE_LIMITED' => l10n.errRateLimited,
+    'SERVICE_UNAVAILABLE' => l10n.errServiceUnavailable,
+    'REFERENCE_NOT_FOUND' => l10n.errReferenceNotFound,
 
-    // Noma'lum kod — serverning matni (zaxira)
+    // Aniq obyekt topilmadi — foydalanuvchi uchun farqi yoʻq, qaysi
+    // jadvalda qidirilgani uni qiziqtirmaydi
+    'DOCUMENT_NOT_FOUND' ||
+    'PAYMENT_NOT_FOUND' ||
+    'USER_NOT_FOUND' ||
+    'WALLET_ACCOUNT_NOT_FOUND' =>
+      l10n.errNotFound,
+
+    // Refresh token QAYTA ishlatildi — tokenni oʻgʻirlash belgisi.
+    // Server hamma sessiyalarni yopgan; foydalanuvchiga "qaytadan
+    // kiring" deyish yetarli, xavfsizlik tafsiloti uni qoʻrqitadi
+    'AUTH_REFRESH_REUSED' => l10n.errAuthSessionRevoked,
+
+    // 500. Serverning matni KOʻRSATILMAYDI: u texnik boʻlishi mumkin
+    // ("Cannot read properties of undefined") va faqat oʻzbekcha.
+    // Bu kod avval jadvalda yoʻq edi va aynan shu holat yuz berardi
+    'INTERNAL_ERROR' => l10n.errInternal,
+
+    // Noma'lum kod — SERVERNING MATNI (zaxira).
+    //
+    // U faqat oʻzbekcha, lekin boʻsh ekrandan yaxshiroq: yangi kod
+    // qoʻshilgan va bu jadvalga koʻchirilmagan holatda foydalanuvchi
+    // hech boʻlmasa nima boʻlganini biladi.
     _ => error.message,
   };
 }
 
-String _cooldownMessage(ApiException error) {
+String _cooldownMessage(AppLocalizations l10n, ApiException error) {
   final seconds = error.retryAfterSeconds;
   return seconds == null
-      ? 'Biroz kuting va qayta urinib koʻring'
-      : '$seconds soniyadan keyin qayta yuborish mumkin';
+      ? l10n.errOtpCooldownWait
+      : l10n.errOtpCooldownSeconds(seconds);
 }
 
-String _attemptsMessage(ApiException error) {
+String _attemptsMessage(AppLocalizations l10n, ApiException error) {
   final left = error.details?['attemptsLeft'];
-  return left == null
-      ? 'Kod notoʻgʻri'
-      : 'Kod notoʻgʻri. Qolgan urinishlar: $left';
+  // Server sonni satr sifatida ham yuborishi mumkin — ikkalasini ham
+  // qabul qilamiz, aks holda matn "Qolgan urinishlar: null" boʻlardi
+  final attempts = left is int ? left : int.tryParse('$left');
+  return attempts == null
+      ? l10n.errOtpIncorrect
+      : l10n.errOtpIncorrectAttempts(attempts);
 }
 
-String _validationMessage(ApiException error) {
+String _validationMessage(AppLocalizations l10n, ApiException error) {
   final fields = error.details?['fields'];
   if (fields is List && fields.isNotEmpty) {
     // Backend maydon xatolarini inglizcha qaytaradi ("phone must be...").
     // Ularni koʻrsatmaymiz — umumiy matn tushunarliroq.
-    return 'Kiritilgan maʼlumotda xatolik bor';
+    return l10n.errValidationFields;
   }
-  return 'Kiritilgan maʼlumot notoʻgʻri';
+  return l10n.errValidation;
 }

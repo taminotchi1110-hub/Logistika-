@@ -94,7 +94,7 @@ class _TopupSheetState extends ConsumerState<_TopupSheet> {
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() => _isSubmitting = false);
-      _showMessage(localizeError(error));
+      _showMessage(localizeError(context, error));
     }
   }
 

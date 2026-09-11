@@ -170,7 +170,7 @@ class _CreateLoadScreenState extends ConsumerState<CreateLoadScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(localizeError(error)),
+        content: Text(localizeError(context, error)),
         backgroundColor: AppColors.danger,
       ),
     );

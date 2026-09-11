@@ -278,7 +278,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(localizeError(error)),
+          content: Text(localizeError(context, error)),
           backgroundColor: AppColors.danger,
         ),
       );

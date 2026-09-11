@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:karvon/l10n/app_localizations.dart';
 
 import '../../core/api/api_exception.dart';
 import '../../core/theme/app_colors.dart';
@@ -89,15 +90,16 @@ class ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final api = error is ApiException ? error as ApiException : null;
     final isNetwork = api?.isNetwork ?? false;
-    final message = api != null ? localizeError(api) : 'Kutilmagan xatolik';
+    final message = api != null ? localizeError(context, api) : l10n.errUnexpected;
 
     return EmptyState(
       icon: isNetwork ? Icons.wifi_off_rounded : Icons.error_outline_rounded,
-      title: isNetwork ? 'Internet aloqasi yoʻq' : 'Xatolik',
+      title: isNetwork ? l10n.stateNetworkTitle : l10n.stateErrorTitle,
       message: message,
-      actionLabel: onRetry != null && isNetwork ? 'Qayta urinish' : null,
+      actionLabel: onRetry != null && isNetwork ? l10n.actionRetry : null,
       onAction: onRetry,
     );
   }

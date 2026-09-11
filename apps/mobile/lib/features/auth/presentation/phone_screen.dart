@@ -75,7 +75,7 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
       context.push('/auth/otp', extra: challenge);
     } on ApiException catch (error) {
       if (!mounted) return;
-      setState(() => _error = localizeError(error));
+      setState(() => _error = localizeError(context, error));
     } finally {
       if (mounted) setState(() => _loading = false);
     }

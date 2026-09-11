@@ -101,7 +101,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() {
-        _error = localizeError(error);
+        _error = localizeError(context, error);
         _controller.clear();
       });
       // Xatodan keyin klaviatura ochiq qoladi — foydalanuvchi darhol
@@ -130,7 +130,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
       );
     } on ApiException catch (error) {
       if (!mounted) return;
-      setState(() => _error = localizeError(error));
+      setState(() => _error = localizeError(context, error));
       // Cooldown xatosi bo'lsa — qolgan vaqtni taymerga qo'yamiz
       final retry = error.retryAfterSeconds;
       if (retry != null) _startCooldown(retry);

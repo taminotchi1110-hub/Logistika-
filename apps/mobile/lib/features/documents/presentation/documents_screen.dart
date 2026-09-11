@@ -179,7 +179,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(localizeError(error)),
+          content: Text(localizeError(context, error)),
           backgroundColor: AppColors.danger,
         ),
       );
@@ -283,7 +283,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(localizeError(error)),
+          content: Text(localizeError(context, error)),
           backgroundColor: AppColors.danger,
         ),
       );

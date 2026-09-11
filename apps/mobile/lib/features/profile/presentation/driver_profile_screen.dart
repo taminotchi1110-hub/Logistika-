@@ -46,7 +46,7 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(localizeError(error)),
+          content: Text(localizeError(context, error)),
           backgroundColor: AppColors.danger,
         ),
       );
@@ -365,7 +365,7 @@ class _RoutesSection extends ConsumerWidget {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(localizeError(error)),
+          content: Text(localizeError(context, error)),
           backgroundColor: AppColors.danger,
         ),
       );
@@ -542,7 +542,7 @@ class _AddVehicleSheetState extends ConsumerState<_AddVehicleSheet> {
       setState(() => _isSubmitting = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(localizeError(error)),
+          content: Text(localizeError(context, error)),
           backgroundColor: AppColors.danger,
         ),
       );
@@ -696,7 +696,7 @@ class _AddRouteSheetState extends ConsumerState<_AddRouteSheet> {
       setState(() => _isSubmitting = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(localizeError(error)),
+          content: Text(localizeError(context, error)),
           backgroundColor: AppColors.danger,
         ),
       );
