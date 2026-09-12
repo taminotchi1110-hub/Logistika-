@@ -111,6 +111,7 @@ ko'rsatilmaydi — ilovada to'qima raqam yo'q.
 | 16 | [docs/16-matching-and-tracking.md](docs/16-matching-and-tracking.md) | **Avtomatik matching va jonli GPS kuzatuv** |
 | 17 | [docs/17-payments-ratings-admin.md](docs/17-payments-ratings-admin.md) | **Toʻlovlar, reyting va admin paneli** |
 | 18 | [docs/18-i18n.md](docs/18-i18n.md) | **Koʻp tillilik: ilova, bildirishnoma shablonlari, yangi til qoʻshish** |
+| 19 | [docs/19-deploy.md](docs/19-deploy.md) | **Ishlab chiqarishga chiqarish, zaxira nusxa, qaytarish va nosozliklar** |
 | — | [db/migrations/0001_init.sql](db/migrations/0001_init.sql) | To'liq PostgreSQL DDL |
 | — | [db/seeds/0001_reference.sql](db/seeds/0001_reference.sql) | Spravochnik ma'lumotlari |
 

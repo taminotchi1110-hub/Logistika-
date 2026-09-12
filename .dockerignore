@@ -1,0 +1,30 @@
+# Docker build konteksti — faqat tasvirga kerakli fayllar.
+#
+# Busiz butun repo (mobil ilova, node_modules, .git) har build'da
+# daemon'ga yuboriladi: sekin, va eng yomoni — `.env.production` kabi
+# maxfiy fayllar tasvir qatlamiga tushib qolishi mumkin.
+
+**/node_modules
+**/dist
+**/coverage
+**/.turbo
+.git
+.github
+.idea
+.vscode
+
+# Maxfiy qiymatlar HECH QACHON tasvirga tushmaydi
+**/.env
+**/.env.*
+!**/.env.example
+
+# Tasvirga keraksiz qismlar
+apps/mobile
+docs
+scripts
+*.md
+
+# Server ma'lumotlari (deploy papkasida yaratiladi)
+backups
+osrm-data
+.deploy

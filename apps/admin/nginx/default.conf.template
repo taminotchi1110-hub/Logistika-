@@ -1,0 +1,40 @@
+# KARVON admin paneli — statik SPA.
+#
+# DIQQAT: `add_header` ni location ichida ISHLATMANG — nginx'da u
+# server darajasidagi barcha `add_header` larni bekor qiladi va
+# xavfsizlik sarlavhalari jimgina yo'qoladi. Kesh uchun `expires`
+# ishlatiladi: u sarlavhalarni meros qilib olishni buzmaydi.
+
+server {
+  listen 80;
+  server_name _;
+  root /usr/share/nginx/html;
+  server_tokens off;
+
+  # CSP: faqat o'z manbalari + API va fayl ombori. Hujjat ko'ruvchi rasm
+  # va PDF ni imzolangan havola orqali oladi (`<img>`, `<object>`)
+  add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: ${FILES_ORIGIN}; object-src ${FILES_ORIGIN}; frame-src ${FILES_ORIGIN}; connect-src 'self' ${API_ORIGIN}; font-src 'self' data:; base-uri 'self'; form-action 'self'; frame-ancestors 'none'" always;
+  add_header X-Content-Type-Options "nosniff" always;
+  add_header X-Frame-Options "DENY" always;
+  add_header Referrer-Policy "no-referrer" always;
+  add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
+
+  location = /healthz {
+    access_log off;
+    default_type text/plain;
+    return 200 "ok";
+  }
+
+  # Xeshlangan fayllar hech qachon o'zgarmaydi — uzoq kesh
+  location /assets/ {
+    expires 1y;
+    try_files $uri =404;
+  }
+
+  # SPA: noma'lum yo'l → index.html. index.html keshlanmaydi — aks holda
+  # yangi versiyadan keyin brauzer eski (o'chirilgan) fayllarni so'raydi
+  location / {
+    expires -1;
+    try_files $uri $uri/ /index.html;
+  }
+}

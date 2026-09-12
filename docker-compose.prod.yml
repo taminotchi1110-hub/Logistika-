@@ -1,0 +1,193 @@
+# KARVON — ishlab chiqarish: bitta server, Docker Compose.
+#
+#   cp .env.production.example .env.production   # qiymatlarni to'ldiring
+#   bash scripts/generate-secrets.sh             # maxfiy qiymatlar
+#   bash scripts/osrm-prepare.sh                 # bir marta
+#   bash scripts/deploy.sh
+#
+# Tashqariga FAQAT Caddy (80/443) ochiq. Postgres, Redis, MinIO va OSRM
+# ichki tarmoqda — ularning portlari hostga CHIQARILMAYDI. Bazaga kirish:
+#   docker compose --env-file .env.production -f docker-compose.prod.yml \
+#     exec postgres psql -U karvon
+#
+# `${...}` qiymatlari `--env-file .env.production` dan olinadi — skriptlar
+# aynan shunday chaqiradi. Batafsil: docs/19-deploy.md
+
+name: karvon
+
+x-defaults: &defaults
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    # Cheklanmagan log diskni to'ldiradi va baza yozishdan to'xtaydi
+    options:
+      max-size: '20m'
+      max-file: '5'
+
+services:
+  caddy:
+    <<: *defaults
+    image: caddy:2.8-alpine
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    environment:
+      ACME_EMAIL: ${ACME_EMAIL:?ACME_EMAIL kerak}
+      API_DOMAIN: ${API_DOMAIN:?API_DOMAIN kerak}
+      ADMIN_DOMAIN: ${ADMIN_DOMAIN:?ADMIN_DOMAIN kerak}
+      FILES_DOMAIN: ${FILES_DOMAIN:?FILES_DOMAIN kerak}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+      - admin
+      - minio
+
+  api:
+    <<: *defaults
+    image: karvon-api:${IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    env_file: .env.production
+    environment:
+      # Faylda nima yozilgan bo'lishidan qat'i nazar: prod sozlamalar
+      # validatsiyasi (JWT kalitlari, SMS, OSRM) aynan shunga bog'liq
+      NODE_ENV: production
+    extra_hosts:
+      # API fayl omboriga ommaviy domen orqali murojaat qiladi (imzolangan
+      # havolalar shu domen bilan tuziladi). So'rov server ichida qolsin
+      - '${FILES_DOMAIN}:host-gateway'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      osrm:
+        condition: service_started
+
+  admin:
+    <<: *defaults
+    image: karvon-admin:${IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: apps/admin/Dockerfile
+      args:
+        VITE_API_BASE_URL: https://${API_DOMAIN}/v1
+    environment:
+      API_ORIGIN: https://${API_DOMAIN}
+      FILES_ORIGIN: https://${FILES_DOMAIN}
+
+  postgres:
+    <<: *defaults
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER kerak}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD kerak}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB kerak}
+      TZ: UTC
+      PGTZ: UTC
+    command:
+      - postgres
+      - -c
+      - shared_preload_libraries=pg_stat_statements
+      - -c
+      - max_connections=200
+      # 8 GB RAM li server uchun; kattaroqda .env.production da oshiring
+      - -c
+      - shared_buffers=${PG_SHARED_BUFFERS:-2GB}
+      - -c
+      - effective_cache_size=${PG_EFFECTIVE_CACHE_SIZE:-6GB}
+      - -c
+      - log_min_duration_statement=500
+      - -c
+      - wal_compression=on
+    shm_size: 256mb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    <<: *defaults
+    image: redis:7-alpine
+    # `volatile-lru`: xotira to'lsa FAQAT muddatli kalitlar (kesh, limit)
+    # chiqariladi. Push navbati muddatsiz — u yo'qolmasligi kerak
+    command:
+      - redis-server
+      - --appendonly
+      - 'yes'
+      - --requirepass
+      - ${REDIS_PASSWORD:?REDIS_PASSWORD kerak}
+      - --maxmemory
+      - ${REDIS_MAXMEMORY:-1gb}
+      - --maxmemory-policy
+      - volatile-lru
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD-SHELL', 'redis-cli -a "$$REDIS_PASSWORD" --no-auth-warning ping | grep -q PONG']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  minio:
+    <<: *defaults
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:?S3_ACCESS_KEY kerak}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:?S3_SECRET_KEY kerak}
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ['CMD', 'mc', 'ready', 'local']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  osrm:
+    <<: *defaults
+    image: ghcr.io/project-osrm/osrm-backend:v5.27.1
+    # Ma'lumot `scripts/osrm-prepare.sh` bilan tayyorlanadi
+    command: osrm-routed --algorithm mld --max-table-size 1000 /data/uzbekistan-latest.osrm
+    volumes:
+      - ./osrm-data:/data:ro
+
+  backup:
+    <<: *defaults
+    # pg_dump bazaning O'Z versiyasida — boshqa versiya formatni o'qimasligi mumkin
+    image: postgis/postgis:16-3.4
+    entrypoint: ['sh', '/scripts/backup-loop.sh']
+    environment:
+      PGHOST: postgres
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB}
+      BACKUP_DIR: /backups
+      BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-14}
+      BACKUP_HOUR_UTC: ${BACKUP_HOUR_UTC:-21}
+    volumes:
+      - ./backups:/backups
+      - ./scripts/backup-db.sh:/scripts/backup-db.sh:ro
+      - ./deploy/backup-loop.sh:/scripts/backup-loop.sh:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  caddy_data:
+  caddy_config:

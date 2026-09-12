@@ -26,7 +26,7 @@ jobs:
   #  Bazasiz — bu testlar mock bilan ishlaydi va tez qaytadi.
   # ------------------------------------------------------------------
   api:
-    name: API (lint, tsc, 213 unit test)
+    name: API (lint, tsc, 224 unit test)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -80,7 +80,7 @@ jobs:
   #  Integratsiya testlari alohida ishda (ular API talab qiladi).
   # ------------------------------------------------------------------
   mobile:
-    name: Mobil (analyze, 256 test)
+    name: Mobil (analyze, 328 test)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -100,6 +100,167 @@ jobs:
       - name: Unit va widget testlar
         run: flutter test
         working-directory: apps/mobile
+
+  # ------------------------------------------------------------------
+  #  Docker tasvirlari — ishlab chiqarishga AYNAN shular chiqadi.
+  #
+  #  Ishlab chiqish mashinasida Docker ishlamaydi (WSL taqsimoti yoʻq),
+  #  shuning uchun tasvirlar faqat shu yerda tekshiriladi: yigʻiladi,
+  #  ichida kerakli fayllar borligi, prod rejimida haqiqiy Postgres,
+  #  Redis va MinIO bilan koʻtarilishi va admin panel sarlavhalari.
+  # ------------------------------------------------------------------
+  docker:
+    name: Docker (API va admin tasvirlari, prod compose)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Deploy skriptlari (shellcheck)
+        # Serverda birinchi marta ishga tushganda yiqiladigan skript —
+        # eng yomon payt. Xatolarning katta qismini shu yerda ushlaymiz
+        run: |
+          shellcheck -S warning \
+            scripts/deploy.sh scripts/rollback.sh scripts/backup-db.sh \
+            scripts/restore-db.sh scripts/osrm-prepare.sh scripts/generate-secrets.sh \
+            deploy/backup-loop.sh
+
+      - name: Prod compose sintaksisi
+        run: |
+          cp .env.production.example .env.production
+          docker compose --env-file .env.production -f docker-compose.prod.yml config -q
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: API tasviri
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          load: true
+          tags: karvon-api:ci
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api
+
+      - name: Admin tasviri
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/admin/Dockerfile
+          load: true
+          tags: karvon-admin:ci
+          build-args: VITE_API_BASE_URL=https://api.example.uz/v1
+          cache-from: type=gha,scope=admin
+          cache-to: type=gha,mode=max,scope=admin
+
+      - name: API tasvirida migrator va admin skripti bor, root emas
+        run: |
+          docker run --rm --entrypoint sh karvon-api:ci -c '
+            set -e
+            test -f dist/main.js
+            test -f dist/infra/database/migrator.js
+            test -f dist/scripts/create-admin.js
+            ls db/migrations | head -3
+            test "$(id -u)" != "0"
+            echo "foydalanuvchi: $(id -un)"
+          '
+
+      - name: API tasviri prod rejimida koʻtariladi
+        run: |
+          docker network create karvon
+          docker run -d --name pg --network karvon \
+            -e POSTGRES_USER=karvon -e POSTGRES_PASSWORD=ci -e POSTGRES_DB=karvon \
+            postgis/postgis:16-3.4
+          docker run -d --name redis --network karvon redis:7-alpine
+          docker run -d --name minio --network karvon \
+            -e MINIO_ROOT_USER=karvon -e MINIO_ROOT_PASSWORD=karvon-ci-secret \
+            minio/minio:latest server /data
+
+          for i in $(seq 1 60); do
+            docker exec pg pg_isready -U karvon >/dev/null 2>&1 && break
+            sleep 1
+          done
+
+          # `staging` — prod validatsiyasi toʻliq ishlaydi (JWT kalitlari,
+          # SMS, shifrlash, OSRM majburiy). `development` ISHLATILMAYDI:
+          # u logger uchun pino-pretty (dev bogʻliqlik) ni talab qiladi va
+          # tasvirda yoʻq. Kalitlar shu yerda bir martalik yaratiladi
+          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out jwt.key 2>/dev/null
+          openssl pkey -in jwt.key -pubout -out jwt.pub
+          cat > ci.env <<EOF
+          NODE_ENV=staging
+          DATABASE_URL=postgresql://karvon:ci@pg:5432/karvon
+          REDIS_URL=redis://redis:6379
+          OTP_PEPPER=ci-pepper-kamida-16-belgi-uzun
+          JWT_PRIVATE_KEY=$(base64 -w0 jwt.key)
+          JWT_PUBLIC_KEY=$(base64 -w0 jwt.pub)
+          FIELD_ENCRYPTION_KEY=$(openssl rand -base64 32)
+          SMS_PROVIDER=eskiz
+          ESKIZ_EMAIL=ci@example.uz
+          ESKIZ_PASSWORD=ci
+          S3_ENDPOINT=http://minio:9000
+          S3_BUCKET=karvon
+          S3_ACCESS_KEY=karvon
+          S3_SECRET_KEY=karvon-ci-secret
+          OSRM_BASE_URL=http://osrm.invalid:5000
+          EOF
+
+          # Migratsiya va seed — deploy.sh aynan shunday chaqiradi
+          docker run --rm --network karvon --env-file ci.env karvon-api:ci node dist/infra/database/migrator.js up
+          docker run --rm --network karvon --env-file ci.env karvon-api:ci node dist/infra/database/migrator.js seed
+
+          docker run -d --name api --network karvon -p 3000:3000 --env-file ci.env karvon-api:ci
+
+          for i in $(seq 1 60); do
+            curl -sf http://localhost:3000/health/ready >/dev/null && break
+            sleep 1
+          done
+          if ! curl -sf http://localhost:3000/health/ready; then
+            echo "::error::API tasviri sogʻlom holatga kelmadi"
+            docker logs api 2>&1 | tail -60
+            exit 1
+          fi
+          echo
+
+          # Prod rejimida Swagger yopiq: API tuzilmasi ochiq koʻrinmaydi
+          code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/docs)
+          [ "$code" = "404" ] || { echo "::error::/docs prod rejimida ochiq ($code)"; exit 1; }
+
+          # Admin skripti ham tasvirda ishlaydi (TOTP kaliti chiqadi)
+          docker run --rm --network karvon --env-file ci.env karvon-api:ci \
+            node dist/scripts/create-admin.js --email=ci@karvon.uz --password='CI-parol-2026!' --name='CI' \
+            | grep -qi 'otpauth://' || { echo "::error::create-admin tasvirda ishlamadi"; exit 1; }
+
+      - name: Admin tasviri — SPA yoʻnalishi, kesh va xavfsizlik sarlavhalari
+        run: |
+          docker run -d --name admin -p 8081:80 \
+            -e API_ORIGIN=https://api.example.uz -e FILES_ORIGIN=https://files.example.uz \
+            karvon-admin:ci
+          for i in $(seq 1 30); do curl -sf http://localhost:8081/healthz >/dev/null && break; sleep 1; done
+
+          # Chuqur havola ham ilovani qaytaradi (SPA)
+          curl -sf http://localhost:8081/orders/123 | grep -q '<div id="root">'
+
+          headers=$(curl -sI http://localhost:8081/)
+          echo "$headers" | grep -qi "content-security-policy:.*connect-src 'self' https://api.example.uz" \
+            || { echo "::error::CSP da API manzili yoʻq"; echo "$headers"; exit 1; }
+          echo "$headers" | grep -qi 'x-frame-options: deny'
+          echo "$headers" | grep -qi 'cache-control: no-cache'
+
+          # Xeshlangan fayl: uzoq kesh VA xavfsizlik sarlavhalari saqlangan
+          # (nginx'da location ichidagi add_header ularni jimgina oʻchirardi)
+          asset=$(curl -s http://localhost:8081/ | grep -oE '/assets/[^"]+\.js' | head -1)
+          asset_headers=$(curl -sI "http://localhost:8081$asset")
+          echo "$asset_headers" | grep -qi 'cache-control: max-age=31536000'
+          echo "$asset_headers" | grep -qi 'content-security-policy'
+
+      - name: Konteyner loglari (yiqilganda)
+        if: failure()
+        run: |
+          for name in api admin pg minio; do
+            echo "::group::$name"
+            docker logs "$name" 2>&1 | tail -40 || true
+            echo "::endgroup::"
+          done
 
   # ------------------------------------------------------------------
   #  Uchidan-uchiga: haqiqiy Postgres, Redis, MinIO va ishlab turgan API

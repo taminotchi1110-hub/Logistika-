@@ -65,6 +65,11 @@ desktop.ini
 /tmp/
 /uploads/
 
+# --- Ishlab chiqarish serveri (docker-compose.prod.yml) ---
+/backups/
+/osrm-data/
+/.deploy/
+
 # --- Flutter / Dart ---
 apps/mobile/.dart_tool/
 apps/mobile/.flutter-plugins
