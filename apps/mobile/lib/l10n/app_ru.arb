@@ -625,5 +625,10 @@
   "filterMax": "До",
   "filterWeightInvalid": "Минимум не должен превышать максимум",
   "filterMinPrice": "Цена от",
-  "actionShowResults": "Показать результаты"
+  "actionShowResults": "Показать результаты",
+
+  "pushChannelMessages": "Сообщения",
+  "pushChannelMessagesHint": "Переписка грузоотправителя и водителя",
+  "pushChannelOrders": "Заказы",
+  "pushChannelOrdersHint": "Новые грузы, предложения и статус заказа"
 }

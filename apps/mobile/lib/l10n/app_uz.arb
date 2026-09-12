@@ -786,5 +786,11 @@
   "filterMax": "Eng koʻp",
   "filterWeightInvalid": "Eng kami eng koʻpidan katta boʻlmasligi kerak",
   "filterMinPrice": "Narx kamida",
-  "actionShowResults": "Natijalarni koʻrsatish"
+  "actionShowResults": "Natijalarni koʻrsatish",
+
+  "pushChannelMessages": "Xabarlar",
+  "@pushChannelMessages": {"description":"Android bildirishnoma kanali nomi (Sozlamalar → Ilovalar → KARVON → Bildirishnomalar)."},
+  "pushChannelMessagesHint": "Yuk beruvchi va haydovchi oʻrtasidagi xabarlar",
+  "pushChannelOrders": "Buyurtmalar",
+  "pushChannelOrdersHint": "Yangi yuklar, takliflar va buyurtma holati"
 }

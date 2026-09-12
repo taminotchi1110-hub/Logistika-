@@ -625,5 +625,10 @@
   "filterMax": "Max",
   "filterWeightInvalid": "Min must not exceed max",
   "filterMinPrice": "Price from",
-  "actionShowResults": "Show results"
+  "actionShowResults": "Show results",
+
+  "pushChannelMessages": "Messages",
+  "pushChannelMessagesHint": "Messages between shippers and drivers",
+  "pushChannelOrders": "Orders",
+  "pushChannelOrdersHint": "New loads, offers and order status"
 }

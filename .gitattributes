@@ -1,0 +1,25 @@
+# Qator oxirlari.
+#
+# Ishlab chiqish Windows'da, server va konteynerlar esa Linux'da.
+# Skript yoki Dockerfile CRLF bilan kelsa, Linux'da "bad interpreter:
+# /bin/bash^M" yoki tushunarsiz sintaksis xatosi bilan yiqiladi — va
+# bu serverda, eng yomon paytda ma'lum bo'ladi. Shu fayllar ish nusxasida
+# ham DOIM LF.
+* text=auto
+
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.template text eol=lf
+Caddyfile text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.sql text eol=lf
+
+# Windows vositalari uchun
+*.ps1 text eol=crlf
+
+# Ikkilik fayllar — hech qachon o'zgartirilmaydi
+*.png binary
+*.jpg binary
+*.jks binary
+*.keystore binary

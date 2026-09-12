@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:karvon/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'core/l10n/locale_controller.dart';
+import 'core/notifications/push_registration.dart';
+import 'core/notifications/push_service.dart';
 import 'core/providers.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
@@ -24,6 +28,8 @@ class KarvonApp extends ConsumerWidget {
     // Til serverga yetkaziladi (push va SMS shu tilda). `watch` —
     // provayder ilova yashagan davomida faol turishi uchun
     ref.watch(languageSyncProvider);
+    // Kirishda qurilma push uchun ro'yxatdan o'tadi, chiqishda o'chiriladi
+    ref.watch(pushRegistrationProvider);
 
     return MaterialApp.router(
       title: 'KARVON',
@@ -62,7 +68,7 @@ class KarvonApp extends ConsumerWidget {
   }
 }
 
-/// WebSocket ulanishi va bildirishnoma banneri.
+/// WebSocket ulanishi, bildirishnoma banneri va push bosilishi.
 ///
 /// NEGA ILOVA ILDIZIDA (har bir ekranda emas): ulanish bitta bo'lishi
 /// kerak va banner istalgan ekranda ko'rinishi kerak. Chat ekranida
@@ -85,7 +91,10 @@ class _RealtimeHostState extends ConsumerState<_RealtimeHost> {
   void initState() {
     super.initState();
     // Ilova ochilganda sessiya bo'lsa darhol ulanamiz
-    WidgetsBinding.instance.addPostFrameCallback((_) => _syncConnection());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _syncConnection();
+      _setupPush();
+    });
   }
 
   void _syncConnection() {
@@ -96,6 +105,31 @@ class _RealtimeHostState extends ConsumerState<_RealtimeHost> {
       socket.connect();
     } else {
       socket.disconnect();
+    }
+  }
+
+  /// Push bosilganda — tegishli ekran; ilova ochiq paytdagi push — banner.
+  ///
+  /// Firebase sozlanmagan yig'ishda (lokal, CI) hech narsa qilinmaydi.
+  void _setupPush() {
+    if (!mounted || !ref.read(pushAvailableProvider)) return;
+
+    final push = ref.read(pushServiceProvider)
+      ..onNotificationTap = _openDeepLink
+      ..onForegroundMessage = (message) {
+        if (mounted) _onNotification(notificationFromPush(message));
+      };
+
+    unawaited(_openInitialPush(push));
+  }
+
+  /// Ilova YOPIQ holatda bildirishnoma bosib ochilgan bo'lsa — o'sha ekran.
+  Future<void> _openInitialPush(PushService push) async {
+    try {
+      final link = await push.initialDeepLink();
+      if (link != null && mounted) _openDeepLink(link);
+    } on Object {
+      // Firebase javob bermadi — ilova odatdagidek ochiladi
     }
   }
 

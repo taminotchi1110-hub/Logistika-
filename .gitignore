@@ -76,9 +76,12 @@ apps/mobile/.flutter-plugins
 apps/mobile/.flutter-plugins-dependencies
 apps/mobile/.packages
 apps/mobile/build/
-apps/mobile/pubspec.lock
-apps/mobile/android/
-apps/mobile/ios/
+# android/ va ios/ — loyihaning bir qismi (identifikator, ruxsatlar, imzo
+# sozlamasi). pubspec.lock ilovada commit qilinadi: yig'ish takrorlanuvchan
+# bo'lsin, har mashinada boshqa paket versiyasi tushmasin
+apps/mobile/android/key.properties
+apps/mobile/android/app/*.jks
+apps/mobile/android/app/*.keystore
 apps/mobile/macos/
 apps/mobile/linux/
 apps/mobile/windows/

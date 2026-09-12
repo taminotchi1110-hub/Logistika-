@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app.dart';
+import 'core/notifications/push_registration.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,5 +16,14 @@ Future<void> main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  runApp(const ProviderScope(child: KarvonApp()));
+  // Push ixtiyoriy: Firebase konfiguratsiyasi (google-services.json /
+  // GoogleService-Info.plist) bo'lmasa ilova pushsiz ishlaydi
+  final pushAvailable = await initializeFirebase();
+
+  runApp(
+    ProviderScope(
+      overrides: [pushAvailableProvider.overrideWithValue(pushAvailable)],
+      child: const KarvonApp(),
+    ),
+  );
 }

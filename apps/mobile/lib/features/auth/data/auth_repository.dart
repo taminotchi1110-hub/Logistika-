@@ -117,6 +117,20 @@ class AuthRepository {
     );
   }
 
+  /// Push tokeni — qurilma ma'lumoti bilan birga.
+  ///
+  /// Platforma yoki qurilma identifikatorini aniqlab bo'lmasa
+  /// yuborilmaydi: backend ikkalasini majburiy tekshiradi va so'rov
+  /// baribir rad etilardi.
+  Future<void> registerPushToken(String fcmToken) async {
+    final device = await _deviceInfo();
+    final platform = device['platform'] as String?;
+    final deviceId = device['deviceId'] as String?;
+    if (platform == null || deviceId == null) return;
+
+    await registerDevice(fcmToken: fcmToken, deviceId: deviceId, platform: platform);
+  }
+
   /// Qurilma ma'lumoti — sessiyalar ro'yxatida ko'rsatiladi
   /// ("Samsung Galaxy A54, 8 sentyabr").
   ///
