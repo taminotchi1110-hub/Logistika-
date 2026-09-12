@@ -190,6 +190,9 @@ String localizeErrorWith(AppLocalizations l10n, ApiException error) {
     // ("Cannot read properties of undefined") va faqat oʻzbekcha.
     // Bu kod avval jadvalda yoʻq edi va aynan shu holat yuz berardi
     'INTERNAL_ERROR' => l10n.errInternal,
+    // Mijoz yasagan zaxira kod: javobda `code` yoʻq yoki javob JSON emas
+    // (proksi/balanser sahifasi). Matni oʻzbekcha va texnik — koʻrsatilmaydi
+    'UNKNOWN' => l10n.errInternal,
 
     // Noma'lum kod — SERVERNING MATNI (zaxira).
     //

@@ -608,5 +608,7 @@
   "addressNotFound": "Адрес не найден",
   "addressNotFoundHint": "Попробуйте написать иначе или укажите ближайший объект — рынок, остановку или улицу.",
   "notFoundTitle": "Страница не найдена",
-  "actionGoHome": "На главную"
+  "actionGoHome": "На главную",
+
+  "fieldSelectPlaceholder": "Выберите"
 }

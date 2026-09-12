@@ -74,8 +74,13 @@ class LocaleController extends StateNotifier<AppLocale> {
   final LocaleStorage _storage;
 
   Future<void> _restore() async {
-    final saved = await _storage.read();
-    if (saved != null && saved != state) state = saved;
+    try {
+      final saved = await _storage.read();
+      if (mounted && saved != null && saved != state) state = saved;
+    } on Exception {
+      // Xotira o'qilmadi (buzilgan fayl, plagin yo'q) — tizim tili qoladi.
+      // Til tanlovi yo'qolgani ilovani ishga tushirmaslikka sabab emas
+    }
   }
 
   Future<void> change(AppLocale locale) async {

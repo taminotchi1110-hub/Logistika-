@@ -53,6 +53,13 @@ class ApiClient {
   /// Sessiya butunlay tugaganda chaqiriladi — ilova login ekraniga o'tadi.
   void Function()? onSessionExpired;
 
+  /// Joriy interfeys tili (`uz` / `ru` / `en`).
+  ///
+  /// Har bir so'rovda `Accept-Language` bo'lib ketadi: server SMS,
+  /// bildirishnoma va xato matnlarini shu tilda tayyorlaydi. Qiymatni
+  /// `apiClientProvider` til tanlovidan kuzatib turadi.
+  String language = 'uz';
+
   Future<void> _onRequest(
     RequestOptions options,
     RequestInterceptorHandler handler,
@@ -64,6 +71,7 @@ class ApiClient {
         options.headers['Authorization'] = 'Bearer $token';
       }
     }
+    options.headers['Accept-Language'] = language;
     handler.next(options);
   }
 

@@ -10,6 +10,7 @@ import 'core/theme/app_theme.dart';
 import 'core/ws/socket_client.dart';
 import 'core/ws/ws_providers.dart';
 import 'features/chat/presentation/chat_providers.dart';
+import 'features/profile/presentation/language_sync.dart';
 import 'features/tracking/presentation/tracking_providers.dart';
 import 'shared/widgets/notification_banner.dart';
 
@@ -20,6 +21,9 @@ class KarvonApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
     final locale = ref.watch(localeControllerProvider);
+    // Til serverga yetkaziladi (push va SMS shu tilda). `watch` —
+    // provayder ilova yashagan davomida faol turishi uchun
+    ref.watch(languageSyncProvider);
 
     return MaterialApp.router(
       title: 'KARVON',

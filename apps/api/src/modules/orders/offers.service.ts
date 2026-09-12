@@ -10,6 +10,7 @@ import { DriversService } from '@/modules/drivers/drivers.service';
 import { EscrowService } from '@/modules/payments/escrow.service';
 import { OFFER_CREATED, OfferCreatedEvent } from '@/modules/loads/load.events';
 import { NotificationsService } from '@/modules/notifications/notifications.service';
+import { tpl } from '@/modules/notifications/notification-templates';
 import { VehiclesService } from '@/modules/vehicles/vehicles.service';
 
 export interface OfferView {
@@ -188,13 +189,15 @@ export class OffersService {
       .executeTakeFirst();
 
     const driverName = [driver?.firstName, driver?.lastName].filter(Boolean).join(' ');
-    const priceSoum = Math.round(offeredPrice / 100).toLocaleString('ru-RU');
 
     await this.notifications.notify({
       userId: load.shipperId,
       type: 'offer.received',
-      title: 'Yangi taklif',
-      body: `${driverName} · ⭐${Number(driver?.ratingAvg ?? 0).toFixed(1)} · ${priceSoum} soʻm`,
+      template: tpl('offer.received', {
+        driverName,
+        rating: Number(driver?.ratingAvg ?? 0),
+        amountTiyin: offeredPrice,
+      }),
       entityType: 'LOAD',
       entityId: loadId,
       deepLink: `karvon://load/${loadId}/offers`,
@@ -256,8 +259,7 @@ export class OffersService {
     await this.notifications.notify({
       userId: offer.driverId,
       type: 'offer.rejected',
-      title: 'Taklif rad etildi',
-      body: offer.title,
+      template: tpl('offer.rejected', { loadTitle: offer.title }),
       entityType: 'OFFER',
       entityId: offerId,
       dedupeKey: `offer:${offerId}:rejected`,

@@ -5,6 +5,8 @@ import { DatabaseService } from '@/infra/database/database.service';
 import { RedisService } from '@/infra/redis/redis.service';
 import type { LangCode } from '@/infra/database/database.types';
 
+import { renderTemplate, type NotificationText, type TemplateCall } from './notification-templates';
+
 /**
  * Bildirishnoma kanallari:
  *   IN_APP — bazaga yoziladi, bildirishnomalar markazida ko'rinadi
@@ -28,11 +30,9 @@ export type NotificationType =
   | 'rating.received'
   | 'document.reviewed';
 
-export interface NotifyInput {
+interface NotifyBase {
   userId: string;
   type: NotificationType;
-  title: string;
-  body: string;
   entityType?: 'ORDER' | 'LOAD' | 'OFFER' | 'CONVERSATION' | 'PAYMENT' | 'RATING' | 'DOCUMENT' | 'VEHICLE' | 'USER';
   entityId?: string;
   deepLink?: string;
@@ -42,6 +42,23 @@ export interface NotifyInput {
   /** Faqat banner kerak, bazaga yozish shart emas (masalan "yozmoqda..."). */
   transient?: boolean;
 }
+
+/**
+ * Matn ikki xil beriladi — faqat BITTASI (kompilyator tekshiradi):
+ *
+ *   `template` — asosiy yo'l: matn qabul qiluvchining tilida yig'iladi
+ *                (`notification-templates.ts`);
+ *   `title` + `body` — tildan mustaqil matn: chatda yuboruvchining ismi
+ *                va xabarning o'zi. Uni tarjima qilib bo'lmaydi.
+ */
+export type NotifyInput = NotifyBase &
+  (
+    | { template: TemplateCall; title?: undefined; body?: undefined }
+    | { template?: undefined; title: string; body: string }
+  );
+
+/** `userId` siz — birlashmaning har bir a'zosi alohida (`notifyBoth` uchun). */
+type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
 
 /** Qaysi bildirishnoma qaysi Android kanalida ko'rsatiladi. */
 const CHANNEL_BY_TYPE: Record<NotificationType, 'karvon_messages' | 'karvon_orders'> = {
@@ -86,10 +103,27 @@ export class NotificationsService {
         .digest('hex')
         .slice(0, 32);
 
+    // 1. Takrorlanishni Redis'da to'xtatamiz.
+    //
+    // NEGA BAZADA EMAS: `dedupe_key` indeksi PARTIAL (`WHERE dedupe_key IS NOT NULL`),
+    // shuning uchun `ON CONFLICT (dedupe_key)` ishlamaydi — Postgres indeksni
+    // aniqlash uchun aynan shu predikatni talab qiladi. Redis'da tekshirish
+    // ham arzonroq (muvaffaqiyatsiz INSERT umuman bo'lmaydi), ham aniqroq:
+    // takroriy bildirishnoma push ham yubormaydi.
+    const isFirst = await this.redis.setIfAbsent(`notif:dedupe:${dedupeKey}`, '1', 600);
+    if (!isFirst) {
+      this.logger.debug({ dedupeKey, userId: input.userId }, 'Takroriy bildirishnoma o‘tkazildi');
+      return;
+    }
+
+    // 2. Matn — qabul qiluvchining tilida. Takroriy xabar uchun bazaga
+    // murojaat qilinmasligi uchun dedupe'dan KEYIN
+    const { title, body } = await this.resolveText(input);
+
     const payload = {
       type: input.type,
-      title: input.title,
-      body: input.body,
+      title,
+      body,
       entityType: input.entityType ?? null,
       entityId: input.entityId ?? null,
       deepLink: input.deepLink ?? null,
@@ -98,37 +132,27 @@ export class NotificationsService {
       createdAt: new Date().toISOString(),
     };
 
-    // 1. Takrorlanishni Redis'da to'xtatamiz.
-    //
-    // NEGA BAZADA EMAS: `dedupe_key` indeksi PARTIAL (`WHERE dedupe_key IS NOT NULL`),
-    // shuning uchun `ON CONFLICT (dedupe_key)` ishlamaydi — Postgres indeksni
-    // aniqlash uchun aynan shu predikatni talab qiladi. Redis'da tekshirish
-    // hам arzonroq (muvaffaqiyatsiz INSERT umuman bo'lmaydi), ham aniqroq:
-    // takroriy bildirishnoma push ham yubormaydi.
-    const isFirst = await this.redis.setIfAbsent(`notif:dedupe:${dedupeKey}`, '1', 600);
-    if (!isFirst) {
-      this.logger.debug({ dedupeKey, userId: input.userId }, 'Takroriy bildirishnoma o‘tkazildi');
-      return;
-    }
-
-    // 2. Foydalanuvchi ayni damda ulanganmi — kanal shunga qarab tanlanadi
+    // 3. Foydalanuvchi ayni damda ulanganmi — kanal shunga qarab tanlanadi
     const online = await this.isOnline(input.userId);
 
-    // 3. Tarixga yozamiz (bildirishnomalar markazi uchun).
+    // 4. Tarixga yozamiz (bildirishnomalar markazi uchun).
     //
     // `channel` — HAQIQIY yetkazish yo'li, "rejalashtirilgani" emas. Bu
     // ustun keyinchalik hisobot uchun kerak bo'ladi: qancha bildirishnoma
     // push orqali ketdi (FCM xarajati) va qanchasi ilova ochiqligida
     // bannerda ko'rindi. Doim 'IN_APP' yozilsa bu ma'lumot yo'qoladi.
+    //
+    // `templateKey` — aniq shablon ("document.rejected"), umumiy tur
+    // ("document.reviewed") emas: qaysi xabar ko'p ochilishini o'lchash uchun.
     if (!input.transient) {
       try {
         await this.database.db
           .insertInto('notifications')
           .values({
             userId: input.userId,
-            templateKey: input.type,
-            title: input.title,
-            body: input.body,
+            templateKey: input.template?.key ?? input.type,
+            title,
+            body,
             channel: online ? 'IN_APP' : 'PUSH',
             entityType: input.entityType ?? null,
             entityId: input.entityId ?? null,
@@ -146,7 +170,7 @@ export class NotificationsService {
       }
     }
 
-    // 4. Onlayn bo'lsa — realtime banner, aks holda push.
+    // 5. Onlayn bo'lsa — realtime banner, aks holda push.
     //
     // Ikkalasi ham yuborilmaydi: aks holda ilova ochiq turgan foydalanuvchi
     // bitta xabarni ikki marta ko'radi (banner + tizim bildirishnomasi).
@@ -165,14 +189,19 @@ export class NotificationsService {
     );
   }
 
-  /** Ikkala tomonga bir vaqtda (masalan buyurtma statusi o'zgardi). */
+  /**
+   * Ikkala tomonga bir vaqtda (masalan buyurtma statusi o'zgardi).
+   *
+   * Har bir tomon matnni O'Z TILIDA oladi: shablon har biri uchun alohida
+   * yig'iladi — mijoz ruscha, haydovchi o'zbekcha bo'lishi mumkin.
+   */
   async notifyBoth(
     users: { shipperId: string; driverId: string },
-    build: (role: 'SHIPPER' | 'DRIVER') => Omit<NotifyInput, 'userId'>,
+    build: (role: 'SHIPPER' | 'DRIVER') => DistributiveOmit<NotifyInput, 'userId'>,
   ): Promise<void> {
     await Promise.all([
-      this.notify({ userId: users.shipperId, ...build('SHIPPER') }),
-      this.notify({ userId: users.driverId, ...build('DRIVER') }),
+      this.notify({ userId: users.shipperId, ...build('SHIPPER') } as NotifyInput),
+      this.notify({ userId: users.driverId, ...build('DRIVER') } as NotifyInput),
     ]);
   }
 
@@ -188,6 +217,25 @@ export class NotificationsService {
 
   async isOnline(userId: string): Promise<boolean> {
     return (await this.redis.client.scard(`presence:${userId}`)) > 0;
+  }
+
+  /** Matn: shablon bo'lsa — foydalanuvchi tilida, aks holda tayyor matn. */
+  private async resolveText(input: NotifyInput): Promise<NotificationText> {
+    if (input.template === undefined) return { title: input.title, body: input.body };
+    return renderTemplate(input.template, await this.langOf(input.userId));
+  }
+
+  /**
+   * Foydalanuvchi tili — mobil ilova uni `PATCH /me` orqali interfeys
+   * tiliga moslab turadi. Topilmasa o'zbekcha (platformaning asosiy tili).
+   */
+  private async langOf(userId: string): Promise<LangCode> {
+    const row = await this.database.db
+      .selectFrom('users')
+      .select('lang')
+      .where('id', '=', userId)
+      .executeTakeFirst();
+    return row?.lang ?? 'uz';
   }
 
   /**
@@ -238,12 +286,5 @@ export class NotificationsService {
       .where('isRead', '=', false)
       .executeTakeFirst();
     return Number(row?.count ?? 0);
-  }
-
-  /** Til bo'yicha matn tanlash — hozircha uz, keyin i18n paketiga ko'chadi. */
-  static text(lang: LangCode, uz: string, ru?: string, en?: string): string {
-    if (lang === 'ru' && ru) return ru;
-    if (lang === 'en' && en) return en;
-    return uz;
   }
 }

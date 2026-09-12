@@ -10,6 +10,7 @@ import { StorageService } from '@/infra/storage/storage.service';
 import { LedgerService } from '@/modules/payments/ledger.service';
 import { PayoutsService } from '@/modules/payments/payouts.service';
 import { NotificationsService } from '@/modules/notifications/notifications.service';
+import { tpl } from '@/modules/notifications/notification-templates';
 import type { OrderStatus } from '@/modules/orders/order-status';
 import { OrdersService } from '@/modules/orders/orders.service';
 
@@ -275,10 +276,10 @@ export class AdminService {
     await this.notifications.notify({
       userId: before.ownerId,
       type: 'document.reviewed',
-      title: approve ? 'Hujjat tasdiqlandi' : 'Hujjat rad etildi',
-      body: approve
-        ? `${before.type} tekshiruvdan oʻtdi`
-        : `${before.type} rad etildi: ${reason ?? 'sabab koʻrsatilmagan'}`,
+      // Ilgari matnga xom kod tushardi: "PASSPORT tekshiruvdan oʻtdi"
+      template: approve
+        ? tpl('document.approved', { document: before.type })
+        : tpl('document.rejected', { document: before.type, reason }),
       entityType: 'DOCUMENT',
       entityId: documentId,
       deepLink: 'karvon://profile/documents',
@@ -325,10 +326,7 @@ export class AdminService {
     await this.notifications.notify({
       userId: driverId,
       type: 'document.reviewed',
-      title: approve ? 'Verifikatsiya yakunlandi' : 'Verifikatsiya rad etildi',
-      body: approve
-        ? 'Endi yuklarga taklif yuborishingiz mumkin'
-        : `Sabab: ${reason ?? 'koʻrsatilmagan'}`,
+      template: approve ? tpl('driver.verified', {}) : tpl('driver.rejected', { reason }),
       entityType: 'USER',
       entityId: driverId,
       deepLink: 'karvon://profile/verification',
@@ -372,8 +370,9 @@ export class AdminService {
     await this.notifications.notify({
       userId: before.driverId,
       type: 'document.reviewed',
-      title: approve ? 'Transport tasdiqlandi' : 'Transport rad etildi',
-      body: `${before.plateNumber}${approve ? '' : ` — ${reason ?? 'sabab koʻrsatilmagan'}`}`,
+      template: approve
+        ? tpl('vehicle.verified', { plate: before.plateNumber })
+        : tpl('vehicle.rejected', { plate: before.plateNumber, reason }),
       entityType: 'VEHICLE',
       entityId: vehicleId,
       deepLink: 'karvon://profile/vehicles',

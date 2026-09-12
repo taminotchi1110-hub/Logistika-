@@ -3,6 +3,7 @@ import 'package:karvon/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/config/app_config.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
@@ -60,12 +61,16 @@ class BlockedScreen extends ConsumerWidget {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: AppSpacing.xxxl),
-              AppButton(
-                label: l10n.actionSupport,
-                icon: Icons.support_agent_rounded,
-                onPressed: () => launchUrl(Uri.parse('tel:+998712000000')),
-              ),
-              const SizedBox(height: AppSpacing.md),
+              // Raqam `--dart-define=SUPPORT_PHONE` orqali beriladi —
+              // to'qima raqamga qo'ng'iroq qildirishdan tugmasiz yaxshiroq
+              if (AppConfig.hasSupportPhone) ...[
+                AppButton(
+                  label: l10n.actionSupport,
+                  icon: Icons.support_agent_rounded,
+                  onPressed: () => launchUrl(Uri(scheme: 'tel', path: AppConfig.supportPhone)),
+                ),
+                const SizedBox(height: AppSpacing.md),
+              ],
               AppButton.secondary(
                 label: l10n.actionLogout,
                 onPressed: () => ref.read(authStateProvider.notifier).logout(),

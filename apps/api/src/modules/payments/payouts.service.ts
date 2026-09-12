@@ -5,6 +5,7 @@ import { ErrorCode } from '@/common/errors/error-codes';
 import { formatSoum, toTiyin } from '@/common/utils/money.util';
 import { DatabaseService } from '@/infra/database/database.service';
 import { NotificationsService } from '@/modules/notifications/notifications.service';
+import { tpl } from '@/modules/notifications/notification-templates';
 
 import { LedgerService } from './ledger.service';
 
@@ -167,8 +168,7 @@ export class PayoutsService {
     await this.notifications.notify({
       userId: payout.driverId,
       type: 'payout.processed',
-      title: 'Pul kartangizga oʻtkazildi',
-      body: `${formatSoum(amount)} — ${payout.cardMask}`,
+      template: tpl('payout.completed', { amountTiyin: amount, cardMask: payout.cardMask }),
       entityType: 'PAYMENT',
       entityId: payoutId,
       deepLink: 'karvon://wallet',
@@ -210,8 +210,7 @@ export class PayoutsService {
     await this.notifications.notify({
       userId: payout.driverId,
       type: 'payout.processed',
-      title: 'Yechish soʻrovi rad etildi',
-      body: `${formatSoum(amount)} hamyoningizga qaytarildi. Sabab: ${reason}`,
+      template: tpl('payout.rejected', { amountTiyin: amount, reason }),
       entityType: 'PAYMENT',
       entityId: payoutId,
       deepLink: 'karvon://wallet',

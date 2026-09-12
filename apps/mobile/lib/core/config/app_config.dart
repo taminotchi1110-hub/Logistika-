@@ -28,6 +28,16 @@ abstract final class AppConfig {
   static bool get isDevelopment => environment == 'development';
   static bool get isProduction => environment == 'production';
 
+  /// Qo'llab-quvvatlash telefoni, E.164: `+998XXXXXXXXX`.
+  ///
+  /// NEGA STANDART QIYMAT YO'Q: to'qima raqam bilan chiqqan ilovada
+  /// bloklangan foydalanuvchi begona odamga qo'ng'iroq qiladi. Raqam
+  /// berilmasa tugma ko'rsatilmaydi; reliz yig'ishda `scripts/build-
+  /// mobile-release.sh` bu qiymatni majburiy tekshiradi.
+  static const supportPhone = String.fromEnvironment('SUPPORT_PHONE');
+
+  static bool get hasSupportPhone => supportPhone.isNotEmpty;
+
   /// Xarita plitkalari — OpenStreetMap.
   ///
   /// Ishlab chiqarishda o'z tile serverimiz bo'ladi: OSM ning ochiq

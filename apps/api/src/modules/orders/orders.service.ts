@@ -10,6 +10,7 @@ import { maskPhone } from '@/common/utils/phone.util';
 import { DatabaseService } from '@/infra/database/database.service';
 import type { OrderStatusDb } from '@/infra/database/database.types';
 import { NotificationsService } from '@/modules/notifications/notifications.service';
+import { tpl } from '@/modules/notifications/notification-templates';
 import { EscrowService } from '@/modules/payments/escrow.service';
 
 import {
@@ -317,8 +318,7 @@ export class OrdersService {
     await this.notifications.notify({
       userId: offer.driverId,
       type: 'offer.accepted',
-      title: 'Taklifingiz qabul qilindi',
-      body: 'Buyurtmani tasdiqlang va yoʻlga chiqing. Chat ochildi.',
+      template: tpl('offer.accepted', {}),
       entityType: 'ORDER',
       entityId: orderId,
       deepLink: `karvon://order/${orderId}`,
@@ -605,8 +605,7 @@ export class OrdersService {
 
     await this.notifications.notifyBoth(order, () => ({
       type: 'contacts.revealed',
-      title: 'Telefon raqamlari ochildi',
-      body: `Sabab: ${reason}`,
+      template: tpl('contacts.revealed', { reason }),
       entityType: 'ORDER',
       entityId: orderId,
       deepLink: `karvon://order/${orderId}`,
@@ -693,17 +692,11 @@ export class OrdersService {
     order: { shipperId: string; driverId: string },
     to: OrderStatus,
   ): Promise<void> {
-    const label = STATUS_LABEL_UZ[to];
-
+    // Matn har bir tomonga O'Z TILIDA yig'iladi: mijoz ruscha, haydovchi
+    // o'zbekcha bo'lishi mumkin
     await this.notifications.notifyBoth(order, (role) => ({
       type: 'order.status',
-      title: label,
-      body:
-        to === 'ARRIVED_AT_PICKUP'
-          ? 'Haydovchi yuk olish nuqtasida. Telefon raqamlari endi ochiq.'
-          : role === 'SHIPPER'
-            ? 'Buyurtmangiz holati oʻzgardi'
-            : 'Buyurtma holati yangilandi',
+      template: tpl('order.status', { status: to, role }),
       entityType: 'ORDER',
       entityId: orderId,
       deepLink: `karvon://order/${orderId}`,

@@ -7,6 +7,7 @@ import { SettingsService } from '@/common/services/settings.service';
 import { DatabaseService } from '@/infra/database/database.service';
 import type { OrderStatusDb, RatingDirection } from '@/infra/database/database.types';
 import { NotificationsService } from '@/modules/notifications/notifications.service';
+import { tpl } from '@/modules/notifications/notification-templates';
 
 /** Reyting berish mumkin bo'lgan buyurtma holatlari. */
 const RATEABLE_STATUSES: OrderStatusDb[] = ['DELIVERED', 'COMPLETED', 'CLOSED'];
@@ -144,8 +145,7 @@ export class RatingsService {
       await this.notifications.notify({
         userId: ratedId,
         type: 'rating.received',
-        title: 'Sizga baho berildi',
-        body: 'Hamkoringiz baho qoldirdi. Siz ham baho bersangiz, ikkalasi ochiladi.',
+        template: tpl('rating.prompt', {}),
         entityType: 'ORDER',
         entityId: orderId,
         deepLink: `karvon://order/${orderId}/rating`,
@@ -192,8 +192,7 @@ export class RatingsService {
       await this.notifications.notify({
         userId: row.ratedId,
         type: 'rating.received',
-        title: `Sizga ${row.score} ball berildi`,
-        body: 'Baholar ochildi — hamkoringizning fikrini koʻrishingiz mumkin',
+        template: tpl('rating.revealed', { score: row.score }),
         entityType: 'ORDER',
         entityId: orderId,
         deepLink: `karvon://order/${orderId}/rating`,

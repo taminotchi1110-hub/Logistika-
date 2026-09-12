@@ -608,5 +608,7 @@
   "addressNotFound": "Address not found",
   "addressNotFoundHint": "Try spelling it differently or enter a nearby landmark — a bazaar, bus stop or street.",
   "notFoundTitle": "Page not found",
-  "actionGoHome": "Go to home"
+  "actionGoHome": "Go to home",
+
+  "fieldSelectPlaceholder": "Select"
 }

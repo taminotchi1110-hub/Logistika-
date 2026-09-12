@@ -769,5 +769,7 @@
   "addressNotFound": "Manzil topilmadi",
   "addressNotFoundHint": "Nomni boshqacha yozib koʻring yoki yaqin obyekt nomini kiriting — masalan bozor, bekat yoki koʻcha nomi.",
   "notFoundTitle": "Sahifa topilmadi",
-  "actionGoHome": "Bosh sahifaga"
+  "actionGoHome": "Bosh sahifaga",
+
+  "fieldSelectPlaceholder": "Tanlang"
 }

@@ -6,6 +6,7 @@ import { SettingsService } from '@/common/services/settings.service';
 import { DatabaseService } from '@/infra/database/database.service';
 import { PricingService } from '@/modules/loads/pricing.service';
 import { NotificationsService } from '@/modules/notifications/notifications.service';
+import { tpl } from '@/modules/notifications/notification-templates';
 import { ACTIVE_STATUSES } from '@/modules/orders/order-status';
 
 import {
@@ -491,7 +492,18 @@ export class MatchingService {
       .selectFrom('loads as l')
       .innerJoin('regions as rf', 'rf.id', 'l.pickupRegionId')
       .innerJoin('regions as rt', 'rt.id', 'l.deliveryRegionId')
-      .select(['l.title', 'l.weightKg', 'l.priceTiyin', 'rf.nameUz as fromName', 'rt.nameUz as toName'])
+      // Viloyat nomlari UCHALA tilda: har bir haydovchi o'z tilida oladi
+      .select([
+        'l.title',
+        'l.weightKg',
+        'l.priceTiyin',
+        'rf.nameUz as fromUz',
+        'rf.nameRu as fromRu',
+        'rf.nameEn as fromEn',
+        'rt.nameUz as toUz',
+        'rt.nameRu as toRu',
+        'rt.nameEn as toEn',
+      ])
       .where('l.id', '=', loadId)
       .executeTakeFirst();
 
@@ -509,18 +521,20 @@ export class MatchingService {
     const targets = ranked.filter((item) => !skip.has(item.driverId));
     if (targets.length === 0) return;
 
-    const price =
-      load.priceTiyin === null
-        ? 'Kelishuv asosida'
-        : `${Math.round(Number(load.priceTiyin) / 100_000).toLocaleString('ru-RU')} ming soʻm`;
-
     await Promise.all(
       targets.map((item) =>
         this.notifications.notify({
           userId: item.driverId,
           type: 'load.matched',
-          title: `${load.fromName} → ${load.toName}`,
-          body: `${load.title} · ${(load.weightKg / 1000).toFixed(1)} t · ${price} · ${Math.round(item.score)}% mos`,
+          // Har bir haydovchi o'z tilida: viloyat nomi, narx va "mos" so'zi
+          template: tpl('load.matched', {
+            from: { uz: load.fromUz, ru: load.fromRu, en: load.fromEn },
+            to: { uz: load.toUz, ru: load.toRu, en: load.toEn },
+            title: load.title,
+            weightKg: load.weightKg,
+            priceTiyin: load.priceTiyin,
+            score: Math.round(item.score),
+          }),
           entityType: 'LOAD',
           entityId: loadId,
           deepLink: `karvon://load/${loadId}`,

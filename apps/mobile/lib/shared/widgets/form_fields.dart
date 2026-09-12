@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:karvon/core/l10n/formatters.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
@@ -141,7 +142,7 @@ class AppSelectField extends StatelessWidget {
     required this.label,
     required this.value,
     required this.onTap,
-    this.placeholder = 'Tanlang',
+    this.placeholder,
     this.icon,
     this.helper,
     this.isRequired = false,
@@ -152,7 +153,8 @@ class AppSelectField extends StatelessWidget {
   final String label;
   final String? value;
   final VoidCallback onTap;
-  final String placeholder;
+  /// `null` — joriy tildagi "Tanlang".
+  final String? placeholder;
   final IconData? icon;
   final String? helper;
   final bool isRequired;
@@ -194,7 +196,7 @@ class AppSelectField extends StatelessWidget {
                   ],
                   Expanded(
                     child: Text(
-                      isEmpty ? placeholder : value!,
+                      isEmpty ? placeholder ?? context.l10n.fieldSelectPlaceholder : value!,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodyLarge?.copyWith(

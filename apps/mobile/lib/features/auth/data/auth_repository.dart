@@ -21,7 +21,9 @@ class AuthRepository {
   Future<OtpChallenge> requestOtp(String phone) async {
     final data = await _api.post<Map<String, dynamic>>(
       '/auth/otp/request',
-      body: {'phone': phone},
+      // SMS matni shu tilda keladi. Foydalanuvchi hali tizimga kirmagan
+      // va server uning tilini bilmaydi — faqat ilova biladi
+      body: {'phone': phone, 'lang': _api.language},
       skipAuth: true,
     );
     return OtpChallenge.fromJson(phone, data);
@@ -59,7 +61,8 @@ class AuthRepository {
   }) async {
     final data = await _api.post<Map<String, dynamic>>(
       '/auth/profile',
-      body: {'firstName': firstName, 'lastName': lastName, 'role': role.api},
+      // Til ro'yxatdan o'tishda saqlanadi: birinchi push ham shu tilda keladi
+      body: {'firstName': firstName, 'lastName': lastName, 'role': role.api, 'lang': _api.language},
     );
     return AppUser.fromJson(data);
   }

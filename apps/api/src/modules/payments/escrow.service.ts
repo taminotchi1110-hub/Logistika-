@@ -6,6 +6,7 @@ import { SettingsService } from '@/common/services/settings.service';
 import { formatSoum, percentOf, toTiyin } from '@/common/utils/money.util';
 import { DatabaseService } from '@/infra/database/database.service';
 import { NotificationsService } from '@/modules/notifications/notifications.service';
+import { tpl } from '@/modules/notifications/notification-templates';
 
 import { LedgerService } from './ledger.service';
 
@@ -228,11 +229,12 @@ export class EscrowService {
     await this.notifications.notify({
       userId: order.driverId,
       type: 'payment.received',
-      title: 'Toʻlov hisobingizga tushdi',
-      body:
+      // Naqd buyurtmada pul haydovchining qo'lida — unga "to'lov tushdi"
+      // deyish noto'g'ri edi: aslida komissiya YECHILADI
+      template:
         order.paymentMethod === 'ESCROW'
-          ? `${formatSoum(payout)} hamyoningizga oʻtkazildi`
-          : `Komissiya yechildi: ${formatSoum(commission)}`,
+          ? tpl('escrow.released', { amountTiyin: payout })
+          : tpl('commission.charged', { amountTiyin: commission }),
       entityType: 'ORDER',
       entityId: orderId,
       deepLink: 'karvon://wallet',

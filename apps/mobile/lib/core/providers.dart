@@ -4,6 +4,7 @@ import '../features/auth/data/auth_repository.dart';
 import '../features/auth/domain/user.dart';
 import 'api/api_client.dart';
 import 'api/api_exception.dart';
+import 'l10n/locale_controller.dart';
 import 'storage/token_storage.dart';
 
 /// Ilova bo'ylab umumiy provayderlar.
@@ -27,7 +28,18 @@ final tokenStorageProvider = Provider<TokenStorage>((ref) => TokenStorage());
 /// Endi bog'lanish bir tomonlama: `AuthNotifier` o'zi mijozga
 /// obuna bo'ladi.
 final apiClientProvider = Provider<ApiClient>((ref) {
-  return ApiClient(storage: ref.watch(tokenStorageProvider));
+  final client = ApiClient(storage: ref.watch(tokenStorageProvider));
+
+  // Til `listen` bilan kuzatiladi, `watch` bilan EMAS: til o'zgarganda
+  // mijoz qayta yaratilmaydi — aks holda token yangilash navbati va
+  // sessiya callback'i yo'qolardi
+  ref.listen<AppLocale>(
+    localeControllerProvider,
+    (_, next) => client.language = next.code,
+    fireImmediately: true,
+  );
+
+  return client;
 });
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {

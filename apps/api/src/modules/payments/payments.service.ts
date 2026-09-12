@@ -9,6 +9,7 @@ import type { Env } from '@/config/env.schema';
 import { DatabaseService } from '@/infra/database/database.service';
 import type { PaymentStatus, PspProvider } from '@/infra/database/database.types';
 import { NotificationsService } from '@/modules/notifications/notifications.service';
+import { tpl } from '@/modules/notifications/notification-templates';
 
 import { LedgerService } from './ledger.service';
 
@@ -245,8 +246,7 @@ export class PaymentsService {
     await this.notifications.notify({
       userId: payment.userId,
       type: 'payment.received',
-      title: 'Hamyon toʻldirildi',
-      body: `${(amount / 100n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} soʻm hisobingizga tushdi`,
+      template: tpl('wallet.topup', { amountTiyin: amount }),
       entityType: 'PAYMENT',
       entityId: payment.id,
       deepLink: 'karvon://wallet',
