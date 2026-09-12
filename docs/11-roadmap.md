@@ -21,7 +21,7 @@ Operatsion jamoa (launch'ga 1 oy qolganda): 2 support operatori,
 
 ### Sprint 0 — Fundament (2 hafta)
 - Monorepo (Turborepo/Nx), lint/prettier/husky, commit konvensiyasi
-- Docker Compose: postgres+postgis, redis, minio, osrm, mailhog
+- Docker Compose: postgres+postgis, redis, seaweedfs (S3), osrm, mailhog
 - CI/CD skeleti, dev muhit
 - DB migratsiyalari + seed (viloyat, tuman, transport turlari)
 - NestJS skeleti: config, logger (pino), error filter, OpenAPI, health-check

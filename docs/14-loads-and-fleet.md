@@ -7,7 +7,7 @@ to'liq zanjir kodlandi.
 
 | Modul | Vazifasi |
 |---|---|
-| `infra/storage` | S3/MinIO — presigned upload/download, bucket avtomatik yaratish (dev) |
+| `infra/storage` | S3 (SeaweedFS yoki bulut) — presigned upload/download, bucket avtomatik yaratish (dev; prodda `deploy.sh`) |
 | `modules/media` | Fayl yuklash uchun vaqtinchalik havolalar |
 | `modules/documents` | Hujjatlarni qayd etish, egalik tekshiruvi, verifikatsiya tayyorligi |
 | `modules/vehicles` | Transport CRUD, spravochnik bilan validatsiya, asosiy transport |

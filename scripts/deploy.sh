@@ -6,9 +6,10 @@
 # Qadamlar:
 #   1. tekshiruv  — .env.production to'ldirilganmi, OSRM ma'lumoti bormi
 #   2. build      — tasvirlar git SHA tegi bilan (qaytarish uchun eskisi qoladi)
-#   3. zaxira     — MIGRATSIYADAN OLDIN (baza allaqachon ishlayotgan bo'lsa)
-#   4. migratsiya — yangi tasvir bilan, BIR MARTA (replikalar poygasisiz)
-#   5. ishga tushirish va sog'liq tekshiruvi (`/health/ready`: baza + Redis)
+#   3. bucket     — fayl omborida (bor bo'lsa tegilmaydi)
+#   4. zaxira     — MIGRATSIYADAN OLDIN (baza allaqachon ishlayotgan bo'lsa)
+#   5. migratsiya — yangi tasvir bilan, BIR MARTA (replikalar poygasisiz)
+#   6. ishga tushirish va sog'liq tekshiruvi (`/health/ready`: baza + Redis)
 #
 # Yiqilsa: bash scripts/rollback.sh — oldingi tasvirlarga qaytaradi.
 
@@ -16,6 +17,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 ENV_FILE=.env.production
+# Fayl omborida bucket yaratish uchun (versiya qotirilgan)
+AWS_CLI_IMAGE=amazon/aws-cli:2.36.44
 compose() { docker compose --env-file "$ENV_FILE" -f docker-compose.prod.yml "$@"; }
 step() { printf '\n==> %s\n' "$1"; }
 
@@ -51,7 +54,48 @@ compose build api admin
 
 step "Infratuzilma"
 # `up` bog'liqliklar sog'lom bo'lishini kutadi (depends_on: service_healthy)
-compose up -d postgres redis minio osrm backup
+compose up -d postgres redis s3 osrm backup
+
+step "Fayl ombori (bucket)"
+# API prod rejimida bucket'ni o'zi YARATMAYDI (faqat dev'da): nomdagi xato
+# yangi bo'sh bucket ochib yuborardi va hujjatlar "yo'qolgandek" ko'rinardi.
+# Shu yerda aniq nom bilan yaratiladi; bor bo'lsa hech narsa o'zgarmaydi.
+#
+# Nom va kalitlar ombor konteynerining O'ZIDAN olinadi: compose
+# .env.production ni qanday o'qigan bo'lsa (qo'shtirnoq va h.k.), aynan shunday
+s3_env() { compose exec -T s3 printenv "$1"; }
+bucket=$(s3_env S3_BUCKET) || {
+  echo "Fayl ombori ishga tushmadi. Oxirgi loglar:" >&2
+  compose logs --tail=40 s3 >&2
+  exit 1
+}
+AWS_ACCESS_KEY_ID=$(s3_env S3_ACCESS_KEY)
+AWS_SECRET_ACCESS_KEY=$(s3_env S3_SECRET_KEY)
+export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
+s3_network="container:$(compose ps -q s3)"
+aws() {
+  # Kalitlar `-e NOM` bilan muhitdan o'tadi — buyruq qatorida (`ps`) ko'rinmaydi
+  docker run --rm --network "$s3_network" \
+    -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_DEFAULT_REGION=us-east-1 \
+    "$AWS_CLI_IMAGE" --endpoint-url http://127.0.0.1:8333 "$@"
+}
+docker pull -q "$AWS_CLI_IMAGE" >/dev/null
+bucket_ready=false
+for _ in $(seq 1 30); do
+  if aws s3api head-bucket --bucket "$bucket" >/dev/null 2>&1 \
+    || aws s3api create-bucket --bucket "$bucket" >/dev/null 2>&1; then
+    bucket_ready=true
+    break
+  fi
+  sleep 2
+done
+unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
+if [ "$bucket_ready" != true ]; then
+  echo "Fayl ombori javob bermadi. Oxirgi loglar:" >&2
+  compose logs --tail=40 s3 >&2
+  exit 1
+fi
+echo "Bucket tayyor: $bucket"
 
 step "Zaxira nusxa"
 if [ -n "$current" ]; then

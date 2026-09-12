@@ -65,7 +65,7 @@ flowchart TB
     subgraph Data["Ma'lumot qatlami"]
         PG[("PostgreSQL 16 + PostGIS<br/>primary + read replica")]
         RD[("Redis 7<br/>cache · GEO · queue · pubsub")]
-        S3[("S3 / MinIO<br/>hujjat, foto")]
+        S3[("S3 (SeaweedFS)<br/>hujjat, foto")]
         CH[("ClickHouse (V2)<br/>analitika")]
     end
 
@@ -451,7 +451,7 @@ kabi nomuvofiqlik muqarrar.
 
 | Muhit | Maqsad | Infra |
 |---|---|---|
-| `local` | Dasturchi | Docker Compose (pg+postgis, redis, minio, osrm, mailhog) |
+| `local` | Dasturchi | Docker Compose (pg+postgis, redis, seaweedfs, osrm, mailhog) |
 | `dev` | Integratsiya | 1 VPS, auto-deploy `develop` branch |
 | `staging` | QA, yuklama testi | prod nusxasi, anonimlashtirilgan ma'lumot |
 | `prod` | Real | O'zbekistondagi DC, 2+ app node, PG primary+replica, kunlik backup |

@@ -15,7 +15,7 @@ avtomatik matching, escrow to'lov va reyting tizimiga ega marketplace platforma.
 ```bash
 npm install
 cp .env.example .env
-npm run infra:up        # PostgreSQL+PostGIS, Redis, MinIO, Adminer
+npm run infra:up        # PostgreSQL+PostGIS, Redis, S3 (SeaweedFS), Adminer
 npm run db:migrate      # sxema
 npm run db:seed         # 14 viloyat, transport turlari, tariflar
 npm run dev             # http://localhost:3000/v1 · hujjat: /docs
@@ -77,7 +77,7 @@ ko'rsatilmaydi — ilovada to'qima raqam yo'q.
 | Mobil | **Flutter 3.x (Dart)** | Bitta kod → Android+iOS, past darajali Android'da ham 60fps |
 | Admin panel | **React 18 + TypeScript + Vite + TanStack Query** | Tez, ekotizim keng |
 | Push | **Firebase Cloud Messaging** (+APNs) | Android/iOS uchun yagona kanal |
-| Storage | **S3-compatible (MinIO → keyin bulut)** | Presigned upload, arzon |
+| Storage | **S3-mos (SeaweedFS → keyin bulut)** | Presigned upload, arzon; kod faqat S3 API'ga bog'liq |
 | Observability | OpenTelemetry + Prometheus + Grafana + Loki + Sentry | Prod'da diagnostika |
 | Infra | Docker → Docker Compose (MVP) → Kubernetes (scale) | Bosqichma-bosqich |
 
@@ -145,7 +145,7 @@ karvon/
 ├── docs/                     # 18 ta hujjat
 ├── scripts/                  # uchidan-uchiga testlar, fixture, Windows sozlash
 ├── .github/workflows/ci.yml  # API, admin, mobil va integratsiya testlari
-└── docker-compose.yml        # postgres+postgis, redis, minio, adminer
+└── docker-compose.yml        # postgres+postgis, redis, s3 (SeaweedFS), adminer
 
 # keyingi bosqichlarda:
 #   services/ai-matching/     # FastAPI (V2) — ML matching va ETA

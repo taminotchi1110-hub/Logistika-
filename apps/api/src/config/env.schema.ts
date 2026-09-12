@@ -57,7 +57,7 @@ export const envSchema = z
     // --- shifrlash ---
     FIELD_ENCRYPTION_KEY: z.string().optional().or(z.literal('')),
 
-    // --- S3 / MinIO ---
+    // --- S3 (SeaweedFS yoki istalgan S3 mos ombor) ---
     S3_ENDPOINT: z.string().url(),
     S3_REGION: z.string().default('us-east-1'),
     S3_BUCKET: z.string().min(3),

@@ -48,9 +48,10 @@ CREATE DATABASE karvon OWNER karvon ENCODING 'UTF8';
 `.env` dagi `DATABASE_URL` va `REDIS_URL` o'zgarishsiz qoladi — portlar bir xil
 (5432 va 6379). Shundan keyin `npm run db:migrate` va qolgani hujjatdagidek.
 
-**Farqi:** MinIO ishlamaydi, ya'ni fayl yuklash (`/media`, `/documents`)
-endpointlari ishlamaydi. Ular kerak bo'lganda MinIO'ni alohida `.exe` sifatida
-ishga tushirish mumkin — u administrator huquqi talab qilmaydi.
+**Farqi:** S3 fayl ombori ko'tarilmaydi, ya'ni fayl yuklash (`/media`,
+`/documents`) endpointlari ishlamaydi. Kerak bo'lganda SeaweedFS'ning Windows
+uchun bitta `weed.exe` faylini `scripts/start-s3.ps1` bilan ishga tushirish
+mumkin — u administrator huquqi talab qilmaydi.
 
 ## 13.2. Birinchi ishga tushirish
 
@@ -61,7 +62,7 @@ npm install
 # 2. Muhit o'zgaruvchilari
 cp .env.example .env
 
-# 3. Infratuzilma (PostgreSQL+PostGIS, Redis, MinIO, Adminer)
+# 3. Infratuzilma (PostgreSQL+PostGIS, Redis, S3 ombori — SeaweedFS, Adminer)
 npm run infra:up
 
 # 4. Baza sxemasi va spravochniklar
@@ -77,7 +78,7 @@ Ochiladi:
 - OpenAPI hujjati — http://localhost:3000/docs
 - Health — http://localhost:3000/health
 - Adminer (baza) — http://localhost:8080 (server: `postgres`, user/parol: `karvon`)
-- MinIO konsoli — http://localhost:9001
+- Fayl ombori (SeaweedFS, fayllarni ko'rish) — http://localhost:8888
 
 ## 13.3. Birinchi so'rov (haqiqiy oqim)
 

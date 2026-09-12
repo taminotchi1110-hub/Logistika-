@@ -150,7 +150,7 @@ jobs:
   #  Ishlab chiqish mashinasida Docker ishlamaydi (WSL taqsimoti yoʻq),
   #  shuning uchun tasvirlar faqat shu yerda tekshiriladi: yigʻiladi,
   #  ichida kerakli fayllar borligi, prod rejimida haqiqiy Postgres,
-  #  Redis va MinIO bilan koʻtarilishi va admin panel sarlavhalari.
+  #  Redis va S3 ombori (SeaweedFS) bilan koʻtarilishi va admin panel sarlavhalari.
   # ------------------------------------------------------------------
   docker:
     name: Docker (API va admin tasvirlari, prod compose)
@@ -165,12 +165,24 @@ jobs:
           shellcheck -S warning \
             scripts/deploy.sh scripts/rollback.sh scripts/backup-db.sh \
             scripts/restore-db.sh scripts/osrm-prepare.sh scripts/generate-secrets.sh \
-            deploy/backup-loop.sh
+            deploy/backup-loop.sh deploy/s3-start.sh
 
       - name: Prod compose sintaksisi
         run: |
           cp .env.production.example .env.production
           docker compose --env-file .env.production -f docker-compose.prod.yml config -q
+
+      - name: Prod compose — fayl ombori sogʻlom koʻtariladi
+        # Compose taʼrifining OʻZI: entrypoint, skript ulanishi va sogʻliq
+        # tekshiruvi. Keyingi qadamlarda ombor qoʻlda ishga tushiriladi va
+        # bu joylardagi xato u yerda koʻrinmasdi
+        run: |
+          compose() { docker compose --env-file .env.production -f docker-compose.prod.yml "$@"; }
+          if ! compose up -d --wait --wait-timeout 180 s3; then
+            compose logs s3 | tail -40
+            exit 1
+          fi
+          compose down -v
 
       - uses: docker/setup-buildx-action@v3
 
@@ -214,14 +226,43 @@ jobs:
             -e POSTGRES_USER=karvon -e POSTGRES_PASSWORD=ci -e POSTGRES_DB=karvon \
             postgis/postgis:16-3.4
           docker run -d --name redis --network karvon redis:7-alpine
-          docker run -d --name minio --network karvon \
-            -e MINIO_ROOT_USER=karvon -e MINIO_ROOT_PASSWORD=karvon-ci-secret \
-            minio/minio:latest server /data
+          # S3 ombori — prod bilan bir xil tasvir va AYNAN oʻsha ishga
+          # tushirish skripti: kalitlar bilan, anonim soʻrov rad etiladi
+          docker run -d --name s3 --network karvon \
+            -e S3_ACCESS_KEY=karvon -e S3_SECRET_KEY=karvon-ci-secret \
+            -v "$PWD/deploy/s3-start.sh:/s3-start.sh:ro" --entrypoint sh \
+            chrislusf/seaweedfs:4.46 /s3-start.sh
 
           for i in $(seq 1 60); do
             docker exec pg pg_isready -U karvon >/dev/null 2>&1 && break
             sleep 1
           done
+
+          # Prod rejimida API bucketni oʻzi yaratmaydi — uni deploy.sh
+          # yaratadi. Shu yerda ham xuddi oʻsha usulda (aws-cli)
+          docker pull -q amazon/aws-cli:2.36.44 >/dev/null
+          s3() {
+            docker run --rm --network karvon \
+              -e AWS_ACCESS_KEY_ID=karvon -e AWS_SECRET_ACCESS_KEY=karvon-ci-secret \
+              -e AWS_DEFAULT_REGION=us-east-1 \
+              amazon/aws-cli:2.36.44 --endpoint-url http://s3:8333 "$@"
+          }
+          for i in $(seq 1 60); do
+            s3 s3api head-bucket --bucket karvon >/dev/null 2>&1 && break
+            s3 s3api create-bucket --bucket karvon >/dev/null 2>&1 && break
+            sleep 2
+          done
+          if ! s3 s3api head-bucket --bucket karvon; then
+            echo "::error::S3 ombori tayyor boʻlmadi"
+            docker logs s3 2>&1 | tail -40
+            exit 1
+          fi
+
+          # Kalitsiz soʻrov RAD ETILADI: bucketda pasport va guvohnoma
+          # suratlari turadi. Kalitlar fayli oʻqilmay qolsa ombor hammaga
+          # ochiq ishlashi mumkin edi — shuning uchun alohida tekshiriladi
+          anon=$(docker exec s3 curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8333/karvon)
+          [ "$anon" = "403" ] || { echo "::error::S3 kalitsiz soʻrovga $anon qaytardi (403 kutilgan)"; exit 1; }
 
           # `staging` — prod validatsiyasi toʻliq ishlaydi (JWT kalitlari,
           # SMS, shifrlash, OSRM majburiy). `development` ISHLATILMAYDI:
@@ -240,7 +281,7 @@ jobs:
           SMS_PROVIDER=eskiz
           ESKIZ_EMAIL=ci@example.uz
           ESKIZ_PASSWORD=ci
-          S3_ENDPOINT=http://minio:9000
+          S3_ENDPOINT=http://s3:8333
           S3_BUCKET=karvon
           S3_ACCESS_KEY=karvon
           S3_SECRET_KEY=karvon-ci-secret
@@ -267,6 +308,16 @@ jobs:
           # Prod rejimida Swagger yopiq: API tuzilmasi ochiq koʻrinmaydi
           code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/docs)
           [ "$code" = "404" ] || { echo "::error::/docs prod rejimida ochiq ($code)"; exit 1; }
+
+          # API prod rejimida fayl omboriga haqiqatan ulanadi (kalit va imzo
+          # SeaweedFS bilan mos). Ulana olmasa u yiqilmaydi, faqat logga
+          # yozadi — shuning uchun log tekshiriladi
+          api_log=$(docker logs api 2>&1)
+          if grep -q 'S3 bucket topilmadi' <<<"$api_log"; then
+            echo "::error::API fayl omboriga ulana olmadi"
+            grep -i 's3' <<<"$api_log" | tail -5
+            exit 1
+          fi
 
           # Admin skripti ham tasvirda ishlaydi (TOTP kaliti chiqadi)
           docker run --rm --network karvon --env-file ci.env karvon-api:ci \
@@ -299,16 +350,16 @@ jobs:
       - name: Konteyner loglari (yiqilganda)
         if: failure()
         run: |
-          for name in api admin pg minio; do
+          for name in api admin pg s3; do
             echo "::group::$name"
             docker logs "$name" 2>&1 | tail -40 || true
             echo "::endgroup::"
           done
 
   # ------------------------------------------------------------------
-  #  Uchidan-uchiga: haqiqiy Postgres, Redis, MinIO va ishlab turgan API
+  #  Uchidan-uchiga: haqiqiy Postgres, Redis, S3 ombori va ishlab turgan API
   #
-  #  MINIO SHU YERDA BOR — lokal muhitda Docker koʻtarilmagani uchun
+  #  S3 OMBORI SHU YERDA BOR — lokal muhitda Docker koʻtarilmagani uchun
   #  hujjat yuklash testlari oʻtkazib yuborilardi. CI da ular
   #  HAQIQATAN ishga tushadi.
   # ------------------------------------------------------------------
@@ -352,21 +403,6 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 20
-
-      minio:
-        # `edge-cicd` — MinIO ning CI uchun chiqaradigan tegi: u
-        # `minio server /data` ni oʻzi ishga tushiradi. Oddiy
-        # `minio/minio` tegida buyruq berish kerak, GitHub xizmat
-        # konteynerlari esa `command` ni qoʻllab-quvvatlamaydi.
-        image: minio/minio:edge-cicd
-        env:
-          MINIO_ROOT_USER: karvon
-          MINIO_ROOT_PASSWORD: karvon_ci_secret
-        ports: ['9000:9000']
-        # Sogʻliq tekshiruvi konteyner ichida emas, RUNNER tomonida
-        # (quyidagi qadam). Sabab: `--health-cmd` konteyner ichidagi
-        # buyruqni ishlatadi va u yerda `curl` borligiga kafolat yoʻq —
-        # tasvir oʻzgarsa CI tushunarsiz sababdan yiqilardi.
 
     steps:
       - uses: actions/checkout@v5
@@ -441,13 +477,40 @@ jobs:
             console.log('.env tayyor:', Object.keys(env).length, 'ta oʻzgaruvchi');
           "
 
-      - name: MinIO tayyorligini kutish
+      - name: S3 fayl ombori (SeaweedFS)
+        # MinIO oʻz Docker tasvirlarini tarqatishni toʻxtatdi: `minio/minio`
+        # Docker Hub'da yoʻq va #12 dan beri bu ish shu sababdan yiqilardi.
+        # Prod bilan bir xil tasvir va AYNAN oʻsha ishga tushirish skripti.
+        #
+        # Xizmat konteyneri emas, qadam: GitHub xizmat konteynerlariga
+        # `entrypoint` va buyruq berib boʻlmaydi, skript esa kerak
         run: |
+          docker run -d --name s3 -p 9000:8333 \
+            -e S3_ACCESS_KEY=karvon -e S3_SECRET_KEY=karvon_ci_secret \
+            -v "$PWD/deploy/s3-start.sh:/s3-start.sh:ro" --entrypoint sh \
+            chrislusf/seaweedfs:4.46 /s3-start.sh
+
+          # Tayyorlik — bucket yaratilguncha kutiladi: port ochilgani yetarli
+          # emas, filer va volume server ham koʻtarilishi kerak. API dev
+          # rejimida bucketni oʻzi ham yaratadi, lekin ombor kechiksa bu
+          # urinish faqat logda qolardi va yuklash testlari tushunarsiz yiqilardi
+          docker pull -q amazon/aws-cli:2.36.44 >/dev/null
+          s3() {
+            docker run --rm --network host \
+              -e AWS_ACCESS_KEY_ID=karvon -e AWS_SECRET_ACCESS_KEY=karvon_ci_secret \
+              -e AWS_DEFAULT_REGION=us-east-1 \
+              amazon/aws-cli:2.36.44 --endpoint-url http://localhost:9000 "$@"
+          }
           for i in $(seq 1 60); do
-            curl -sf http://localhost:9000/minio/health/live && break
-            sleep 1
+            s3 s3api head-bucket --bucket karvon >/dev/null 2>&1 && break
+            s3 s3api create-bucket --bucket karvon >/dev/null 2>&1 && break
+            sleep 2
           done
-          curl -sf http://localhost:9000/minio/health/live
+          if ! s3 s3api head-bucket --bucket karvon; then
+            echo "::error::S3 ombori tayyor boʻlmadi"
+            docker logs s3 2>&1 | tail -40
+            exit 1
+          fi
 
       - name: Migratsiya va seed
         run: |
@@ -486,7 +549,7 @@ jobs:
         run: node scripts/reset-rate-limits.js
 
       - name: Mobil integratsiya testlari
-        # MinIO ishlab turgani uchun hujjat yuklash testlari ham
+        # S3 ombori ishlab turgani uchun hujjat yuklash testlari ham
         # HAQIQATAN ishga tushadi — lokal muhitda ular oʻtkazib
         # yuborilardi (Docker koʻtarilmagan).
         #
@@ -532,6 +595,9 @@ jobs:
         run: |
           echo "::group::API log (oxirgi 40 qator)"
           tail -40 /tmp/api.log || true
+          echo "::endgroup::"
+          echo "::group::S3 ombori log (oxirgi 20 qator)"
+          docker logs s3 2>&1 | tail -20 || true
           echo "::endgroup::"
 
           # Status kodlari SONI bilan: bitta 429 tasodif, ellikta 429 —

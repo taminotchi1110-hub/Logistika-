@@ -5,7 +5,7 @@
 #   bash scripts/osrm-prepare.sh                 # bir marta
 #   bash scripts/deploy.sh
 #
-# Tashqariga FAQAT Caddy (80/443) ochiq. Postgres, Redis, MinIO va OSRM
+# Tashqariga FAQAT Caddy (80/443) ochiq. Postgres, Redis, S3 ombori va OSRM
 # ichki tarmoqda — ularning portlari hostga CHIQARILMAYDI. Bazaga kirish:
 #   docker compose --env-file .env.production -f docker-compose.prod.yml \
 #     exec postgres psql -U karvon
@@ -44,7 +44,7 @@ services:
     depends_on:
       - api
       - admin
-      - minio
+      - s3
 
   api:
     <<: *defaults
@@ -66,7 +66,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      minio:
+      s3:
         condition: service_healthy
       osrm:
         condition: service_started
@@ -141,20 +141,34 @@ services:
       timeout: 3s
       retries: 20
 
-  minio:
+  s3:
     <<: *defaults
-    image: minio/minio:latest
-    command: server /data --console-address ":9001"
+    # S3 mos fayl ombori: hujjat, avatar, yuk fotolari.
+    #
+    # NEGA MINIO EMAS: MinIO o'z Docker tasvirlarini tarqatishni to'xtatdi
+    # (Docker Hub'dagi `minio/minio` o'chirilgan). SeaweedFS (Apache-2.0)
+    # xuddi shu S3 API'ni beradi — ilova kodi (AWS SDK) o'zgarmaydi.
+    # Versiya qotirilgan: `latest` bilan server qayta ishga tushganda
+    # kutilmagan yangi versiya tushib qolardi.
+    image: chrislusf/seaweedfs:4.46
+    # Kalitlarni konteyner ichidagi faylga yozadi va tasvirning o'z
+    # entrypoint'ini chaqiradi (jarayon root emas)
+    entrypoint: ['sh', '/s3-start.sh']
     environment:
-      MINIO_ROOT_USER: ${S3_ACCESS_KEY:?S3_ACCESS_KEY kerak}
-      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:?S3_SECRET_KEY kerak}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:?S3_ACCESS_KEY kerak}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:?S3_SECRET_KEY kerak}
+      # Ombor o'zi ishlatmaydi: deploy.sh bucket'ni aynan shu nom bilan yaratadi
+      S3_BUCKET: ${S3_BUCKET:?S3_BUCKET kerak}
     volumes:
-      - minio_data:/data
+      - s3_data:/data
+      - ./deploy/s3-start.sh:/s3-start.sh:ro
     healthcheck:
-      test: ['CMD', 'mc', 'ready', 'local']
+      # `-f` YO'Q ataylab: kalitsiz so'rovga 403 keladi — bu ham "javob beryapti"
+      test: ['CMD', 'curl', '-so', '/dev/null', 'http://127.0.0.1:8333/']
       interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 12
+      start_period: 20s
 
   osrm:
     <<: *defaults
@@ -188,6 +202,6 @@ services:
 volumes:
   postgres_data:
   redis_data:
-  minio_data:
+  s3_data:
   caddy_data:
   caddy_config:

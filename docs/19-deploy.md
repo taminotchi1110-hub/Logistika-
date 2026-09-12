@@ -15,8 +15,8 @@
         ┌────────┘  │  └──────────┐
         ▼           ▼             ▼
      ┌─────┐   ┌───────┐     ┌───────┐
-     │ API │   │ Admin │     │ MinIO │  imzolangan havola orqali
-     └──┬──┘   └───────┘     └───────┘  to'g'ridan-to'g'ri yuklash
+     │ API │   │ Admin │     │  S3   │  SeaweedFS: imzolangan havola
+     └──┬──┘   └───────┘     └───────┘  bilan to'g'ridan-to'g'ri yuklash
         │ admin.karvon.uz (nginx, statik SPA)
         ├──────────┬──────────┬──────────┐
         ▼          ▼          ▼          ▼
@@ -31,6 +31,7 @@
 |---|---|
 | `docker-compose.prod.yml` | Barcha xizmatlar |
 | `deploy/Caddyfile` | Domenlar, TLS, proksi |
+| `deploy/s3-start.sh` | Fayl omborini (SeaweedFS) kalitlar bilan ishga tushirish |
 | `.env.production.example` | Sozlamalar namunasi (`.env.production` — gitda yo'q) |
 | `apps/api/Dockerfile`, `apps/admin/Dockerfile` | Tasvirlar (CI har push'da yig'ib sinaydi) |
 | `scripts/deploy.sh` · `rollback.sh` | Chiqarish va qaytarish |
@@ -66,7 +67,13 @@ sudo apt install -y unattended-upgrades fail2ban
 
 > Docker o'z portlarini `ufw` ni chetlab ochadi. Shuning uchun
 > `docker-compose.prod.yml` da faqat Caddy portlari e'lon qilingan —
-> Postgres, Redis, MinIO va OSRM uchun `ports:` YO'Q, bu ataylab.
+> Postgres, Redis, S3 ombori va OSRM uchun `ports:` YO'Q, bu ataylab.
+
+> **Fayl ombori — SeaweedFS** (Apache-2.0). MinIO o'z Docker tasvirlarini
+> tarqatishni to'xtatdi (`minio/minio` Docker Hub'da yo'q). SeaweedFS xuddi
+> shu S3 API'ni beradi: ilova AWS SDK orqali ishlaydi va kod o'zgarmagan.
+> Kirish faqat kalit bilan (`deploy/s3-start.sh`), kalitsiz so'rov — 403
+> (CI buni har push'da tekshiradi).
 
 ## 19.3 Birinchi o'rnatish
 
@@ -92,8 +99,8 @@ sudo apt install -y unattended-upgrades fail2ban
    ```bash
    bash scripts/deploy.sh
    ```
-   Skript tasvirlarni yig'adi, migratsiya va spravochnikni qo'llaydi,
-   `/health/ready` yashil bo'lishini kutadi.
+   Skript tasvirlarni yig'adi, fayl omborida bucket yaratadi, migratsiya
+   va spravochnikni qo'llaydi, `/health/ready` yashil bo'lishini kutadi.
 
 5. **Birinchi administrator** (TOTP kaliti chiqadi — Authenticator'ga
    darhol kiriting, qayta ko'rsatilmaydi):
@@ -171,10 +178,16 @@ kunlik nusxa (masalan `rclone`), shifrlangan holda:
 30 3 * * * rclone copy /opt/karvon/backups remote:karvon-backups --max-age 26h
 ```
 
-**Fayllar (MinIO)** — hujjatlar va rasmlar bazada emas:
+**Fayllar (S3 ombori)** — hujjatlar va rasmlar bazada emas. Server ichidagi
+papkaga nusxa (so'ng `rclone` bilan tashqariga — yuqoridagidek). Kalitlar
+ombor konteyneridan olinadi, buyruq qatoriga yozilmaydi:
 ```bash
+cd /opt/karvon
+s3env() { docker compose --env-file .env.production -f docker-compose.prod.yml exec -T s3 printenv "$1"; }
+export AWS_ACCESS_KEY_ID="$(s3env S3_ACCESS_KEY)" AWS_SECRET_ACCESS_KEY="$(s3env S3_SECRET_KEY)"
 docker run --rm --network karvon_default -v /opt/karvon/backups/files:/out \
-  minio/mc sh -c 'mc alias set k http://minio:9000 karvon "$S3_SECRET_KEY" && mc mirror --overwrite k/karvon /out'
+  -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_DEFAULT_REGION=us-east-1 \
+  amazon/aws-cli:2.36.44 --endpoint-url http://s3:8333 s3 sync s3://karvon /out
 ```
 
 **Tiklash:**
@@ -241,6 +254,15 @@ ular PSP bilan solishtirilgach qo'lda yakunlanadi.
 **`FIELD_ENCRYPTION_KEY` ni almashtirmang** — eski kalit bilan shifrlangan
 maydonlar o'qilmay qoladi. Almashtirish faqat qayta shifrlash migratsiyasi
 bilan.
+
+**Hujjat yoki rasm yuklanmayapti** — `logs s3` va `logs api | grep S3`.
+- `S3 bucket topilmadi` — bucket yo'q: `bash scripts/deploy.sh` uni yaratadi.
+- `SignatureDoesNotMatch` yoki 403 — kalit `.env.production` da o'zgargan,
+  xizmatlar esa eski kalit bilan ishlayapti: `bash scripts/deploy.sh`
+  ombor va API ni yangi kalit bilan qayta ko'taradi.
+- API logida xato yo'q, ilova esa yuklay olmayapti — `files.` domenining
+  DNS yozuvi va sertifikati (quyida).
+- Disk to'lganmi: `df -h` (fayllar `s3_data` hajmida).
 
 **Sertifikat olinmayapti** — `logs caddy`: DNS A yozuvi serverga
 qaraydimi va 80-port ochiqmi (Let's Encrypt HTTP tekshiruvi).

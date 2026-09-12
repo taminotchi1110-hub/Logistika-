@@ -49,7 +49,7 @@ const EXTENSION_BY_MIME: Record<string, string> = {
 };
 
 /**
- * S3-mos storage (dev'da MinIO, prodda mahalliy bulut).
+ * S3-mos storage (oʻz serverimizda SeaweedFS; keyin istalgan S3 mos bulut).
  *
  * ASOSIY QARORLAR:
  *  1. **Fayl API server orqali oʻtmaydi.** Mijoz presigned URL oladi va
@@ -80,7 +80,8 @@ export class StorageService implements OnModuleInit {
     this.client = new S3Client({
       endpoint: config.get('S3_ENDPOINT', { infer: true }),
       region: config.get('S3_REGION', { infer: true }),
-      // MinIO virtual-host stilini qoʻllab-quvvatlamaydi
+      // Oʻz serverimizdagi ombor virtual-host stilini (bucket.domen) DNS
+      // sozlamasisiz qoʻllab-quvvatlamaydi — yoʻl stili (domen/bucket)
       forcePathStyle: config.get('S3_FORCE_PATH_STYLE', { infer: true }),
       credentials: {
         accessKeyId: config.get('S3_ACCESS_KEY', { infer: true }),
@@ -89,13 +90,18 @@ export class StorageService implements OnModuleInit {
     });
   }
 
-  /** Dev'da bucket boʻlmasa yaratamiz — yangi dasturchi hech narsa sozlamaydi. */
+  /**
+   * Dev'da bucket boʻlmasa yaratamiz — yangi dasturchi hech narsa sozlamaydi.
+   *
+   * Prodda YARATILMAYDI: nomdagi xato yangi boʻsh bucket ochib yuborardi va
+   * hujjatlar "yoʻqolgandek" koʻrinardi. U yerda uni `scripts/deploy.sh` yaratadi.
+   */
   async onModuleInit(): Promise<void> {
     try {
       await this.client.send(new HeadBucketCommand({ Bucket: this.bucket }));
     } catch {
       if (!this.isDev) {
-        this.logger.error(`S3 bucket topilmadi: ${this.bucket}`);
+        this.logger.error(`S3 bucket topilmadi: ${this.bucket} (deploy.sh yaratadi)`);
         return;
       }
       try {

@@ -45,25 +45,30 @@ services:
       timeout: 3s
       retries: 10
 
-  minio:
-    # S3-mos storage: hujjat, avatar, yuk fotolari
-    image: minio/minio:latest
-    container_name: karvon-minio
+  s3:
+    # S3 mos fayl ombori: hujjat, avatar, yuk fotolari. Prod bilan bir xil
+    # tasvir va ishga tushirish skripti (MinIO tasvirlarini tarqatishni
+    # to'xtatgan — docs/19-deploy.md)
+    image: chrislusf/seaweedfs:4.46
+    container_name: karvon-s3
     restart: unless-stopped
+    entrypoint: ['sh', '/s3-start.sh']
     environment:
-      MINIO_ROOT_USER: ${S3_ACCESS_KEY:-karvon}
-      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-karvon_dev_password}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-karvon}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-karvon_dev_password}
     ports:
-      - '${S3_PORT:-9000}:9000'
-      - '${S3_CONSOLE_PORT:-9001}:9001'
-    command: server /data --console-address ":9001"
+      - '${S3_PORT:-9000}:8333'
+      # Fayllarni brauzerda ko'rish. Faqat shu kompyuterdan: filer S3
+      # kalitlarini chetlab o'tadi
+      - '127.0.0.1:${S3_FILER_PORT:-8888}:8888'
     volumes:
-      - minio_data:/data
+      - s3_data:/data
+      - ./deploy/s3-start.sh:/s3-start.sh:ro
     healthcheck:
-      test: ['CMD', 'mc', 'ready', 'local']
+      test: ['CMD', 'curl', '-so', '/dev/null', 'http://127.0.0.1:8333/']
       interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 12
 
   adminer:
     # Bazani brauzerdan ko'rish uchun (dev only)
@@ -79,4 +84,4 @@ services:
 volumes:
   postgres_data:
   redis_data:
-  minio_data:
+  s3_data:

@@ -33,7 +33,7 @@
 	reverse_proxy admin:80
 }
 
-# Fayl ombori (MinIO). Ilova va panel imzolangan havola bilan to'g'ridan-
+# Fayl ombori (SeaweedFS, S3 mos). Ilova va panel imzolangan havola bilan to'g'ridan-
 # to'g'ri shu yerga yuklaydi va o'qiydi. Host sarlavhasi O'ZGARTIRILMAYDI:
 # S3 imzosi unga bog'liq (Caddy standart holatda uni o'zgarmas uzatadi).
 {$FILES_DOMAIN} {
@@ -41,5 +41,5 @@
 	request_body {
 		max_size 25MB
 	}
-	reverse_proxy minio:9000
+	reverse_proxy s3:8333
 }

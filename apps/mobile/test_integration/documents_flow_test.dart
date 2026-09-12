@@ -26,7 +26,7 @@ import 'support/memory_token_storage.dart';
 ///      hujjat yaratishdagi rad etish yo'llari ham storage'ga bormaydi.
 ///      Bu qism har doim ishlaydi.
 ///
-///   2. **Haqiqiy PUT** — S3 (dev'da MinIO) kerak. U ko'tarilmagan bo'lsa
+///   2. **Haqiqiy PUT** — S3 (dev'da SeaweedFS) kerak. U ko'tarilmagan bo'lsa
 ///      test O'TKAZIB YUBORILADI va sabab konsolga chiqadi. Jimgina
 ///      "yashil" bo'lib qolmaydi: o'tkazib yuborilgan test — bajarilgan
 ///      test emas va buni ko'rib turish kerak.
@@ -36,7 +36,7 @@ import 'support/memory_token_storage.dart';
 void main() {
   final random = Random();
 
-  /// MinIO javob beradimi.
+  /// S3 ombori javob beradimi.
   ///
   /// TCP ulanish yetarli: bucket va imzo tekshiruvi testning o'zida
   /// bo'ladi, bu yerda faqat "port ochiqmi?" degan savol.
@@ -254,8 +254,8 @@ void main() {
       if (!await storageReachable()) {
         // ATAYLAB baland: o'tkazib yuborilgan test bajarilgan test emas
         markTestSkipped(
-          'S3 (MinIO) javob bermayapti — yuklash oqimi TEKSHIRILMADI. '
-          'Ko\'tarish: docker compose up -d minio',
+          'S3 ombori javob bermayapti — yuklash oqimi TEKSHIRILMADI. '
+          'Ko\'tarish: docker compose up -d s3',
         );
         return;
       }
@@ -292,7 +292,7 @@ void main() {
 
     test('★ TASDIQLANMAGAN HUJJATNI O\'CHIRISH MUMKIN', () async {
       if (!await storageReachable()) {
-        markTestSkipped('S3 (MinIO) javob bermayapti — o\'chirish TEKSHIRILMADI.');
+        markTestSkipped('S3 ombori javob bermayapti — o\'chirish TEKSHIRILMADI.');
         return;
       }
 
@@ -311,7 +311,7 @@ void main() {
 
     test('★ YUKLASH YETARLI EMAS — TASDIQLASH KERAK', () async {
       if (!await storageReachable()) {
-        markTestSkipped('S3 (MinIO) javob bermayapti — tayyorlik TEKSHIRILMADI.');
+        markTestSkipped('S3 ombori javob bermayapti — tayyorlik TEKSHIRILMADI.');
         return;
       }
 
@@ -333,7 +333,7 @@ void main() {
       // oʻzi yetarli boʻlsa, istalgan odam boʻsh rasm yuklab reysga
       // chiqa olardi.
       //
-      // Xato faqat CI da koʻrindi: lokal muhitda MinIO boʻlmagani
+      // Xato faqat CI da koʻrindi: lokal muhitda S3 ombori boʻlmagani
       // uchun bu test oʻtkazib yuborilardi.
       final readiness = await driver.api.get<Map<String, dynamic>>('/me/driver/readiness');
 
