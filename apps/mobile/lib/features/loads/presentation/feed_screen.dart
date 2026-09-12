@@ -9,6 +9,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/app_states.dart';
 import '../data/loads_repository.dart';
 import '../domain/load.dart';
+import 'widgets/feed_filter_sheet.dart';
 import 'widgets/load_card.dart';
 import 'package:karvon/core/l10n/formatters.dart';
 
@@ -293,11 +294,13 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
     return const SizedBox(height: AppSpacing.xl);
   }
 
-  void _openFilters(BuildContext context) {
-    // Filtr oynasi keyingi bosqichda
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(context.l10n.feedFilterSoon)),
-    );
+  Future<void> _openFilters(BuildContext context) async {
+    final filter = await showFeedFilterSheet(context, ref.read(feedProvider).filter);
+    if (filter == null || !mounted) return;
+
+    await ref.read(feedProvider.notifier).applyFilter(filter);
+    // Yangi natija boshidan ko'rinsin — eski joyda qolish chalkashtiradi
+    if (_scrollController.hasClients) _scrollController.jumpTo(0);
   }
 }
 

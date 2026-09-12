@@ -260,7 +260,6 @@
   "feedEmptyHint": "Yangi eʼlonlar paydo boʻlishi bilan bu yerda koʻrinadi. Yoʻnalishlaringizni sozlasangiz mos yuklar haqida xabar beramiz.",
   "feedClearFilter": "Filtrni tozalash",
   "feedEnd": "Hammasi shu",
-  "feedFilterSoon": "Filtr oynasi tayyorlanmoqda",
 
   "badgeUrgent": "Shoshilinch",
   "badgeMatch": "{percent}% mos",
@@ -771,5 +770,21 @@
   "notFoundTitle": "Sahifa topilmadi",
   "actionGoHome": "Bosh sahifaga",
 
-  "fieldSelectPlaceholder": "Tanlang"
+  "fieldSelectPlaceholder": "Tanlang",
+
+  "filterTitle": "Filtr",
+  "filterSort": "Saralash",
+  "sortBestMatch": "Eng mos",
+  "sortNewest": "Yangilari",
+  "sortPriceHigh": "Avval qimmat",
+  "sortPickupSoon": "Yuklash sanasi yaqin",
+  "sortNearest": "Menga yaqin",
+  "filterNearNeedsLocation": "Yaqin yuklarni koʻrsatish uchun joylashuvga ruxsat bering",
+  "filterAnyRegion": "Istalgan",
+  "filterWeight": "Ogʻirlik, kg",
+  "filterMin": "Eng kam",
+  "filterMax": "Eng koʻp",
+  "filterWeightInvalid": "Eng kami eng koʻpidan katta boʻlmasligi kerak",
+  "filterMinPrice": "Narx kamida",
+  "actionShowResults": "Natijalarni koʻrsatish"
 }

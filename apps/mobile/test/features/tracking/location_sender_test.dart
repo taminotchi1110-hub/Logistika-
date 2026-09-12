@@ -54,6 +54,12 @@ void main() {
 
   const position = DeviceLocation(lat: 41.3111, lng: 69.2797, accuracyM: 8);
 
+  /// "Faqat darhol yuborilgan nuqta" tekshiruvlari uchun: davriy yuborish
+  /// test davomida umuman ishlamaydi. 20 ms interval bilan bu testlar
+  /// band mashinada (butun to'plam parallel ishlaganda) tasodifan
+  /// yiqilardi — kutish 5 ms bo'lsa ham navbatdagi tik ulgurardi.
+  const neverTicks = Duration(hours: 1);
+
   setUp(() {
     repository = _MockTrackingRepository();
     socket = _FakeSocket();
@@ -76,7 +82,7 @@ void main() {
   }
 
   test('★ BIRINCHI NUQTA DARHOL YUBORILADI', () async {
-    final sender = build();
+    final sender = build(interval: neverTicks);
     sender.start('o-1');
 
     // Mijoz xaritani intervalni kutmasdan koʻrishi kerak
@@ -209,7 +215,7 @@ void main() {
   });
 
   test('bir xil reysga qayta start — qayta ishga tushirmaydi', () async {
-    final sender = build();
+    final sender = build(interval: neverTicks);
     sender.start('o-1');
     await Future<void>.delayed(const Duration(milliseconds: 5));
     final afterFirst = socket.sentLive.length;

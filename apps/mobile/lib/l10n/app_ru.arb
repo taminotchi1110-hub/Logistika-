@@ -189,7 +189,6 @@
   "feedEmptyHint": "Новые объявления появятся здесь. Настройте маршруты — и мы сообщим о подходящих грузах.",
   "feedClearFilter": "Сбросить фильтр",
   "feedEnd": "Это всё",
-  "feedFilterSoon": "Фильтр скоро будет доступен",
 
   "badgeUrgent": "Срочно",
   "badgeMatch": "Совпадение {percent}%",
@@ -610,5 +609,21 @@
   "notFoundTitle": "Страница не найдена",
   "actionGoHome": "На главную",
 
-  "fieldSelectPlaceholder": "Выберите"
+  "fieldSelectPlaceholder": "Выберите",
+
+  "filterTitle": "Фильтр",
+  "filterSort": "Сортировка",
+  "sortBestMatch": "Самые подходящие",
+  "sortNewest": "Новые",
+  "sortPriceHigh": "Сначала дороже",
+  "sortPickupSoon": "Ближайшая погрузка",
+  "sortNearest": "Рядом со мной",
+  "filterNearNeedsLocation": "Разрешите доступ к геолокации, чтобы показать грузы рядом",
+  "filterAnyRegion": "Любой",
+  "filterWeight": "Вес, кг",
+  "filterMin": "От",
+  "filterMax": "До",
+  "filterWeightInvalid": "Минимум не должен превышать максимум",
+  "filterMinPrice": "Цена от",
+  "actionShowResults": "Показать результаты"
 }

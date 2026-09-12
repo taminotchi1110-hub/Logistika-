@@ -2,8 +2,8 @@
 
 [![CI](https://github.com/taminotchi1110-hub/Logistika-/actions/workflows/ci.yml/badge.svg)](https://github.com/taminotchi1110-hub/Logistika-/actions/workflows/ci.yml)
 
-> **Holat:** 8-BOSQICH — admin panel interfeysi va buyurtma monitoringi
-> **Versiya:** 0.8.0 · **Sana:** 2026-09-10
+> **Holat:** 9-BOSQICH — uch tilli interfeys (uz/ru/en), lenta filtri, ishga tushirishga tayyorgarlik
+> **Versiya:** 0.9.0 · **Sana:** 2026-09-12
 
 Yuk beruvchi (shipper) va haydovchi (carrier) ni real vaqtda bog'laydigan, GPS tracking,
 avtomatik matching, escrow to'lov va reyting tizimiga ega marketplace platforma.
@@ -33,19 +33,32 @@ Batafsil: [docs/13-backend.md](docs/13-backend.md)
 | 6 — Flutter mobil ilova (12 ekran, chat, kuzatuv, hamyon) | ✅ tayyor |
 | 7 — Admin panel interfeysi (React + Vite, 9 ekran) | ✅ tayyor |
 | 8 — Buyurtma monitoringi va support amallari, **CI** | ✅ tayyor |
-| 9 — i18n (uz/ru/en), yuklama va xavfsizlik testlari, deploy | ⏳ keyingi |
+| 9 — **i18n** (uz/ru/en: ilova + push/SMS), lenta filtri | ✅ tayyor |
+| 9 — Yuklama va xavfsizlik testlari, Docker, deploy va zaxira nusxa | ⏳ jarayonda |
 
 ### Testlar
 
 | Qatlam | Soni | Buyruq |
 |---|---|---|
-| Backend unit | 213 | `npm test --workspace=@karvon/api` |
+| Backend unit | 224 | `npm test --workspace=@karvon/api` |
 | Backend uchidan-uchiga | 425 | `bash scripts/test-all.sh` |
 | Admin panel | 188 | `npm run admin:test` |
-| Mobil unit/widget | 276 | `npm run mobile:test` |
+| Mobil unit/widget | 328 | `npm run mobile:test` |
 | Mobil integratsiya | 81 | `npm run mobile:test:api` |
 
 Hammasi har push va PR da avtomatik ishlaydi ([ci.yml](.github/workflows/ci.yml)).
+
+### Mobil ilovani yig'ish
+
+```bash
+flutter run \
+  --dart-define=API_BASE_URL=https://api.karvon.uz/v1 \
+  --dart-define=WS_URL=https://api.karvon.uz \
+  --dart-define=SUPPORT_PHONE=+998XXXXXXXXX
+```
+
+`SUPPORT_PHONE` berilmasa bloklangan akkaunt ekranida qo'ng'iroq tugmasi
+ko'rsatilmaydi — ilovada to'qima raqam yo'q.
 
 ---
 
@@ -97,6 +110,7 @@ Hammasi har push va PR da avtomatik ishlaydi ([ci.yml](.github/workflows/ci.yml)
 | 15 | [docs/15-realtime-and-notifications.md](docs/15-realtime-and-notifications.md) | **Chat, WebSocket, bildirishnoma va push** |
 | 16 | [docs/16-matching-and-tracking.md](docs/16-matching-and-tracking.md) | **Avtomatik matching va jonli GPS kuzatuv** |
 | 17 | [docs/17-payments-ratings-admin.md](docs/17-payments-ratings-admin.md) | **Toʻlovlar, reyting va admin paneli** |
+| 18 | [docs/18-i18n.md](docs/18-i18n.md) | **Koʻp tillilik: ilova, bildirishnoma shablonlari, yangi til qoʻshish** |
 | — | [db/migrations/0001_init.sql](db/migrations/0001_init.sql) | To'liq PostgreSQL DDL |
 | — | [db/seeds/0001_reference.sql](db/seeds/0001_reference.sql) | Spravochnik ma'lumotlari |
 
@@ -107,25 +121,31 @@ Hammasi har push va PR da avtomatik ishlaydi ([ci.yml](.github/workflows/ci.yml)
 ```
 karvon/
 ├── apps/
-│   └── api/              # ✅ NestJS core API (REST + WebSocket)
-│       ├── src/
-│       │   ├── config/           # env validatsiya (zod), JWT kalitlari
-│       │   ├── common/           # xatolar, filter, interceptor, guard, util
-│       │   ├── infra/            # PostgreSQL (Kysely), Redis, S3, migrator
-│       │   └── modules/          # auth · users · sms · reference · geo · media
-│       │                         # documents · vehicles · drivers · addresses · loads
-│       └── test/                 # e2e testlar
+│   ├── api/                  # NestJS core API (REST + WebSocket + push navbati)
+│   │   ├── src/
+│   │   │   ├── config/           # env validatsiya (zod), JWT kalitlari
+│   │   │   ├── common/           # xatolar, filter, interceptor, guard, util
+│   │   │   ├── infra/            # PostgreSQL (Kysely), Redis, S3, migrator
+│   │   │   └── modules/          # auth · users · sms · reference · geo · media · documents
+│   │   │                         # vehicles · drivers · loads · matching · orders · chat
+│   │   │                         # tracking · notifications · payments · ratings · admin
+│   │   └── test/                 # e2e testlar
+│   ├── admin/                # React + Vite admin panel (9 ekran)
+│   └── mobile/               # Flutter — mijoz va haydovchi bitta ilovada
+│       ├── lib/features/         # auth · loads · offers · orders · chat · tracking
+│       │                         # wallet · profile · documents · ratings · geo
+│       ├── lib/l10n/             # uz/ru/en tarjimalar (ARB)
+│       ├── test/                 # unit va widget testlar
+│       └── test_integration/     # haqiqiy API bilan oqimlar
 ├── db/
-│   ├── migrations/       # ✅ SQL — yagona haqiqat manbai
-│   └── seeds/            # ✅ viloyat, tuman, transport turlari, tariflar
-├── docs/                 # ✅ 14 ta hujjat
-├── docker-compose.yml    # ✅ postgres+postgis, redis, minio, adminer
-│
-│   # keyingi bosqichlarda:
-├── apps/worker/          # BullMQ consumerlar (matching, notification, payout)
-├── apps/admin-web/       # React admin SPA
-├── apps/mobile/          # Flutter (klient + haydovchi bitta ilovada)
-├── packages/contracts/   # API ↔ admin umumiy TS tiplar
-├── services/ai-matching/ # FastAPI (V2)
-└── infra/                # k8s, terraform
+│   ├── migrations/           # SQL — yagona haqiqat manbai
+│   └── seeds/                # viloyat, tuman, transport turlari, tariflar
+├── docs/                     # 18 ta hujjat
+├── scripts/                  # uchidan-uchiga testlar, fixture, Windows sozlash
+├── .github/workflows/ci.yml  # API, admin, mobil va integratsiya testlari
+└── docker-compose.yml        # postgres+postgis, redis, minio, adminer
+
+# keyingi bosqichlarda:
+#   services/ai-matching/     # FastAPI (V2) — ML matching va ETA
+#   infra/                    # k8s, terraform
 ```

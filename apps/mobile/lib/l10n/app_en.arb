@@ -189,7 +189,6 @@
   "feedEmptyHint": "New listings will appear here. Set up your routes and we'll notify you about matching loads.",
   "feedClearFilter": "Clear filter",
   "feedEnd": "That's all",
-  "feedFilterSoon": "Filters are coming soon",
 
   "badgeUrgent": "Urgent",
   "badgeMatch": "{percent}% match",
@@ -610,5 +609,21 @@
   "notFoundTitle": "Page not found",
   "actionGoHome": "Go to home",
 
-  "fieldSelectPlaceholder": "Select"
+  "fieldSelectPlaceholder": "Select",
+
+  "filterTitle": "Filters",
+  "filterSort": "Sort by",
+  "sortBestMatch": "Best match",
+  "sortNewest": "Newest",
+  "sortPriceHigh": "Highest price",
+  "sortPickupSoon": "Earliest pickup",
+  "sortNearest": "Nearest to me",
+  "filterNearNeedsLocation": "Allow location access to see loads near you",
+  "filterAnyRegion": "Any",
+  "filterWeight": "Weight, kg",
+  "filterMin": "Min",
+  "filterMax": "Max",
+  "filterWeightInvalid": "Min must not exceed max",
+  "filterMinPrice": "Price from",
+  "actionShowResults": "Show results"
 }
