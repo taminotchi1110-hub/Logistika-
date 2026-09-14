@@ -26,7 +26,7 @@ jobs:
   #  Bazasiz — bu testlar mock bilan ishlaydi va tez qaytadi.
   # ------------------------------------------------------------------
   api:
-    name: API (lint, tsc, 224 unit test)
+    name: API (lint, tsc, 244 unit test)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5

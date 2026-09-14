@@ -32,6 +32,12 @@ export class OtpService {
   private readonly maxPerDayPerIp: number;
   private readonly pepper: string;
   private readonly exposeCode: boolean;
+  /**
+   * Do'kon ko'rib chiquvchilari uchun sinov raqami (null — o'chirilgan).
+   * Shu raqamga SMS yuborilmaydi va kod doimiy; qolgan himoya o'zgarmaydi.
+   */
+  private readonly reviewPhone: string | null;
+  private readonly reviewCode: string | null;
 
   constructor(
     private readonly database: DatabaseService,
@@ -49,6 +55,8 @@ export class OtpService {
     this.exposeCode =
       config.get('OTP_EXPOSE_CODE_IN_DEV', { infer: true }) &&
       config.get('NODE_ENV', { infer: true }) === 'development';
+    this.reviewPhone = config.get('REVIEW_PHONE', { infer: true }) || null;
+    this.reviewCode = config.get('REVIEW_OTP_CODE', { infer: true }) || null;
   }
 
   /**
@@ -95,7 +103,10 @@ export class OtpService {
       );
     }
 
-    const code = this.generateCode();
+    // Sinov hisobi: kod doimiy. Yuqoridagi limitlar unga ham xuddi
+    // boshqalardek qo'llandi — doimiy kodni terib topish shu bilan to'xtaydi
+    const reviewCode = phone === this.reviewPhone ? this.reviewCode : null;
+    const code = reviewCode ?? this.generateCode();
     const expiresAt = new Date(Date.now() + this.ttlSeconds * 1000);
 
     // Eski tasdiqlanmagan kodlarni bekor qilamiz: bir vaqtda faqat bitta
@@ -119,19 +130,14 @@ export class OtpService {
       })
       .execute();
 
-    try {
-      await this.sms.sendOtp(phone, code, lang);
-    } catch {
-      // SMS ketmasa foydalanuvchiga rost gapiramiz va cooldown'ni bo'shatamiz —
-      // aks holda u 60 soniya bekorga kutadi.
-      await this.rateLimit.releaseCooldown(`otp:${phone}`);
-      throw AppError.unprocessable(
-        ErrorCode.OTP_SEND_FAILED,
-        'SMS yuborib boʻlmadi. Birozdan keyin qayta urinib koʻring.',
-      );
+    if (reviewCode) {
+      // Ko'rib chiquvchi kodni do'kon kabinetidagi izohdan oladi. Har
+      // foydalanish logda qoladi — begona IP dan urinishlar ko'rinib turadi
+      this.logger.warn({ phone: maskPhone(phone), ip }, "Sinov hisobi: kod SMS'siz berildi");
+    } else {
+      await this.sendSms(phone, code, lang);
+      this.logger.log({ phone: maskPhone(phone) }, 'OTP yuborildi');
     }
-
-    this.logger.log({ phone: maskPhone(phone) }, 'OTP yuborildi');
 
     return {
       expiresInSeconds: this.ttlSeconds,
@@ -185,6 +191,20 @@ export class OtpService {
 
     await this.consume(otp.id);
     await this.rateLimit.releaseCooldown(`otp:${phone}`);
+  }
+
+  private async sendSms(phone: string, code: string, lang: LangCode): Promise<void> {
+    try {
+      await this.sms.sendOtp(phone, code, lang);
+    } catch {
+      // SMS ketmasa foydalanuvchiga rost gapiramiz va cooldown'ni bo'shatamiz —
+      // aks holda u 60 soniya bekorga kutadi.
+      await this.rateLimit.releaseCooldown(`otp:${phone}`);
+      throw AppError.unprocessable(
+        ErrorCode.OTP_SEND_FAILED,
+        'SMS yuborib boʻlmadi. Birozdan keyin qayta urinib koʻring.',
+      );
+    }
   }
 
   private async consume(otpId: string): Promise<void> {

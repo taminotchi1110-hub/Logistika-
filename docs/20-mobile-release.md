@@ -105,10 +105,36 @@ qilmaydi). Birinchi reliz oldidan `0.1.0+1` → `1.0.0+1`.
 - [ ] Play **Data safety** va App Store **App Privacy** shakllari:
       telefon raqami, ism, joylashuv (ilova ochiq paytida), hujjat
       suratlari, to'lov tarixi; uchinchi tomonga sotilmaydi
-- [ ] Ko'rib chiquvchilar uchun sinov hisobi: ilova SMS kod bilan
-      kiradi — ko'rib chiquvchiga ishlaydigan raqam va kod berilishi kerak
+- [ ] Ko'rib chiquvchilar uchun sinov hisobi (20.7)
 
-## 20.7 Ma'lum cheklovlar (keyingi relizlar)
+## 20.7 Ko'rib chiquvchilar uchun sinov hisobi ✋
+
+Apple va Google ilovani ishlab turgan serverda tekshiradi va kirish
+ma'lumotini so'raydi. Ilova SMS kod bilan kiradi, ko'rib chiquvchi esa SMS
+ololmaydi — shuning uchun BITTA raqamga doimiy kod beriladi.
+
+1. **O'zingizga tegishli** raqamni tanlang (begona odamniki bo'lsa, u
+   SMS'siz qoladi) va tasodifiy kod yarating:
+   ```bash
+   python3 -c "import secrets; print(f'{secrets.randbelow(10**6):06d}')"
+   ```
+2. `.env.production`: `REVIEW_PHONE=+998...` va `REVIEW_OTP_CODE=...`,
+   so'ng `bash scripts/deploy.sh`.
+3. Play Console → *App content → App access* va App Store Connect →
+   *App Review Information → Sign-in required*: raqam va kod. Izohga
+   qo'shing: "kodni bir soatda 3 martadan ko'p so'ramang".
+
+**O'zgaradigani:** shu raqamga SMS yuborilmaydi, kod doimiy.
+**O'zgarmaydigani:** limitlar (60 soniya oraliq, soatiga 3 ta so'rov,
+kodga 5 ta urinish), har kirish yangi so'rov bilan, hisob — oddiy
+foydalanuvchi, hech qanday maxsus huquqsiz. Server oddiy (`000000`,
+`123456`) yoki noto'g'ri uzunlikdagi kod bilan ishga tushmaydi. Har
+foydalanish logda qoladi: `logs api | grep "Sinov hisobi"`.
+
+**Ko'rib chiqish tugagach:** ikkala qiymatni bo'shating va `deploy.sh`;
+sinov hisobi joylagan yuk e'lonlarini admin paneldan bekor qiling.
+
+## 20.8 Ma'lum cheklovlar (keyingi relizlar)
 
 - **Fon rejimida kuzatuv yo'q:** haydovchi ilovani yig'ib qo'ysa GPS
   yuborish to'xtaydi. Keyingi qadam — Android *foreground service* va

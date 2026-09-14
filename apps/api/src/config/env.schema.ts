@@ -9,7 +9,21 @@
  */
 import { z } from 'zod';
 
+import { normalizeUzPhone } from '../common/utils/phone.util';
+
 const durationRegex = /^\d+(ms|s|m|h|d)$/;
+
+/**
+ * 000000, 123456, 654321 kabi kodlar — hujumchi birinchi navbatda
+ * sinaydiganlari. Qadam 0 — bir xil raqamlar, 1 — o'suvchi, 9 — kamayuvchi.
+ */
+function isGuessableCode(code: string): boolean {
+  const steps = new Set<number>();
+  for (let i = 1; i < code.length; i++) {
+    steps.add((code.charCodeAt(i) - code.charCodeAt(i - 1) + 10) % 10);
+  }
+  return steps.size === 1 && (steps.has(0) || steps.has(1) || steps.has(9));
+}
 
 export const envSchema = z
   .object({
@@ -46,6 +60,21 @@ export const envSchema = z
       .enum(['true', 'false'])
       .default('false')
       .transform((v) => v === 'true'),
+
+    // --- do'kon ko'rib chiquvchilari uchun sinov hisobi ---
+    //
+    // App Store va Google Play ilovani ishlab turgan serverda tekshiradi,
+    // lekin SMS ololmaydi. Shu BITTA raqamga SMS yuborilmaydi, kod esa
+    // doimiy. Qolgan himoya (limitlar, urinishlar soni) o'zgarmaydi.
+    // Bo'sh — o'chirilgan. docs/20-mobile-release.md, 20.7
+    REVIEW_PHONE: z
+      .string()
+      .refine((v) => normalizeUzPhone(v) === v, {
+        message: "Kanonik ko'rinishda va amaldagi operator kodi bilan: +998901234567",
+      })
+      .optional()
+      .or(z.literal('')),
+    REVIEW_OTP_CODE: z.string().regex(/^\d+$/, 'Faqat raqamlar').optional().or(z.literal('')),
 
     // --- sms ---
     SMS_PROVIDER: z.enum(['console', 'eskiz']).default('console'),
@@ -138,6 +167,31 @@ export const envSchema = z
         code: z.ZodIssueCode.custom,
         path: ['OTP_EXPOSE_CODE_IN_DEV'],
         message: "OTP kodini javobda ochish production muhitida qat'iyan taqiqlanadi.",
+      });
+    }
+    // Sinov hisobi prodda ham ruxsat etiladi — do'konlar aynan prodni tekshiradi.
+    // Raqam va kod faqat birga ma'noga ega
+    if (Boolean(env.REVIEW_PHONE) !== Boolean(env.REVIEW_OTP_CODE)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['REVIEW_OTP_CODE'],
+        message: "REVIEW_PHONE va REVIEW_OTP_CODE birga beriladi (yoki ikkalasi ham bo'sh).",
+      });
+    }
+    if (env.REVIEW_OTP_CODE && env.REVIEW_OTP_CODE.length !== env.OTP_LENGTH) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['REVIEW_OTP_CODE'],
+        message: `REVIEW_OTP_CODE ${env.OTP_LENGTH} xonali bo'lishi kerak (OTP_LENGTH).`,
+      });
+    }
+    // Kod doimiy: oddiy kodni terib topish bir necha urinishlik ish
+    if (env.REVIEW_OTP_CODE && isGuessableCode(env.REVIEW_OTP_CODE)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['REVIEW_OTP_CODE'],
+        message:
+          'REVIEW_OTP_CODE juda oddiy (bir xil yoki ketma-ket raqamlar) — tasodifiy kod tanlang.',
       });
     }
     if (isProd && !env.FIELD_ENCRYPTION_KEY) {
