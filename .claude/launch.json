@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev", "--workspace=@karvon/admin"],
       "port": 5173
+    },
+    {
+      "name": "api",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["apps/api/dist/main.js"],
+      "port": 3000
     }
   ]
 }

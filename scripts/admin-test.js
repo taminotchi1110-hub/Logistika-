@@ -218,12 +218,20 @@ async function main() {
   );
   check('transport rad etildi', true, rejectVehicle.data?.ok);
 
+  // `template_key` — aniq shablon (haydovchi tasdiqlandi, transport rad
+  // etildi), umumiy "document.reviewed" turi emas: qaysi xabar ko'p
+  // ochilishini o'lchash uchun shunday saqlanadi
   const notified = await pg.query(
-    `SELECT count(*)::int AS n FROM notifications
-      WHERE user_id = $1 AND template_key = 'document.reviewed'`,
+    `SELECT template_key, body FROM notifications
+      WHERE user_id = $1 AND template_key IN ('driver.verified', 'vehicle.rejected')`,
     [pendingDriverId],
   );
-  check('★ HAYDOVCHI XABARDOR QILINDI', true, notified.rows[0].n >= 2);
+  check('★ HAYDOVCHI XABARDOR QILINDI', 2, notified.rows.length);
+  check(
+    'rad etish sababi xabarda',
+    true,
+    notified.rows.some((row) => row.body.includes('Rasm sifati past')),
+  );
 
   // ------------------------------------------------- hujjatni ko'rish
   step('Hujjatni koʻrish havolasi va uning auditi');

@@ -44,13 +44,22 @@ run() {
   echo "############################################################"
   local title="$1"
   shift
-  if "$@"; then
+  local log
+  log=$(mktemp)
+  # Chiqish ekranga ham, faylga ham: yiqilganda AYNAN QAYSI tekshiruv
+  # yiqilgani annotatsiyaga chiqadi. Faqat to'plam nomi yetmaydi — #17 da
+  # "9. Admin paneli" ko'rindi, sababini esa taxmin qilishga to'g'ri keldi
+  if "$@" 2>&1 | tee "$log"; then
     summary "- ✅ $title"
   else
     FAILED=1
     summary "- ❌ **$title**"
     annotate "Toʻplam yiqildi: $title"
+    sed -E 's/\x1b\[[0-9;]*m//g; s/^[[:space:]]+//' "$log" \
+      | grep -E '\[XATO\]|XATO:' | head -15 \
+      | while IFS= read -r line; do annotate "$title — $line"; done
   fi
+  rm -f "$log"
 }
 
 run "1. Asosiy oqim (auth, park, hujjatlar, yuklar)" bash scripts/smoke-test.sh
