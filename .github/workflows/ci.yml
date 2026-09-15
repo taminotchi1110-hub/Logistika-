@@ -80,7 +80,7 @@ jobs:
   #  Integratsiya testlari alohida ishda (ular API talab qiladi).
   # ------------------------------------------------------------------
   mobile:
-    name: Mobil (analyze, 337 test)
+    name: Mobil (analyze, 342 test)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -364,7 +364,7 @@ jobs:
   #  HAQIQATAN ishga tushadi.
   # ------------------------------------------------------------------
   integration:
-    name: Uchidan-uchiga (425 backend + 81 mobil)
+    name: Uchidan-uchiga (444 backend + 81 mobil)
     runs-on: ubuntu-latest
 
     # ISH DARAJASIDA, qadam darajasida emas.
@@ -539,7 +539,7 @@ jobs:
           done
           curl -sf http://localhost:3000/health
 
-      - name: Backend uchidan-uchiga (10 toʻplam)
+      - name: Backend uchidan-uchiga (11 toʻplam)
         run: bash scripts/test-all.sh
 
       - name: OTP limitlarini tozalash

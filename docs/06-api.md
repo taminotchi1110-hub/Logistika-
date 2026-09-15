@@ -75,6 +75,7 @@ POST /v1/auth/otp/verify
 |---|---|---|
 | GET | `/me` | Joriy foydalanuvchi (profil + rol + statistika) |
 | PATCH | `/me` | Profilni yangilash |
+| DELETE | `/me` | **Hisobni o'chirish** (qaytarib bo'lmaydi). Ochiq buyurtma, hamyonda qoldiq yoki kutilayotgan pul yechish — `409 ACCOUNT_HAS_*`. Shaxsiy ma'lumotlar tozalanadi, raqam bo'shaydi, moliyaviy yozuvlar shaxssiz qoladi |
 | POST | `/me/role` | Rolni almashtirish/qo'shish (`SHIPPER`↔`DRIVER`) |
 | POST | `/me/avatar` | Avatar (presigned upload'dan keyin key yuboriladi) |
 | GET | `/me/stats` | Buyurtmalar, daromad, reyting statistikasi |

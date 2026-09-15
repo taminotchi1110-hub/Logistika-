@@ -283,6 +283,20 @@ class ProfileTab extends ConsumerWidget {
             title: Text(l10n.actionLogout, style: const TextStyle(color: AppColors.danger)),
             onTap: () => _confirmLogout(context, ref),
           ),
+          const Divider(),
+          // Do'konlar talabi: hisob ochish mumkin bo'lgan ilovada uni
+          // ilovaning o'zidan o'chirish ham mumkin bo'lishi shart
+          ListTile(
+            leading: const Icon(
+              Icons.delete_forever_outlined,
+              color: AppColors.textSecondary,
+            ),
+            title: Text(
+              l10n.menuDeleteAccount,
+              style: const TextStyle(color: AppColors.textSecondary),
+            ),
+            onTap: () => _confirmDeleteAccount(context, ref),
+          ),
         ],
       ),
     );
@@ -393,6 +407,55 @@ class ProfileTab extends ConsumerWidget {
     if (confirmed ?? false) {
       await ref.read(authStateProvider.notifier).logout();
     }
+  }
+
+  /// Hisobni o'chirish.
+  ///
+  /// Oynada nima o'chishi va nima qolishi aytiladi, tugma aniq nomlangan
+  /// ("Butunlay o'chirish") — tasodifan bosib yuborish qiyin bo'lsin.
+  /// Server rad etsa (ochiq buyurtma, hamyonda pul) sabab ko'rsatiladi va
+  /// foydalanuvchi tizimda qoladi.
+  Future<void> _confirmDeleteAccount(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.deleteAccountTitle),
+        content: Text(l10n.deleteAccountBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n.actionCancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(
+              l10n.deleteAccountConfirm,
+              style: const TextStyle(color: AppColors.danger),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    try {
+      await ref.read(profileRepositoryProvider).deleteAccount();
+    } on ApiException catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(localizeError(context, error)),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+      return;
+    }
+
+    // Sessiyalar serverda yopilgan — mahalliy tokenlar tozalanadi va
+    // ilova kirish ekraniga qaytadi
+    await ref.read(authStateProvider.notifier).logout();
   }
 }
 

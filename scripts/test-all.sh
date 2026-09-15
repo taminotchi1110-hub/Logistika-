@@ -72,6 +72,7 @@ run "7. Hamyon, ledger va PSP toʻlovlari" node scripts/payments-test.js
 run "8. Ikki tomonlama reyting" node scripts/ratings-test.js
 run "9. Admin paneli" node scripts/admin-test.js
 run "10. Mijozning \"Yuklarim\" roʻyxati" node scripts/my-loads-test.js
+run "11. Hisobni oʻchirish" node scripts/account-deletion-test.js
 
 echo ""
 if [ "$FAILED" -eq 0 ]; then

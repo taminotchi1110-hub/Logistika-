@@ -1,10 +1,11 @@
-import { Body, Controller, Get, Param, Patch, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Put } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
 import { IsIn, IsOptional, IsString, Length, MaxLength } from 'class-validator';
 
 import { CurrentUser, type AuthenticatedUser } from '@/common/decorators';
 import { maskPhone } from '@/common/utils/phone.util';
 
+import { AccountDeletionService } from './account-deletion.service';
 import { UsersService } from './users.service';
 
 export class UpdateProfileDto {
@@ -51,7 +52,10 @@ export class RegisterDeviceDto {
 @ApiTags('users')
 @Controller()
 export class UsersController {
-  constructor(private readonly users: UsersService) {}
+  constructor(
+    private readonly users: UsersService,
+    private readonly accountDeletion: AccountDeletionService,
+  ) {}
 
   @Put('me/devices')
   @ApiBearerAuth()
@@ -79,6 +83,21 @@ export class UsersController {
   async updateMe(@CurrentUser() current: AuthenticatedUser, @Body() dto: UpdateProfileDto) {
     const updated = await this.users.updateProfile(current.id, dto);
     return this.users.toPublicProfile(updated);
+  }
+
+  @Delete('me')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Hisobni oʻchirish',
+    description:
+      'QAYTARIB BOʻLMAYDI. Shaxsiy maʼlumotlar tozalanadi, sessiyalar yopiladi, ' +
+      'telefon raqami boʻshaydi (u bilan qaytadan roʻyxatdan oʻtish mumkin). ' +
+      'Ochiq buyurtma, hamyonda qoldiq yoki kutilayotgan pul yechish boʻlsa — 409. ' +
+      'Moliyaviy yozuvlar shaxssiz holda saqlanadi (qonun talabi).',
+  })
+  async deleteMe(@CurrentUser() current: AuthenticatedUser) {
+    await this.accountDeletion.deleteAccount(current.id);
+    return { deleted: true };
   }
 
   @Get('users/:id')

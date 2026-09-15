@@ -792,5 +792,13 @@
   "@pushChannelMessages": {"description":"Android bildirishnoma kanali nomi (Sozlamalar → Ilovalar → KARVON → Bildirishnomalar)."},
   "pushChannelMessagesHint": "Yuk beruvchi va haydovchi oʻrtasidagi xabarlar",
   "pushChannelOrders": "Buyurtmalar",
-  "pushChannelOrdersHint": "Yangi yuklar, takliflar va buyurtma holati"
+  "pushChannelOrdersHint": "Yangi yuklar, takliflar va buyurtma holati",
+
+  "menuDeleteAccount": "Hisobni oʻchirish",
+  "deleteAccountTitle": "Hisob oʻchirilsinmi?",
+  "deleteAccountBody": "Bu amalni qaytarib boʻlmaydi. Ismingiz, raqamingiz, hujjatlaringiz va manzillaringiz oʻchiriladi, eʼlonlaringiz bekor qilinadi. Toʻlovlar tarixi qonun talabiga koʻra shaxssiz holda saqlanadi.\n\nKeyinroq shu raqam bilan yangi hisob ochishingiz mumkin.",
+  "deleteAccountConfirm": "Butunlay oʻchirish",
+  "errAccountHasOpenOrders": "Yakunlanmagan buyurtmangiz bor. Avval uni yakunlang yoki bekor qiling.",
+  "errAccountHasBalance": "Hamyoningizda qoldiq bor. Avval pulni yeching yoki qarzni yoping.",
+  "errAccountHasPendingPayout": "Pul yechish soʻrovingiz koʻrib chiqilmoqda. U yakunlangach hisobni oʻchirishingiz mumkin."
 }

@@ -100,11 +100,18 @@ qilmaydi). Birinchi reliz oldidan `0.1.0+1` → `1.0.0+1`.
       barcha o'lchamlar yaratiladi.
 - [ ] Skrinshotlar (telefon), Play uchun 1024×500 banner
 - [ ] Qisqa va to'liq tavsif — o'zbek, rus, ingliz
-- [ ] **Maxfiylik siyosati URL** — ikkala do'kon uchun majburiy
-      (loyiha: `docs/legal/`, yurist tasdig'idan keyin saytga)
+- [ ] **Maxfiylik siyosati URL** — ikkala do'kon uchun majburiy.
+      Loyiha: [`docs/legal/maxfiylik-siyosati.md`](legal/maxfiylik-siyosati.md),
+      shartlar: [`foydalanish-shartlari.md`](legal/foydalanish-shartlari.md) —
+      yurist tasdig'idan keyin saytga
 - [ ] Play **Data safety** va App Store **App Privacy** shakllari:
-      telefon raqami, ism, joylashuv (ilova ochiq paytida), hujjat
-      suratlari, to'lov tarixi; uchinchi tomonga sotilmaydi
+      telefon raqami, ism, joylashuv (faqat reys davomida, ilova ochiq
+      paytida), hujjat suratlari, to'lov tarixi; uchinchi tomonga
+      sotilmaydi; foydalanuvchi ma'lumotini o'chirishni so'rashi mumkin — **ha**
+- [ ] **Hisobni o'chirish** — ilovada tayyor (Profil → Hisobni o'chirish,
+      `DELETE /v1/me`). Google Play qo'shimcha **veb-havola** so'raydi:
+      [`docs/legal/hisobni-ochirish.md`](legal/hisobni-ochirish.md) ni saytga
+      joylab, Data safety ga yozing
 - [ ] Ko'rib chiquvchilar uchun sinov hisobi (20.7)
 
 ## 20.7 Ko'rib chiquvchilar uchun sinov hisobi ✋

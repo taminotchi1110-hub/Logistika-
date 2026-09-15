@@ -104,6 +104,11 @@ String localizeErrorWith(AppLocalizations l10n, ApiException error) {
     'USER_PROFILE_INCOMPLETE' => l10n.errUserProfileIncomplete,
     'USER_ROLE_NOT_ALLOWED' => l10n.errUserRoleNotAllowed,
 
+    // --- hisobni o'chirish ---
+    'ACCOUNT_HAS_OPEN_ORDERS' => l10n.errAccountHasOpenOrders,
+    'ACCOUNT_HAS_BALANCE' => l10n.errAccountHasBalance,
+    'ACCOUNT_HAS_PENDING_PAYOUT' => l10n.errAccountHasPendingPayout,
+
     // --- haydovchi va transport ---
     'DRIVER_NOT_VERIFIED' => l10n.errDriverNotVerified,
     'VEHICLE_NOT_VERIFIED' => l10n.errVehicleNotVerified,

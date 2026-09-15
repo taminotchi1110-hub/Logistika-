@@ -630,5 +630,13 @@
   "pushChannelMessages": "Messages",
   "pushChannelMessagesHint": "Messages between shippers and drivers",
   "pushChannelOrders": "Orders",
-  "pushChannelOrdersHint": "New loads, offers and order status"
+  "pushChannelOrdersHint": "New loads, offers and order status",
+
+  "menuDeleteAccount": "Delete account",
+  "deleteAccountTitle": "Delete your account?",
+  "deleteAccountBody": "This can't be undone. Your name, phone number, documents and addresses will be deleted, and your listings cancelled. Payment history is kept in anonymised form as required by law.\n\nYou can create a new account with the same number later.",
+  "deleteAccountConfirm": "Delete permanently",
+  "errAccountHasOpenOrders": "You have an unfinished order. Complete or cancel it first.",
+  "errAccountHasBalance": "Your wallet has a balance. Withdraw the money or pay off the debt first.",
+  "errAccountHasPendingPayout": "Your withdrawal request is being processed. You can delete your account once it's done."
 }

@@ -41,9 +41,9 @@ Batafsil: [docs/13-backend.md](docs/13-backend.md)
 | Qatlam | Soni | Buyruq |
 |---|---|---|
 | Backend unit | 247 | `npm test --workspace=@karvon/api` |
-| Backend uchidan-uchiga | 425 | `bash scripts/test-all.sh` |
+| Backend uchidan-uchiga | 444 | `bash scripts/test-all.sh` |
 | Admin panel | 188 | `npm run admin:test` |
-| Mobil unit/widget | 337 | `npm run mobile:test` |
+| Mobil unit/widget | 342 | `npm run mobile:test` |
 | Mobil integratsiya | 81 | `npm run mobile:test:api` |
 
 Hammasi har push va PR da avtomatik ishlaydi ([ci.yml](.github/workflows/ci.yml)).
@@ -113,6 +113,7 @@ ko'rsatilmaydi — ilovada to'qima raqam yo'q.
 | 18 | [docs/18-i18n.md](docs/18-i18n.md) | **Koʻp tillilik: ilova, bildirishnoma shablonlari, yangi til qoʻshish** |
 | 19 | [docs/19-deploy.md](docs/19-deploy.md) | **Ishlab chiqarishga chiqarish, zaxira nusxa, qaytarish va nosozliklar** |
 | 20 | [docs/20-mobile-release.md](docs/20-mobile-release.md) | **Mobil ilova: Firebase, imzo kaliti, yig'ish, do'kon materiallari** |
+| — | [docs/legal/](docs/legal/) | **Maxfiylik siyosati, foydalanish shartlari, hisobni o'chirish sahifasi** (loyiha — yurist tasdig'i kerak) |
 | — | [db/migrations/0001_init.sql](db/migrations/0001_init.sql) | To'liq PostgreSQL DDL |
 | — | [db/seeds/0001_reference.sql](db/seeds/0001_reference.sql) | Spravochnik ma'lumotlari |
 

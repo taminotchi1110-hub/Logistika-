@@ -84,4 +84,13 @@ class ProfileRepository {
   Future<void> removeRoute(String id) async {
     await _api.delete<dynamic>('/me/driver/routes/$id');
   }
+
+  /// Hisobni butunlay o'chiradi (App Store va Google Play talabi).
+  ///
+  /// Server ochiq buyurtma, hamyon qoldig'i yoki kutilayotgan pul yechish
+  /// bo'lsa rad etadi (409) — sabab kod bilan keladi va tarjima qilinadi.
+  /// Muvaffaqiyatli bo'lsa barcha sessiyalar serverda allaqachon yopilgan.
+  Future<void> deleteAccount() async {
+    await _api.delete<dynamic>('/me');
+  }
 }
