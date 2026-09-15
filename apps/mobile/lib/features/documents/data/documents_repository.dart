@@ -114,10 +114,23 @@ class DocumentsRepository {
         ),
       );
     } on DioException catch (error) {
+      // Ombor javobi xabarga qo'shiladi: foydalanuvchi baribir kod bo'yicha
+      // tarjima qilingan matnni ko'radi, test va log esa haqiqiy sababni
+      // (403 SignatureDoesNotMatch, 400 BadDigest...) — usiz CI da faqat
+      // "yuklab bo'lmadi" ko'rinardi va sababni taxmin qilishga to'g'ri kelardi
+      final status = error.response?.statusCode;
+      final storageCode = RegExp(r'<Code>([^<]+)</Code>')
+          .firstMatch('${error.response?.data ?? ''}')
+          ?.group(1);
+      final reason = [
+        if (status != null) 'HTTP $status',
+        if (storageCode != null) storageCode,
+      ].join(' ');
       throw ApiException(
         code: 'UPLOAD_FAILED',
-        message: 'Faylni yuklab boʻlmadi. Internetni tekshiring.',
-        statusCode: error.response?.statusCode ?? 0,
+        message: 'Faylni yuklab boʻlmadi. Internetni tekshiring.'
+            '${reason.isEmpty ? '' : ' ($reason)'}',
+        statusCode: status ?? 0,
       );
     }
   }

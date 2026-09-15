@@ -26,7 +26,7 @@ jobs:
   #  Bazasiz — bu testlar mock bilan ishlaydi va tez qaytadi.
   # ------------------------------------------------------------------
   api:
-    name: API (lint, tsc, 244 unit test)
+    name: API (lint, tsc, 247 unit test)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -599,6 +599,11 @@ jobs:
           echo "::group::S3 ombori log (oxirgi 20 qator)"
           docker logs s3 2>&1 | tail -20 || true
           echo "::endgroup::"
+          # Ombor rad etgan so'rovlar ANNOTATSIYAGA: yuklash yiqilsa sababi
+          # (imzo, checksum) tizimga kirmasdan ham ko'rinsin — #19 da faqat
+          # "yuklab bo'lmadi" ko'rindi
+          docker logs s3 2>&1 | grep -iE 'error|denied|mismatch|invalid|signature' | tail -5 \
+            | while IFS= read -r line; do echo "::error::S3: $line"; done || true
 
           # Status kodlari SONI bilan: bitta 429 tasodif, ellikta 429 —
           # sabab. Oldingi urinishda faqat kodlar roʻyxati chiqqan edi

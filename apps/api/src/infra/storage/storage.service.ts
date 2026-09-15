@@ -87,6 +87,12 @@ export class StorageService implements OnModuleInit {
         accessKeyId: config.get('S3_ACCESS_KEY', { infer: true }),
         secretAccessKey: config.get('S3_SECRET_KEY', { infer: true }),
       },
+      // SDK (3.729+) standart holatda imzolangan PUT havolasiga BO'SH tananing
+      // checksumini qo'shadi (`x-amz-checksum-crc32=AAAAAA==`). Qat'iy S3
+      // (SeaweedFS, AWS) yuklangan faylni shu qiymat bilan solishtiradi va
+      // rad etadi — MinIO tekshirmagani uchun xato yashirin qolgan edi
+      requestChecksumCalculation: 'WHEN_REQUIRED',
+      responseChecksumValidation: 'WHEN_REQUIRED',
     });
   }
 
@@ -141,7 +147,10 @@ export class StorageService implements OnModuleInit {
         ContentType: params.mimeType,
         ContentLength: params.sizeBytes,
       }),
-      { expiresIn: this.uploadTtl },
+      // `content-type` presigner standart holatda imzolamaydi (faqat
+      // `content-length` va `host`) — shusiz "rasm" havolasiga HTML
+      // yuklab qo'yish mumkin edi
+      { expiresIn: this.uploadTtl, signableHeaders: new Set(['content-type']) },
     );
 
     return {
