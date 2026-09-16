@@ -59,7 +59,11 @@ export const envSchema = z
     OTP_MAX_ATTEMPTS: z.coerce.number().int().min(3).max(10).default(5),
     OTP_RESEND_COOLDOWN_SECONDS: z.coerce.number().int().min(15).max(300).default(60),
     OTP_MAX_PER_HOUR_PER_PHONE: z.coerce.number().int().min(1).max(20).default(3),
-    OTP_MAX_PER_DAY_PER_IP: z.coerce.number().int().min(1).max(200).default(10),
+    // IP bo'yicha kunlik limit — SMS xarajatidan himoyaning IKKINCHI qatlami.
+    // Asosiysi raqam bo'yicha (soatiga 3 ta). Past qiymat mumkin emas: mobil
+    // operatorlar yuzlab abonentni bitta tashqi IP orqali chiqaradi (CGNAT)
+    // va ular bir-birini bloklab qo'yardi
+    OTP_MAX_PER_DAY_PER_IP: z.coerce.number().int().min(1).max(5000).default(200),
     OTP_EXPOSE_CODE_IN_DEV: z
       .enum(['true', 'false'])
       .default('false')

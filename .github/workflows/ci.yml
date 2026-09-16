@@ -444,9 +444,9 @@ jobs:
           # koʻrinardi va 429 bilan 500 ni ajratib boʻlmasdi
           LOG_LEVEL=info
 
-          # Kunlik OTP chegarasi namunada 10 — bu bitta toʻplamga ham
-          # yetmaydi. Sxemadagi maksimum 200 (`env.schema.ts`), undan
-          # kattasi yozilsa ilova umuman ishga tushmaydi.
+          # Kunlik OTP chegarasi IP boʻyicha. Namunada ham 200 — pastroq
+          # qiymat bitta toʻplamga ham yetmaydi va CGNAT ortidagi haqiqiy
+          # foydalanuvchilarni bloklaydi (`env.schema.ts`, maksimum 5000)
           OTP_MAX_PER_DAY_PER_IP=200
 
           # Admin paneli kalitsiz ishlamaydi ("Admin paneli sozlanmagan"),
