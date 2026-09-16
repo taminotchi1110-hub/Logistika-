@@ -280,3 +280,35 @@ Bu qadamlar shaxsiy hisob, shartnoma yoki to'lovni talab qiladi:
 - [ ] Maxfiylik siyosati va foydalanish shartlarini yurist tasdig'i
 - [ ] Serverdan tashqari zaxira ombori (`rclone` manzili)
 - [ ] Tashqi kuzatuv xizmati va ogohlantirish qabul qiluvchilari
+
+## 19.10 Yuklama testi (ishga tushirishdan oldin)
+
+Serverni real yuklamada sinash — `scripts/load-test.js` ([k6](https://k6.io)):
+
+```bash
+k6 run -e BASE_URL=https://api.staging.karvon.uz/v1 scripts/load-test.js
+```
+
+Uch oqim bir vaqtda: **lenta** (haydovchi qidiruvi — eng ko'p chaqiriladigan),
+**GPS kuzatuv** (eng ko'p yozadigan), **e'lon joylash** (matching va push
+zanjirini qo'zg'aydi). Chegaralar skriptda: lenta p95 < 500 ms, kuzatuv
+p95 < 300 ms, e'lon p95 < 1,5 s, xatolik < 1% — oshsa k6 xato bilan tugaydi.
+
+**Shartlar:**
+- **faqat staging** yoki shu test uchun ko'tarilgan muhit: skript haqiqiy
+  foydalanuvchi yaratadi va e'lon joylaydi;
+- muhitda `OTP_EXPOSE_CODE_IN_DEV=true` bo'lishi kerak. Production'da
+  server bu sozlama bilan umuman ishga tushmaydi — ya'ni skriptni
+  adashib prodga qarshi ishlatib bo'lmaydi (manzil tekshiruvi ham bor);
+- `HTTP_RATE_LIMIT_PER_MINUTE` ni vaqtincha oshiring, aks holda test
+  serverning quvvatini emas, limitni o'lchaydi (429).
+
+Tugagach tozalash:
+
+```sql
+DELETE FROM loads WHERE title LIKE 'YUKLAMA TESTI%';
+-- test foydalanuvchilari: phone LIKE '+99890777%'
+```
+
+Natijani saqlab boring: har reliz oldidan taqqoslanadi — `p95` sezilarli
+o'sgan bo'lsa, bu regressiya va sababi shu relizdagi o'zgarishlarda.

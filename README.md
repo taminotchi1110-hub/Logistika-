@@ -45,6 +45,7 @@ Batafsil: [docs/13-backend.md](docs/13-backend.md)
 | Admin panel | 188 | `npm run admin:test` |
 | Mobil unit/widget | 342 | `npm run mobile:test` |
 | Mobil integratsiya | 81 | `npm run mobile:test:api` |
+| Yuklama (k6) | 3 ssenariy | `k6 run scripts/load-test.js` (docs/19-deploy.md, 19.10) |
 
 Hammasi har push va PR da avtomatik ishlaydi ([ci.yml](.github/workflows/ci.yml)).
 
