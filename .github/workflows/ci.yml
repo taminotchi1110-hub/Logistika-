@@ -35,7 +35,7 @@ jobs:
     name: API (lint, tsc, 253 unit test)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v5
         with:
@@ -60,7 +60,7 @@ jobs:
     name: Admin panel (lint, tsc, 188 test)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v5
         with:
@@ -89,7 +89,7 @@ jobs:
     name: Mobil (analyze, 342 test)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: subosito/flutter-action@v2
         with:
@@ -117,7 +117,7 @@ jobs:
     name: Android (reliz APK)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-java@v4
         with:
@@ -162,7 +162,7 @@ jobs:
     name: Docker (API va admin tasvirlari, prod compose)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Deploy skriptlari (shellcheck)
         # Serverda birinchi marta ishga tushganda yiqiladigan skript —
@@ -411,7 +411,7 @@ jobs:
           --health-retries 20
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v5
         with:
