@@ -2,8 +2,8 @@
 
 [![CI](https://github.com/taminotchi1110-hub/Logistika-/actions/workflows/ci.yml/badge.svg)](https://github.com/taminotchi1110-hub/Logistika-/actions/workflows/ci.yml)
 
-> **Holat:** 9-BOSQICH — uch tilli interfeys (uz/ru/en), lenta filtri, ishga tushirishga tayyorgarlik
-> **Versiya:** 0.9.0 · **Sana:** 2026-09-12
+> **Holat:** 10-BOSQICH — do'konga topshirishga tayyorgarlik: hisobni o'chirish, xavfsizlik va yuklama testlari
+> **Versiya:** 1.0.0-rc.1 · **Sana:** 2026-09-16
 
 Yuk beruvchi (shipper) va haydovchi (carrier) ni real vaqtda bog'laydigan, GPS tracking,
 avtomatik matching, escrow to'lov va reyting tizimiga ega marketplace platforma.
@@ -34,7 +34,8 @@ Batafsil: [docs/13-backend.md](docs/13-backend.md)
 | 7 — Admin panel interfeysi (React + Vite, 9 ekran) | ✅ tayyor |
 | 8 — Buyurtma monitoringi va support amallari, **CI** | ✅ tayyor |
 | 9 — **i18n** (uz/ru/en: ilova + push/SMS), lenta filtri | ✅ tayyor |
-| 9 — Yuklama va xavfsizlik testlari, Docker, deploy va zaxira nusxa | ⏳ jarayonda |
+| 9 — Yuklama va xavfsizlik testlari, Docker, deploy va zaxira nusxa | ✅ tayyor |
+| 10 — Do'kon talablari: hisobni o'chirish, ko'rib chiquvchi hisobi, huquqiy hujjat loyihalari | ✅ tayyor |
 
 ### Testlar
 
