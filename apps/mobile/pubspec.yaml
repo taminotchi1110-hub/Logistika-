@@ -19,7 +19,7 @@ dependencies:
   # Riverpod: kod generatsiyasisiz ishlatiladi. `build_runner` qo'shilsa
   # CI va lokal muhitda qo'shimcha qadam paydo bo'ladi; bu loyihada
   # provayderlar qo'lda yoziladi — o'qish osonroq va qaramlik kamroq.
-  flutter_riverpod: ^2.5.1
+  flutter_riverpod: ^3.4.3
 
   # --- navigatsiya ---
   # go_router: deep link (karvon://order/123) push bildirishnomalardan
