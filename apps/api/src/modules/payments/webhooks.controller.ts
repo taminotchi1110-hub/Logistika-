@@ -1,8 +1,17 @@
-import { Body, Controller, Headers, HttpCode, HttpStatus, Inject, Logger, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Headers,
+  HttpCode,
+  HttpStatus,
+  Inject,
+  Logger,
+  Post,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiExcludeController } from '@nestjs/swagger';
 
-import { Public, RawResponse } from '@/common/decorators';
+import { Public, RawResponse, SkipRateLimit } from '@/common/decorators';
 import { toTiyin } from '@/common/utils/money.util';
 import type { Env } from '@/config/env.schema';
 import { DatabaseService } from '@/infra/database/database.service';
@@ -45,6 +54,9 @@ import {
  */
 @ApiExcludeController()
 @RawResponse()
+// Umumiy limitdan tashqarida: Click va Payme bir necha IP dan keladi va
+// javob olmasa qayta yuboradi — limit toʻlovni yoʻqotardi. Himoya imzoda
+@SkipRateLimit()
 @Controller('payments/webhook')
 export class PaymentWebhooksController {
   private readonly logger = new Logger(PaymentWebhooksController.name);
@@ -328,13 +340,14 @@ export class PaymentWebhooksController {
     if (!payment) return paymeFailure(body.id, PAYME_ERROR.TRANSACTION_NOT_FOUND);
 
     const cancelled = payment.status === 'CANCELLED' || payment.status === 'REFUNDED';
-    const state = payment.status === 'PAID'
-      ? PAYME_STATE.PERFORMED
-      : cancelled
-        ? payment.status === 'REFUNDED'
-          ? PAYME_STATE.CANCELLED_AFTER_PERFORM
-          : PAYME_STATE.CANCELLED_BEFORE_PERFORM
-        : PAYME_STATE.CREATED;
+    const state =
+      payment.status === 'PAID'
+        ? PAYME_STATE.PERFORMED
+        : cancelled
+          ? payment.status === 'REFUNDED'
+            ? PAYME_STATE.CANCELLED_AFTER_PERFORM
+            : PAYME_STATE.CANCELLED_BEFORE_PERFORM
+          : PAYME_STATE.CREATED;
 
     return paymeSuccess(body.id, {
       create_time: paymeTime(payment.createdAt),

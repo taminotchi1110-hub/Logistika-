@@ -2,7 +2,7 @@ import { Controller, Get, HttpStatus, Res } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
 
-import { Public } from '@/common/decorators';
+import { Public, SkipRateLimit } from '@/common/decorators';
 import { DatabaseService } from '@/infra/database/database.service';
 import { RedisService } from '@/infra/redis/redis.service';
 
@@ -13,6 +13,9 @@ interface DependencyStatus {
 }
 
 @ApiTags('health')
+// Orkestrator sogʻliqni tez-tez soʻraydi va limitga tushsa podni oʻlik
+// deb hisoblab qayta ishga tushirardi
+@SkipRateLimit()
 @Controller()
 export class HealthController {
   private readonly startedAt = Date.now();

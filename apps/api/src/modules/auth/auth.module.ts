@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 
+import { HttpRateLimitGuard } from '@/common/guards/http-rate-limit.guard';
 import type { Env } from '@/config/env.schema';
 import { resolveJwtKeys } from '@/config/jwt-keys';
 import { SmsModule } from '@/modules/sms/sms.module';
@@ -48,6 +49,10 @@ import { TokenService } from './token.service';
     // Tartib muhim — avval autentifikatsiya, keyin rol tekshiruvi.
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
+    // Limit OXIRIDA: bu paytda `request.user` maʼlum va cheklov IP emas,
+    // FOYDALANUVCHI boʻyicha qoʻyiladi (mobil operatorlar koʻp abonentni
+    // bitta IP orqali chiqaradi — CGNAT)
+    { provide: APP_GUARD, useClass: HttpRateLimitGuard },
   ],
   exports: [TokenService, AuthService],
 })

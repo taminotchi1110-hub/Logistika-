@@ -40,8 +40,8 @@ Batafsil: [docs/13-backend.md](docs/13-backend.md)
 
 | Qatlam | Soni | Buyruq |
 |---|---|---|
-| Backend unit | 247 | `npm test --workspace=@karvon/api` |
-| Backend uchidan-uchiga | 444 | `bash scripts/test-all.sh` |
+| Backend unit | 253 | `npm test --workspace=@karvon/api` |
+| Backend uchidan-uchiga | 491 | `bash scripts/test-all.sh` |
 | Admin panel | 188 | `npm run admin:test` |
 | Mobil unit/widget | 342 | `npm run mobile:test` |
 | Mobil integratsiya | 81 | `npm run mobile:test:api` |

@@ -64,14 +64,23 @@ Bu tekshiruv **avtomatik testda** har bir endpoint uchun majburiy:
 
 ## 10.5. Rate limiting va DoS
 
-| Qatlam | Chora |
-|---|---|
-| Nginx | Umumiy: 100 req/min/IP, burst 20 |
-| App (Redis) | Endpoint bo'yicha: `/auth/otp/request` 3/soat, `/loads` POST 20/soat, qidiruv 60/min |
-| WebSocket | Ulanish 5/min/IP, `location:update` 1/5s, `chat:message` 10/10s |
-| Fayl | Max 20 MB, MIME va **magic bytes** tekshiruvi, faqat `image/*` va `application/pdf` |
-| DB | `statement_timeout = 10s`, connection pool limiti |
-| Og'ir so'rovlar | Hisobotlar faqat read-replica'dan, navbat orqali |
+| Qatlam | Chora | Holat |
+|---|---|---|
+| App — global guard | `HTTP_RATE_LIMIT_PER_MINUTE` (prodda 300): **tizimga kirganlar uchun foydalanuvchi**, qolganlar uchun IP bo'yicha. Oshsa 429 + `Retry-After` | ✅ `common/guards/http-rate-limit.guard.ts` |
+| App — qimmat endpointlar | Geo (tashqi geokoder, OSRM): qo'shimcha 30/min | ✅ `@RateLimit()` |
+| App — OTP | Raqam bo'yicha 60 s oraliq va soatiga 3 ta, IP bo'yicha kuniga N ta; kodga 5 urinish | ✅ `OtpService` |
+| Istisnolar | To'lov webhook'lari (Click/Payme javob olmasa qayta yuboradi) va `/health` cheklanmaydi | ✅ `@SkipRateLimit()` |
+| Fayl | Max 20 MB, ruxsat etilgan MIME ro'yxati; yuklangach hajm va tur S3 dan **qayta o'qiladi** | ✅ |
+| Caddy | So'rov tanasi 25 MB, TLS + HSTS | ✅ `deploy/Caddyfile` |
+| DB | Connection pool limiti ✅ · `statement_timeout` | ⏳ reja |
+| WebSocket | Ulanish va xabar chastotasi limiti | ⏳ reja |
+| Og'ir so'rovlar | Hisobotlar read-replica'dan, navbat orqali | ⏳ reja |
+
+> **NEGA IP BO'YICHA EMAS, FOYDALANUVCHI BO'YICHA:** O'zbekistonda mobil
+> operatorlar ko'p abonentni bitta tashqi IP orqali chiqaradi (CGNAT).
+> Faqat IP bo'yicha limit bir-biriga butunlay begona odamlarni bir-biri
+> sababli bloklardi. Redis ishlamay qolsa so'rov o'tkaziladi: limit —
+> himoya qatlami, u tushib qolgani uchun butun API to'xtamasligi kerak.
 
 ## 10.6. Kirish validatsiyasi
 
@@ -141,7 +150,7 @@ kamroq offer).
 |---|---|
 | Kod | Majburiy code review (min 1 approve), `main` branch himoyalangan |
 | CI | ESLint + `npm audit` + Snyk/Dependabot + `gitleaks` + SAST (Semgrep) |
-| Test | Xavfsizlik testlari: IDOR, rate limit, JWT manipulyatsiyasi |
+| Test | ✅ `scripts/security-test.js` (CI, 12-to'plam): token qalbakilash (`alg=none`, HS256 ga almashtirish, payload), refresh token'ni qayta ishlatish, IDOR, mass-assignment, sarlavhalar va CORS. Rate limit — unit testlar |
 | Deploy | Immutable image, rollback 1 buyruq bilan |
 | Prod | Har chorakda **penetration test** (tashqi jamoa), yiliga bir marta to'liq audit |
 | Bog'liqliklar | Oyiga bir marta yangilash, kritik CVE — 48 soat ichida |

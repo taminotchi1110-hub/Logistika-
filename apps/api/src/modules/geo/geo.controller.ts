@@ -12,6 +12,8 @@ import {
   Min,
 } from 'class-validator';
 
+import { RateLimit } from '@/common/decorators';
+
 import { GeocodingService } from './geocoding.service';
 import { GeoService } from './geo.service';
 import { RoutingService } from './routing.service';
@@ -59,6 +61,10 @@ export class GeoRouteDto {
 
 @ApiTags('geo')
 @ApiBearerAuth()
+// Umumiy limitdan qatʼiyroq: bu soʻrovlar TASHQI provayderga (geokoder,
+// OSRM) boradi. Cheklovsiz "avtokomplit" server IP'sini provayderda
+// bloklatib qoʻyishi mumkin — natijada manzil qidiruvi hammada ishlamaydi
+@RateLimit({ limit: 30, windowSeconds: 60 })
 @Controller('geo')
 export class GeoController {
   constructor(

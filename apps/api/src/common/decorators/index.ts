@@ -27,6 +27,32 @@ export const RAW_RESPONSE_KEY = 'rawResponse';
 export const RawResponse = (): MethodDecorator & ClassDecorator =>
   SetMetadata(RAW_RESPONSE_KEY, true);
 
+// ------------------------------------------------------------ rate limit
+export const SKIP_RATE_LIMIT_KEY = 'skipRateLimit';
+export const RATE_LIMIT_KEY = 'rateLimit';
+
+export interface RateLimitOptions {
+  limit: number;
+  windowSeconds: number;
+}
+
+/**
+ * Umumiy HTTP limitini oʻchiradi.
+ *
+ * Faqat tashqi tizimlar uchun: toʻlov webhookʻlari (Click/Payme bir necha
+ * IP dan keladi va javob olmasa qayta yuboradi — limit toʻlovni yoʻqotardi)
+ * va orkestrator sogʻliq tekshiruvi.
+ */
+export const SkipRateLimit = (): MethodDecorator & ClassDecorator =>
+  SetMetadata(SKIP_RATE_LIMIT_KEY, true);
+
+/**
+ * Umumiy limitdan TASHQARI qoʻshimcha, qatʼiyroq limit — qimmat
+ * endpointlar uchun (masalan, tashqi geokoding API'siga boradiganlar).
+ */
+export const RateLimit = (options: RateLimitOptions): MethodDecorator & ClassDecorator =>
+  SetMetadata(RATE_LIMIT_KEY, options);
+
 export const ROLES_KEY = 'requiredRoles';
 
 /** Endpointga faqat koʻrsatilgan rollar kira oladi. `BOTH` har ikkalasiga mos keladi. */

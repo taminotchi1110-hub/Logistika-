@@ -32,6 +32,10 @@ export const envSchema = z
     API_PREFIX: z.string().default('v1'),
     CORS_ORIGINS: z.string().default(''),
     LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
+    // Umumiy HTTP limiti: bir daqiqada bitta foydalanuvchidan (tizimga
+    // kirmagan bo'lsa — bitta IP dan). Testlar bitta IP dan yuzlab so'rov
+    // yuboradi, shuning uchun .env.example da katta qiymat turadi
+    HTTP_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(10).max(1_000_000).default(300),
 
     // --- baza ---
     DATABASE_URL: z.string().url(),
