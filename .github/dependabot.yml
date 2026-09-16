@@ -1,0 +1,47 @@
+# Bog'liqliklarni yangilash — avtomatik PR sifatida.
+#
+# NEGA KERAK: xavfsizlik yamog'i chiqqanini qo'lda kuzatib bo'lmaydi va
+# "keyin qaraymiz" bilan oylab qolib ketadi. Kritik CVE 48 soat ichida
+# yopilishi kerak (docs/10-security.md, 10.10).
+#
+# Har bir PR CI dan o'tadi: yangilanish testlarni buzsa, bu darhol ko'rinadi.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      # Kichik yangilanishlar BITTA PR da: aks holda haftasiga o'nlab PR
+      # keladi va ular o'qilmay yopiladi
+      minor-and-patch:
+        update-types: [minor, patch]
+    labels: [dependencies]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    labels: [dependencies, ci]
+
+  # Flutter paketlari
+  - package-ecosystem: pub
+    directory: /apps/mobile
+    schedule:
+      interval: monthly
+    labels: [dependencies, mobil]
+
+  # Bazaviy tasvirlar (node, nginx) — xavfsizlik yamog'i ko'pincha shu yerda
+  - package-ecosystem: docker
+    directory: /apps/api
+    schedule:
+      interval: monthly
+    labels: [dependencies, docker]
+
+  - package-ecosystem: docker
+    directory: /apps/admin
+    schedule:
+      interval: monthly
+    labels: [dependencies, docker]

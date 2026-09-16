@@ -14,6 +14,12 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# GITHUB_TOKEN ga faqat oʻqish. CI omborga hech narsa yozmaydi; standart
+# huquqlar esa yozishga ham ruxsat berib qoʻyishi mumkin va buzilgan
+# bogʻliqlik shu token bilan kodni oʻzgartira olardi
+permissions:
+  contents: read
+
 env:
   # Ishlab chiqish mashinasidagi versiya bilan BIR XIL. Boshqa versiya
   # tanlansa, faqat CI da yiqiladigan xatolar paydo boʻladi va ularni
