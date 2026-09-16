@@ -41,7 +41,7 @@ dependencies:
   # flutter_map (OpenStreetMap): Google Maps API kaliti va billing
   # hisobi talab qiladi, O'zbekistonda esa to'lov murakkab. OSM bepul
   # va O'zbekiston yo'llari yaxshi chizilgan.
-  flutter_map: ^7.0.2
+  flutter_map: ^8.3.2
   latlong2: ^0.9.1
 
   # --- joylashuv ---
