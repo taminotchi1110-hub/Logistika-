@@ -18,6 +18,13 @@ updates:
       # keladi va ular o'qilmay yopiladi
       minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      # KATTA versiyalar — migratsiya ishi (NestJS 11→12, Vite 5→8 kabi):
+      # ularni odam rejalashtirib qiladi. Bot ochgan bunday PR CI da
+      # yiqiladi va faqat shovqin bo'ladi. Xavfsizlik ogohlantirishlari
+      # baribir GitHub Security bo'limida ko'rinadi
+      - dependency-name: '*'
+        update-types: [version-update:semver-major]
     labels: [dependencies]
 
   - package-ecosystem: github-actions
@@ -31,6 +38,11 @@ updates:
     directory: /apps/mobile
     schedule:
       interval: monthly
+    ignore:
+      # Flutter ekotizimida katta versiya ko'pincha API ni butunlay
+      # o'zgartiradi (riverpod 2→3, go_router 14→18) — qo'lda qilinadi
+      - dependency-name: '*'
+        update-types: [version-update:semver-major]
     labels: [dependencies, mobil]
 
   # Bazaviy tasvirlar (node, nginx) — xavfsizlik yamog'i ko'pincha shu yerda

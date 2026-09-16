@@ -25,7 +25,7 @@ RUN test -n "$VITE_API_BASE_URL" || (echo "VITE_API_BASE_URL berilmagan" >&2 && 
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 RUN npm run build --workspace=@karvon/admin
 
-FROM nginx:1.27-alpine AS runtime
+FROM nginx:1.31-alpine AS runtime
 # `templates/*.template` — ishga tushishda envsubst orqali conf.d ga
 # yoziladi (faqat berilgan o'zgaruvchilar almashtiriladi, `$uri` qoladi)
 COPY apps/admin/nginx/default.conf.template /etc/nginx/templates/default.conf.template
