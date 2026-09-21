@@ -45,6 +45,6 @@
     "admin:lint": "npm run lint --workspace=@karvon/admin"
   },
   "devDependencies": {
-    "prettier": "^3.3.3"
+    "prettier": "^3.9.8"
   }
 }
