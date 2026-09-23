@@ -10,7 +10,7 @@
 | Identifikator | `uz.karvon.app` — Android `applicationId` va iOS bundle ID. **Bir marta tanlanadi, keyin o'zgartirib bo'lmaydi** (o'zgarsa bu boshqa ilova hisoblanadi) |
 | Nomi | KARVON |
 | Tillar | o'zbek, rus, ingliz (ilova ichida tanlanadi) |
-| Ruxsatlar | internet; joylashuv — faqat ilova ochiq paytida; bildirishnomalar; kamera va galereya (hujjat surati) |
+| Ruxsatlar | internet; joylashuv — faqat faol reysda (ekran qulflangan bo'lsa ham, doimiy bildirishnoma bilan); bildirishnomalar; kamera va galereya (hujjat surati). `ACCESS_BACKGROUND_LOCATION` **so'ralmaydi** |
 | Push | Firebase fayli bo'lsa yoqiladi; bo'lmasa ilova pushsiz to'liq ishlaydi |
 | Yo'nalish | faqat portret |
 
@@ -114,6 +114,12 @@ qilmaydi). Birinchi reliz oldidan `0.1.0+1` → `1.0.0+1`.
       `DELETE /v1/me`). Google Play qo'shimcha **veb-havola** so'raydi:
       [`docs/legal/hisobni-ochirish.md`](legal/hisobni-ochirish.md) ni saytga
       joylab, Data safety ga yozing
+- [ ] **Fon xizmatini asoslash.** Play Console → *App content → Foreground
+      service permissions*: `FOREGROUND_SERVICE_LOCATION` uchun qisqa izoh
+      va qisqa video — "reys davomida mijoz yukning joyini ko'radi; xizmat
+      haydovchi reysni boshlaganda yoqiladi va reys tugashi bilan
+      o'chadi; `ACCESS_BACKGROUND_LOCATION` so'ralmaydi". App Store
+      Connect → *App Review Information* ga ham shu izoh yoziladi
 - [ ] Ko'rib chiquvchilar uchun sinov hisobi (20.7)
 
 ## 20.7 Ko'rib chiquvchilar uchun sinov hisobi ✋
@@ -145,9 +151,12 @@ sinov hisobi joylagan yuk e'lonlarini admin paneldan bekor qiling.
 
 ## 20.8 Ma'lum cheklovlar (keyingi relizlar)
 
-- **Fon rejimida kuzatuv yo'q:** haydovchi ilovani yig'ib qo'ysa GPS
-  yuborish to'xtaydi. Keyingi qadam — Android *foreground service* va
-  iOS *location updates* fon rejimi (do'konlar alohida asoslashni so'raydi).
+- **Fon rejimidagi kuzatuv** Android'da doimiy bildirishnomali xizmat,
+  iOS'da `location` fon rejimi orqali ishlaydi va faqat faol reysda
+  yoqiladi. Kod va sozlamalar testlar bilan mustahkamlangan, lekin bu
+  xatti-harakatni emulyatorda ham, CI da ham sinab bo'lmaydi — **haqiqiy
+  telefonda bir marta tekshirish shart**: reysni boshlang, ekranni
+  qulflang va mijoz tomonida nuqta yangilanayotganini ko'ring.
 - iOS ruxsat izohlari ikki tilda bitta qatorda (o'zbek / ingliz);
   to'liq mahalliylashtirish — `InfoPlist.strings` bilan.
 - Ilova yopiq holatda push bosilib, foydalanuvchi hali kirmagan bo'lsa,

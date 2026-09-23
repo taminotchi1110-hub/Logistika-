@@ -638,5 +638,8 @@
   "deleteAccountConfirm": "Delete permanently",
   "errAccountHasOpenOrders": "You have an unfinished order. Complete or cancel it first.",
   "errAccountHasBalance": "Your wallet has a balance. Withdraw the money or pay off the debt first.",
-  "errAccountHasPendingPayout": "Your withdrawal request is being processed. You can delete your account once it's done."
+  "errAccountHasPendingPayout": "Your withdrawal request is being processed. You can delete your account once it's done.",
+
+  "trackingNotificationTitle": "Trip tracking is on",
+  "trackingNotificationBody": "The customer can see where the cargo is. Tracking stops when the trip ends."
 }

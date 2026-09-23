@@ -800,5 +800,8 @@
   "deleteAccountConfirm": "Butunlay oʻchirish",
   "errAccountHasOpenOrders": "Yakunlanmagan buyurtmangiz bor. Avval uni yakunlang yoki bekor qiling.",
   "errAccountHasBalance": "Hamyoningizda qoldiq bor. Avval pulni yeching yoki qarzni yoping.",
-  "errAccountHasPendingPayout": "Pul yechish soʻrovingiz koʻrib chiqilmoqda. U yakunlangach hisobni oʻchirishingiz mumkin."
+  "errAccountHasPendingPayout": "Pul yechish soʻrovingiz koʻrib chiqilmoqda. U yakunlangach hisobni oʻchirishingiz mumkin.",
+
+  "trackingNotificationTitle": "Reys kuzatuvda",
+  "trackingNotificationBody": "Mijoz yuk qayerdaligini koʻrib turadi. Reys tugagach kuzatuv toʻxtaydi."
 }

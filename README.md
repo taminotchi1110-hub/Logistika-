@@ -44,7 +44,7 @@ Batafsil: [docs/13-backend.md](docs/13-backend.md)
 | Backend unit | 260 | `npm test --workspace=@karvon/api` |
 | Backend uchidan-uchiga | 517 | `bash scripts/test-all.sh` |
 | Admin panel | 188 | `npm run admin:test` |
-| Mobil unit/widget | 342 | `npm run mobile:test` |
+| Mobil unit/widget | 348 | `npm run mobile:test` |
 | Mobil integratsiya | 81 | `npm run mobile:test:api` |
 | Yuklama (k6) | 3 ssenariy | `k6 run scripts/load-test.js` (docs/19-deploy.md, 19.10) |
 

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'core/l10n/locale_controller.dart';
+import 'core/location/trip_location.dart';
 import 'core/notifications/push_registration.dart';
 import 'core/notifications/push_service.dart';
 import 'core/providers.dart';
@@ -173,9 +174,19 @@ class _RealtimeHostState extends ConsumerState<_RealtimeHost> {
 
     if (orderId == null) {
       sender.stop();
-    } else {
-      sender.start(orderId);
+      return;
     }
+
+    // Android fon xizmati doimiy bildirishnoma ko'rsatadi (tizim talabi) —
+    // matn foydalanuvchi tilida bo'lishi kerak, shuning uchun shu yerdan
+    final l10n = AppLocalizations.of(context);
+    sender.start(
+      orderId,
+      notification: TripNotificationText(
+        title: l10n.trackingNotificationTitle,
+        body: l10n.trackingNotificationBody,
+      ),
+    );
   }
 
   void _onNotification(RealtimeNotification notification) {

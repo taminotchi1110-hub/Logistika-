@@ -2,6 +2,7 @@ import 'dart:async';
 
 import '../../../core/config/app_config.dart';
 import '../../../core/location/device_location.dart';
+import '../../../core/location/trip_location.dart';
 import '../../../core/ws/socket_client.dart';
 import 'tracking_repository.dart';
 
@@ -11,6 +12,12 @@ import 'tracking_repository.dart';
 /// ilovani ochib qo'ygani uni doimiy nazoratga qo'ymaydi. Backend ham
 /// shu qoidani mustaqil tekshiradi (`TRACKING_NOT_ACTIVE`).
 ///
+/// EKRAN QULFLANGANDA HAM ISHLAYDI: nuqtalar platformaning fon
+/// xizmatidan keladi (`trip_location.dart`). Ilgari bu yerda oddiy
+/// `Timer.periodic` turgan edi va u ilova fonga o'tgach to'xtardi —
+/// mijoz haydovchini xaritada "muzlagan" holda ko'rardi, aslida reys
+/// davom etayotgan bo'lardi.
+///
 /// ALOQA UZILISHI — NORMAL HOLAT: haydovchi tunnelga kiradi, tog'
 /// yo'lida tarmoq yo'qoladi. Nuqtalar buferga yig'iladi va aloqa
 /// tiklanganda TO'PLAM bilan yuboriladi. Har birini alohida yuborish
@@ -19,17 +26,17 @@ class DriverLocationSender {
   DriverLocationSender({
     required SocketClient socket,
     required TrackingRepository repository,
-    LocationResolver? resolver,
+    TripLocationStream? stream,
     Duration? interval,
-  })  : _socket = socket,
-        _repository = repository,
-        _resolver = resolver ?? resolveDeviceLocation,
-        _interval = interval ??
-            const Duration(seconds: AppConfig.trackingIntervalSeconds);
+  }) : _socket = socket,
+       _repository = repository,
+       _stream = stream ?? deviceTripLocationStream,
+       _interval =
+           interval ?? const Duration(seconds: AppConfig.trackingIntervalSeconds);
 
   final SocketClient _socket;
   final TrackingRepository _repository;
-  final LocationResolver _resolver;
+  final TripLocationStream _stream;
   final Duration _interval;
 
   /// Yuborilmagan nuqtalar.
@@ -40,48 +47,52 @@ class DriverLocationSender {
   static const _maxBuffered = 500;
   final _buffer = <Map<String, dynamic>>[];
 
-  Timer? _timer;
+  StreamSubscription<DeviceLocation>? _locationSubscription;
   StreamSubscription<bool>? _connectionSubscription;
   String? _orderId;
   bool _isFlushing = false;
 
-  bool get isRunning => _timer != null;
+  bool get isRunning => _locationSubscription != null;
   String? get orderId => _orderId;
   int get bufferedCount => _buffer.length;
 
   /// Kuzatuvni boshlaydi. Boshqa reys uchun ishlayotgan bo'lsa,
   /// avval to'xtaydi.
-  void start(String orderId) {
+  ///
+  /// `notification` — Android fon xizmatining doimiy bildirishnomasi
+  /// (tizim talabi). Matn foydalanuvchi tilida bo'lishi uchun chaqiruvchi
+  /// tomondan beriladi.
+  void start(String orderId, {required TripNotificationText notification}) {
     if (_orderId == orderId && isRunning) return;
 
     stop();
     _orderId = orderId;
 
-    _timer = Timer.periodic(_interval, (_) => _tick());
+    _locationSubscription = _stream(interval: _interval, notification: notification).listen(
+      _onPosition,
+      // GPS xatosi (signal yo'q, ruxsat olindi-yu servis o'chdi) reysni
+      // to'xtatmaydi: oqim tiklanishi mumkin, kuzatuv esa qo'shimcha
+      onError: (Object _) {},
+      cancelOnError: false,
+    );
+
     // Aloqa tiklanganda buferni bo'shatamiz
     _connectionSubscription = _socket.connectionState.listen((isUp) {
       if (isUp) unawaited(_flush());
     });
-
-    // Birinchi nuqtani kutmasdan yuboramiz: mijoz xaritani darhol
-    // ko'rishi kerak
-    unawaited(_tick());
   }
 
   void stop() {
-    _timer?.cancel();
-    _timer = null;
+    _locationSubscription?.cancel();
+    _locationSubscription = null;
     _connectionSubscription?.cancel();
     _connectionSubscription = null;
     _orderId = null;
     _buffer.clear();
   }
 
-  Future<void> _tick() async {
-    final position = await _resolver();
-    // Joylashuv aniqlanmasa jimgina o'tkazib yuboramiz: GPS o'chiq
-    // bo'lgani reysni to'xtatib qo'ymasligi kerak
-    if (position == null || _orderId == null) return;
+  void _onPosition(DeviceLocation position) {
+    if (_orderId == null) return;
 
     final point = <String, dynamic>{
       'lat': position.lat,
@@ -93,7 +104,7 @@ class DriverLocationSender {
     if (_socket.isConnected) {
       _socket.sendLocation(lat: position.lat, lng: position.lng);
       // Bufer bo'sh bo'lmasa — aloqa endi tiklandi, uni ham yuboramiz
-      if (_buffer.isNotEmpty) await _flush();
+      if (_buffer.isNotEmpty) unawaited(_flush());
       return;
     }
 

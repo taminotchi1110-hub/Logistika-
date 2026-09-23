@@ -8,6 +8,13 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
 
+    <!-- Reys davomida ekran qulflansa ham joylashuv yuborilishi uchun fon
+         xizmati. `ACCESS_BACKGROUND_LOCATION` SO'RALMAYDI: xizmat ilova
+         ochiq paytda ishga tushadi (haydovchi "Yo'lga chiqdim" tugmasini
+         bosganda) va doimiy bildirishnoma ko'rsatadi -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/>
+
     <!-- Android 13+: bildirishnoma ruxsati -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 

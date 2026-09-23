@@ -32,7 +32,7 @@ doir ma'lumotlari O'zbekiston hududidagi serverlarda saqlanadi.
 | Yuk e'lonlari: manzillar, yuk tavsifi, narx, jo'natuvchi/qabul qiluvchi ismi va telefoni | yuk beruvchi | E'lonni haydovchilarga ko'rsatish, buyurtmani bajarish |
 | Hujjat suratlari: pasport yoki ID-karta, haydovchilik guvohnomasi, texnik pasport, sug'urta | haydovchi | Shaxs va huquqni tekshirish (verifikatsiya) |
 | Transport: rusumi, davlat raqami, sig'imi | haydovchi | Mos yuklarni taklif qilish |
-| Joylashuv | haydovchi | Faqat **reys davomida** (yuk olishga yo'lga chiqqandan yetkazib bergunicha) va ilova ochiq paytda — mijozga yuk qayerdaligini ko'rsatish. Reysdan tashqarida joylashuv yozilmaydi |
+| Joylashuv | haydovchi | Faqat **reys davomida** (yuk olishga yo'lga chiqqandan yetkazib bergunicha) — mijozga yuk qayerdaligini ko'rsatish. Reys vaqtida ekran qulflangan bo'lsa ham yuboriladi: Android'da doimiy bildirishnoma, iOS'da ko'k indikator ko'rinib turadi. **Reysdan tashqarida joylashuv umuman yozilmaydi** va reys tugashi bilan kuzatuv o'z-o'zidan to'xtaydi |
 | Joylashuv (bir martalik) | haydovchi, xohishiga ko'ra | Lentani "menga yaqin" bo'yicha saralash — faqat siz shu saralashni tanlaganingizda |
 | Chat xabarlari | tomonlar | Buyurtma bo'yicha muloqot |
 | Reyting va sharhlar | tomonlar | Ishonch tizimi |

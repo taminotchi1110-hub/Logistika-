@@ -64,6 +64,9 @@
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
+		<!-- Reys davomida ekran qulflanganda ham joylashuv yuboriladi.
+		     Kuzatuv faqat faol reysda ishlaydi va ko'k indikator ko'rinadi -->
+		<string>location</string>
 	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>

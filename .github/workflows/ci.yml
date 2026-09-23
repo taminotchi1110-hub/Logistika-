@@ -86,7 +86,7 @@ jobs:
   #  Integratsiya testlari alohida ishda (ular API talab qiladi).
   # ------------------------------------------------------------------
   mobile:
-    name: Mobil (analyze, 342 test)
+    name: Mobil (analyze, 348 test)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

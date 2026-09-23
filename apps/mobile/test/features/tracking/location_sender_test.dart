@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:karvon/core/location/device_location.dart';
+import 'package:karvon/core/location/trip_location.dart';
 import 'package:karvon/core/ws/socket_client.dart';
 import 'package:karvon/features/tracking/data/location_sender.dart';
 import 'package:karvon/features/tracking/data/tracking_repository.dart';
@@ -22,11 +23,6 @@ class _FakeSocket implements SocketClient {
   @override
   Stream<bool> get connectionState => _connection.stream;
 
-  void goOffline() {
-    connected = false;
-    _connection.add(false);
-  }
-
   void goOnline() {
     connected = true;
     _connection.add(true);
@@ -43,75 +39,114 @@ class _FakeSocket implements SocketClient {
   dynamic noSuchMethod(Invocation invocation) => null;
 }
 
+/// Soxta joylashuv oqimi — nuqtalarni test oʻzi beradi.
+///
+/// TAYMER OʻRNIGA OQIM: testlar ham aniq boʻldi. Ilgari ular haqiqiy
+/// intervalni kutardi va band mashinada tasodifan yiqilardi.
+class _FakeLocationStream {
+  StreamController<DeviceLocation>? _controller;
+  TripNotificationText? notification;
+  Duration? interval;
+  var subscriptions = 0;
+
+  Stream<DeviceLocation> call({
+    required Duration interval,
+    required TripNotificationText notification,
+  }) {
+    this.interval = interval;
+    this.notification = notification;
+    subscriptions++;
+    _controller = StreamController<DeviceLocation>();
+    return _controller!.stream;
+  }
+
+  void emit(DeviceLocation position) => _controller?.add(position);
+  void emitError(Object error) => _controller?.addError(error);
+}
+
 /// Haydovchining joylashuv yuboruvchisi.
 ///
-/// ALOQA UZILISHI — NORMAL HOLAT: haydovchi tunnelga kiradi, tog'
-/// yo'lida tarmoq yo'qoladi. Nuqtalar yo'qolmasligi va aloqa
-/// tiklanganda TO'PLAM bilan ketishi kerak.
+/// ALOQA UZILISHI — NORMAL HOLAT: haydovchi tunnelga kiradi, togʻ
+/// yoʻlida tarmoq yoʻqoladi. Nuqtalar yoʻqolmasligi va aloqa
+/// tiklanganda TOʻPLAM bilan ketishi kerak.
 void main() {
   late _MockTrackingRepository repository;
   late _FakeSocket socket;
+  late _FakeLocationStream locations;
 
   const position = DeviceLocation(lat: 41.3111, lng: 69.2797, accuracyM: 8);
+  const notification = TripNotificationText(title: 'Reys kuzatuvda', body: 'Mijoz koʻradi');
 
-  /// "Faqat darhol yuborilgan nuqta" tekshiruvlari uchun: davriy yuborish
-  /// test davomida umuman ishlamaydi. 20 ms interval bilan bu testlar
-  /// band mashinada (butun to'plam parallel ishlaganda) tasodifan
-  /// yiqilardi — kutish 5 ms bo'lsa ham navbatdagi tik ulgurardi.
-  const neverTicks = Duration(hours: 1);
+  /// Oqim hodisalari asinxron — bitta sikl kutiladi.
+  Future<void> settle() => Future<void>.delayed(Duration.zero);
 
   setUp(() {
     repository = _MockTrackingRepository();
     socket = _FakeSocket();
+    locations = _FakeLocationStream();
     // `true` — server marshrutni yozdi (faol reys bor)
     when(() => repository.sendPoints(any())).thenAnswer((_) async => true);
   });
 
   tearDown(() => socket.close());
 
-  DriverLocationSender build({
-    LocationResolver? resolver,
-    Duration interval = const Duration(milliseconds: 20),
-  }) {
+  DriverLocationSender build({Duration interval = const Duration(seconds: 10)}) {
     return DriverLocationSender(
       socket: socket,
       repository: repository,
-      resolver: resolver ?? () async => position,
+      stream: locations.call,
       interval: interval,
     );
   }
 
-  test('★ BIRINCHI NUQTA DARHOL YUBORILADI', () async {
-    final sender = build(interval: neverTicks);
-    sender.start('o-1');
+  test('★ NUQTA KELISHI BILAN YUBORILADI', () async {
+    final sender = build();
+    sender.start('o-1', notification: notification);
 
-    // Mijoz xaritani intervalni kutmasdan koʻrishi kerak
-    await Future<void>.delayed(const Duration(milliseconds: 5));
+    locations.emit(position);
+    await settle();
 
     expect(socket.sentLive, hasLength(1));
     expect(socket.sentLive.first.lat, 41.3111);
     sender.stop();
   });
 
-  test('muntazam yuboriladi', () async {
-    final sender = build();
-    sender.start('o-1');
+  test('★ FON XIZMATI UCHUN BILDIRISHNOMA VA INTERVAL OQIMGA BERILADI', () async {
+    // Busiz Android fon xizmati ishga tushmaydi va ekran qulflanganda
+    // kuzatuv toʻxtaydi
+    final sender = build(interval: const Duration(seconds: 7));
+    sender.start('o-1', notification: notification);
 
-    await Future<void>.delayed(const Duration(milliseconds: 75));
+    expect(locations.notification?.title, 'Reys kuzatuvda');
+    expect(locations.interval, const Duration(seconds: 7));
+    sender.stop();
+  });
+
+  test('har bir nuqta yuboriladi', () async {
+    final sender = build();
+    sender.start('o-1', notification: notification);
+
+    for (var i = 0; i < 3; i++) {
+      locations.emit(position);
+    }
+    await settle();
     sender.stop();
 
-    expect(socket.sentLive.length, greaterThanOrEqualTo(3));
+    expect(socket.sentLive, hasLength(3));
   });
 
   test('★ ALOQA YOʻQ — NUQTALAR BUFERGA YIGʻILADI', () async {
     socket.connected = false;
     final sender = build();
-    sender.start('o-1');
+    sender.start('o-1', notification: notification);
 
-    await Future<void>.delayed(const Duration(milliseconds: 75));
+    for (var i = 0; i < 3; i++) {
+      locations.emit(position);
+    }
+    await settle();
 
     expect(socket.sentLive, isEmpty);
-    expect(sender.bufferedCount, greaterThanOrEqualTo(3));
+    expect(sender.bufferedCount, 3);
     // Hech narsa yoʻqolmadi
     verifyNever(() => repository.sendPoints(any()));
 
@@ -121,20 +156,23 @@ void main() {
   test('★ ALOQA TIKLANGANDA BUFER TOʻPLAM BILAN KETADI', () async {
     socket.connected = false;
     final sender = build();
-    sender.start('o-1');
+    sender.start('o-1', notification: notification);
 
-    await Future<void>.delayed(const Duration(milliseconds: 75));
-    final buffered = sender.bufferedCount;
-    expect(buffered, greaterThanOrEqualTo(3));
+    for (var i = 0; i < 3; i++) {
+      locations.emit(position);
+    }
+    await settle();
+    expect(sender.bufferedCount, 3);
 
     socket.goOnline();
-    await Future<void>.delayed(const Duration(milliseconds: 30));
+    await settle();
+    await settle();
 
     // BITTA soʻrov, har bir nuqta uchun alohida emas: tunneldan
     // chiqqan haydovchida oʻnlab soʻrov hosil boʻlmasligi kerak
     final captured = verify(() => repository.sendPoints(captureAny())).captured;
     expect(captured, hasLength(1));
-    expect((captured.first as List).length, greaterThanOrEqualTo(buffered));
+    expect((captured.first as List).length, 3);
 
     sender.stop();
   });
@@ -144,25 +182,29 @@ void main() {
 
     socket.connected = false;
     final sender = build();
-    sender.start('o-1');
-    await Future<void>.delayed(const Duration(milliseconds: 50));
+    sender.start('o-1', notification: notification);
+    locations.emit(position);
+    locations.emit(position);
+    await settle();
 
-    final before = sender.bufferedCount;
     socket.goOnline();
-    await Future<void>.delayed(const Duration(milliseconds: 30));
+    await settle();
+    await settle();
 
     // Keyingi urinishda qayta yuboriladi
-    expect(sender.bufferedCount, greaterThanOrEqualTo(before));
+    expect(sender.bufferedCount, 2);
     sender.stop();
   });
 
   test('★ BUFER CHEKSIZ OʻSMAYDI', () async {
     socket.connected = false;
-    // Juda tez interval — chegaraga tez yetamiz
-    final sender = build(interval: const Duration(milliseconds: 1));
-    sender.start('o-1');
+    final sender = build();
+    sender.start('o-1', notification: notification);
 
-    await Future<void>.delayed(const Duration(milliseconds: 900));
+    for (var i = 0; i < 600; i++) {
+      locations.emit(position);
+    }
+    await settle();
     sender.stop();
 
     // 500 nuqta ≈ 83 daqiqa; undan uzoq uzilishda eski nuqtalarning
@@ -170,16 +212,19 @@ void main() {
     expect(sender.bufferedCount, lessThanOrEqualTo(500));
   });
 
-  test('joylashuv aniqlanmasa jimgina oʻtkaziladi', () async {
-    final sender = build(resolver: () async => null);
-    sender.start('o-1');
+  test('★ GPS XATOSI KUZATUVNI TOʻXTATMAYDI', () async {
+    final sender = build();
+    sender.start('o-1', notification: notification);
 
-    await Future<void>.delayed(const Duration(milliseconds: 60));
+    // Signal yoʻqoldi yoki servis oʻchdi — oqim keyin tiklanishi mumkin
+    locations.emitError(Exception('joylashuv yoʻq'));
+    await settle();
 
-    // GPS oʻchiq boʻlgani reysni toʻxtatib qoʻymasligi kerak
-    expect(socket.sentLive, isEmpty);
-    expect(sender.bufferedCount, 0);
     expect(sender.isRunning, isTrue);
+
+    locations.emit(position);
+    await settle();
+    expect(socket.sentLive, hasLength(1));
 
     sender.stop();
   });
@@ -187,8 +232,9 @@ void main() {
   test('toʻxtatilganda bufer tozalanadi', () async {
     socket.connected = false;
     final sender = build();
-    sender.start('o-1');
-    await Future<void>.delayed(const Duration(milliseconds: 50));
+    sender.start('o-1', notification: notification);
+    locations.emit(position);
+    await settle();
 
     expect(sender.bufferedCount, greaterThan(0));
     sender.stop();
@@ -201,30 +247,27 @@ void main() {
   test('★ BOSHQA REYSGA OʻTGANDA ESKI NUQTALAR ARALASHMAYDI', () async {
     socket.connected = false;
     final sender = build();
-    sender.start('o-1');
-    await Future<void>.delayed(const Duration(milliseconds: 50));
+    sender.start('o-1', notification: notification);
+    locations.emit(position);
+    await settle();
     expect(sender.bufferedCount, greaterThan(0));
 
-    sender.start('o-2');
+    sender.start('o-2', notification: notification);
 
     expect(sender.orderId, 'o-2');
     // Oldingi reysning nuqtalari yangisiga yozilmasligi kerak
-    expect(sender.bufferedCount, lessThanOrEqualTo(1));
+    expect(sender.bufferedCount, 0);
 
     sender.stop();
   });
 
   test('bir xil reysga qayta start — qayta ishga tushirmaydi', () async {
-    final sender = build(interval: neverTicks);
-    sender.start('o-1');
-    await Future<void>.delayed(const Duration(milliseconds: 5));
-    final afterFirst = socket.sentLive.length;
+    final sender = build();
+    sender.start('o-1', notification: notification);
+    sender.start('o-1', notification: notification);
 
-    sender.start('o-1');
-    await Future<void>.delayed(const Duration(milliseconds: 5));
-
-    // Darhol yuborish takrorlanmaydi
-    expect(socket.sentLive.length, afterFirst);
+    // Oqimga qayta obuna boʻlinmaydi: fon xizmati ham qayta ishga tushmaydi
+    expect(locations.subscriptions, 1);
     sender.stop();
   });
 }

@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/location/device_location.dart';
+import '../../../core/location/trip_location.dart';
 import '../../../core/providers.dart';
 import '../../../core/ws/ws_providers.dart';
 import '../../orders/domain/order.dart';
@@ -13,7 +13,8 @@ final locationSenderProvider = Provider<DriverLocationSender>((ref) {
   final sender = DriverLocationSender(
     socket: ref.watch(socketClientProvider),
     repository: ref.watch(trackingRepositoryProvider),
-    resolver: ref.watch(locationResolverProvider),
+    // Fon xizmatini biladigan oqim: ekran qulflansa ham nuqtalar keladi
+    stream: ref.watch(tripLocationStreamProvider),
   );
 
   ref.onDispose(sender.stop);
