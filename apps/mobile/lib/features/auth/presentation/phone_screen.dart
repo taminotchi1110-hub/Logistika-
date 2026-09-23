@@ -11,6 +11,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/phone.dart';
 import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/karvon_logo.dart';
 
 /// Telefon raqami kiritish — ilovaning birinchi ekrani.
 ///
@@ -107,15 +108,8 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
 
               const SizedBox(height: AppSpacing.xl),
 
-              // Logotip o'rnida — hozircha matn.
               // Ilova nomi TARJIMA QILINMAYDI: u brend
-              Text(
-                'KARVON',
-                style: theme.textTheme.displayMedium?.copyWith(
-                  color: AppColors.primary,
-                  letterSpacing: 2,
-                ),
-              ),
+              const KarvonLogo(capHeight: 30),
               const SizedBox(height: AppSpacing.sm),
               Text(
                 l10n.appTagline,

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- KARVON adaptiv ikonkasi, old qatlam: K va tasdiq belgisi (brand/logo). Hammasi markazdagi 66dp xavfsiz doira ichida. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M30 67.68L30 41.68L35.32 41.68L35.32 48.78L35.24 54.7Q36.09 53.34 37.05 52.03Q38.01 50.72 39.3 49.15L45.67 41.68L52.18 41.68L42.46 52.94L52.46 67.68L46.16 67.68L38.78 56.44L35.32 60.25L35.32 67.68Z" />
+    <path
+        android:pathData="M56.41 53.9L63.65 65.07L75.38 42.93"
+        android:strokeColor="#F5A623"
+        android:strokeWidth="5.24"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

@@ -95,9 +95,11 @@ qilmaydi). Birinchi reliz oldidan `0.1.0+1` → `1.0.0+1`.
 
 ## 20.6 Do'kon materiallari ✋
 
-- [ ] **Ikonka** 1024×1024 PNG (dizayner). Hozir Flutter'ning standart
-      ikonkasi turibdi. Tayyor bo'lgach `flutter_launcher_icons` bilan
-      barcha o'lchamlar yaratiladi.
+- [x] **Ikonka — tayyor.** Do'konlarga yuklanadigan fayllar:
+      `brand/logo/karvon-app-icon-1024.png` (App Store Connect, alfa-kanalsiz)
+      va `brand/logo/karvon-play-store-512.png` (Play Console). Android va
+      iOS ikonkalari ilovaga allaqachon qo'yilgan; brend qoidalari va
+      qolgan fayllar — `brand/README.md`.
 - [ ] Skrinshotlar (telefon), Play uchun 1024×500 banner
 - [ ] Qisqa va to'liq tavsif — o'zbek, rus, ingliz
 - [ ] **Maxfiylik siyosati URL** — ikkala do'kon uchun majburiy.

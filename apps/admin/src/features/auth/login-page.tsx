@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 
+import logoUrl from '@/assets/karvon-logo.svg';
 import { Alert, Button, Card, Field, Input } from '@/components/ui';
 import { ApiError } from '@/lib/api-error';
 
@@ -57,7 +58,9 @@ export function LoginPage() {
     <main className="flex min-h-screen items-center justify-center bg-slate-100 p-4">
       <div className="w-full max-w-sm">
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-semibold text-slate-900">Karvon</h1>
+          <h1>
+            <img src={logoUrl} alt="Karvon" className="mx-auto h-8 w-auto" />
+          </h1>
           <p className="mt-1 text-sm text-slate-500">Admin paneli</p>
         </div>
 

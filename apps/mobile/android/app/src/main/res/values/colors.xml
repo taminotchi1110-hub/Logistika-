@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Karvon ko'ki (AppColors.primary). Ikonka foni va ochilish ekrani
+         bir xil rangda: tizim splash'idan Flutter SplashScreen'ga o'tish
+         sezilmaydi, chunki u ham shu fonda chiziladi. -->
+    <color name="ic_launcher_background">#0F62A8</color>
+    <color name="splash_background">#0F62A8</color>
+</resources>

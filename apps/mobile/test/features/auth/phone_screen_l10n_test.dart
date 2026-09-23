@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:karvon/core/l10n/locale_controller.dart';
 import 'package:karvon/features/auth/presentation/phone_screen.dart';
 import 'package:karvon/l10n/app_localizations.dart';
+import 'package:karvon/shared/widgets/karvon_logo.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Kirish ekrani uch tilda.
@@ -56,13 +57,16 @@ void main() {
   });
 
   testWidgets('★ ILOVA NOMI TARJIMA QILINMAYDI', (tester) async {
+    final semantics = tester.ensureSemantics();
     for (final locale in AppLocale.values) {
       await tester.pumpWidget(wrap(locale));
       await tester.pump();
 
-      // Brend har uch tilda bir xil
-      expect(find.text('KARVON'), findsOneWidget);
+      // Brend har uch tilda bir xil: logotip va ekran oʻqigichdagi nomi
+      expect(find.byType(KarvonLogo), findsOneWidget);
+      expect(find.bySemanticsLabel('KARVON'), findsOneWidget);
     }
+    semantics.dispose();
   });
 
   testWidgets('★ TIL TANLAGICH KIRISHDAN OLDIN KOʻRINADI', (tester) async {

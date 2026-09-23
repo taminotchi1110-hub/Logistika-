@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/karvon_logo.dart';
 
 /// Ilova ochilishidagi ekran.
 ///
@@ -30,21 +31,17 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return const Scaffold(
       backgroundColor: AppColors.primary,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              'KARVON',
-              style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                    color: AppColors.white,
-                    letterSpacing: 3,
-                  ),
-            ),
-            const SizedBox(height: AppSpacing.xxxl),
-            const SizedBox(
+            // Tizim splash'i ham shu ko'k fonda «K✓» ni ko'rsatadi —
+            // o'tish sakrashsiz, belgi to'liq logotipga aylanadi
+            KarvonLogo(capHeight: 36, color: AppColors.white),
+            SizedBox(height: AppSpacing.xxxl),
+            SizedBox(
               width: 24,
               height: 24,
               child: CircularProgressIndicator(

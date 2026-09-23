@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 12+ tizim splash ekrani. Busiz tizim oq fonda ikonkani
+         doira ichida ko'rsatadi, keyin Flutter ko'k SplashScreen'ga
+         sakraydi. Belgi — adaptiv ikonkaning old qatlami: u 108dp
+         maydonda 66dp xavfsiz doira ichida, splash talabiga ham mos. -->
+    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">@drawable/launch_background</item>
+        <item name="android:windowSplashScreenBackground">@color/splash_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+    </style>
+</resources>

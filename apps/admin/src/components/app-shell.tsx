@@ -1,6 +1,7 @@
 import clsx from 'clsx';
 import { NavLink, Outlet } from 'react-router-dom';
 
+import logoUrl from '@/assets/karvon-logo.svg';
 import { useSession } from '@/features/auth/session';
 import { GROUP_LABELS, visibleNavItems, type NavItem } from '@/nav';
 
@@ -23,8 +24,8 @@ export function AppShell() {
     <div className="flex min-h-screen bg-slate-100">
       <aside className="flex w-64 shrink-0 flex-col border-r border-slate-200 bg-white">
         <div className="border-b border-slate-200 px-5 py-4">
-          <p className="text-lg font-semibold text-slate-900">Karvon</p>
-          <p className="text-xs text-slate-500">Admin paneli</p>
+          <img src={logoUrl} alt="Karvon" className="h-5 w-auto" />
+          <p className="mt-1.5 text-xs text-slate-500">Admin paneli</p>
         </div>
 
         <nav className="flex-1 overflow-y-auto p-3">
