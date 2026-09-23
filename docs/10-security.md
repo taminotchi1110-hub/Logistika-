@@ -73,7 +73,7 @@ Bu tekshiruv **avtomatik testda** har bir endpoint uchun majburiy:
 | Fayl | Max 20 MB, ruxsat etilgan MIME ro'yxati; yuklangach hajm va tur S3 dan **qayta o'qiladi** | ✅ |
 | Caddy | So'rov tanasi 25 MB, TLS + HSTS | ✅ `deploy/Caddyfile` |
 | DB | Connection pool limiti ✅ · `statement_timeout` | ⏳ reja |
-| WebSocket | Ulanish va xabar chastotasi limiti | ⏳ reja |
+| WebSocket | Hodisa chastotasi foydalanuvchi bo'yicha: `chat:message` 30/min, `location:update` 60/min, `chat:typing` 120/min va h.k. Ochiq soket HTTP limiti uchun bitta so'rov — undan keyingi hodisalarni u ko'rmaydi | ✅ `chat/ws-rate-limit.ts` |
 | Og'ir so'rovlar | Hisobotlar read-replica'dan, navbat orqali | ⏳ reja |
 
 > **NEGA IP BO'YICHA EMAS, FOYDALANUVCHI BO'YICHA:** O'zbekistonda mobil

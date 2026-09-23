@@ -13,6 +13,7 @@ import { createAdapter } from '@socket.io/redis-adapter';
 import type { Server, Socket } from 'socket.io';
 
 import { AppError } from '@/common/errors/app.error';
+import { ErrorCode } from '@/common/errors/error-codes';
 import { RedisService } from '@/infra/redis/redis.service';
 import { NotificationsService } from '@/modules/notifications/notifications.service';
 import { TokenService } from '@/modules/auth/token.service';
@@ -20,6 +21,7 @@ import { TrackingService } from '@/modules/tracking/tracking.service';
 import type { LocationPoint } from '@/modules/tracking/tracking.service';
 
 import { ChatService, toWireMessage } from './chat.service';
+import { WsRateLimiter } from './ws-rate-limit';
 
 interface AuthedSocket extends Socket {
   data: { userId?: string; sessionId?: string };
@@ -55,6 +57,9 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     private readonly notifications: NotificationsService,
     private readonly redis: RedisService,
     private readonly tracking: TrackingService,
+    // Ochiq soket — bitta "soʻrov": HTTP limiti undan keyingi hodisalarni
+    // umuman koʻrmaydi
+    private readonly limits: WsRateLimiter,
   ) {}
 
   async afterInit(server: Server): Promise<void> {
@@ -140,6 +145,9 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   ): Promise<{ ok: boolean; canWrite?: boolean; error?: string }> {
     const userId = this.requireUser(client);
     if (!body?.conversationId) return { ok: false, error: 'conversationId kerak' };
+    if (!(await this.limits.allow('chat:join', userId))) {
+      return { ok: false, error: ErrorCode.RATE_LIMITED };
+    }
 
     try {
       const access = await this.chat.assertAccess(body.conversationId, userId);
@@ -180,6 +188,10 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   ): Promise<{ ok: boolean; message?: unknown; clientMsgId?: string; error?: string }> {
     const userId = this.requireUser(client);
     if (!body?.conversationId) return { ok: false, error: 'conversationId kerak' };
+    // Cheklovsiz bo'lsa: spam, bildirishnoma seli va har xabarga push
+    if (!(await this.limits.allow('chat:message', userId))) {
+      return { ok: false, clientMsgId: body.clientMsgId, error: ErrorCode.RATE_LIMITED };
+    }
 
     try {
       const message = await this.chat.sendMessage(body.conversationId, userId, {
@@ -211,6 +223,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   ): Promise<{ ok: boolean; readCount?: number }> {
     const userId = this.requireUser(client);
     if (!body?.conversationId) return { ok: false };
+    if (!(await this.limits.allow('chat:read', userId))) return { ok: false };
 
     const result = await this.chat.markRead(body.conversationId, userId);
     this.server
@@ -222,12 +235,14 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   /** "Yozmoqda…" — bazaga yozilmaydi, faqat uzatiladi. */
   @SubscribeMessage('chat:typing')
-  onTyping(
+  async onTyping(
     @ConnectedSocket() client: AuthedSocket,
     @MessageBody() body: { conversationId?: string; isTyping?: boolean },
-  ): void {
+  ): Promise<void> {
     const userId = client.data.userId;
     if (!userId || !body?.conversationId) return;
+    // Jimgina tashlanadi: "yozmoqda" belgisi yoʻqolgani xato emas
+    if (!(await this.limits.allow('chat:typing', userId))) return;
 
     client.to(`conv:${body.conversationId}`).emit('chat:typing', {
       conversationId: body.conversationId,
@@ -249,6 +264,9 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   ): Promise<{ ok: boolean; error?: string }> {
     const userId = this.requireUser(client);
     if (!body?.orderId) return { ok: false, error: 'orderId kerak' };
+    if (!(await this.limits.allow('order:subscribe', userId))) {
+      return { ok: false, error: ErrorCode.RATE_LIMITED };
+    }
 
     try {
       await this.tracking.lastLocation(body.orderId, userId);
@@ -282,6 +300,11 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         : []);
 
     if (points.length === 0) return { ok: false, error: 'Nuqta yuborilmadi' };
+    // Har nuqta — bazaga yozuv: cheklovsiz bo'lsa bitta mijoz jadvalni
+    // to'ldira oladi
+    if (!(await this.limits.allow('location:update', userId))) {
+      return { ok: false, error: ErrorCode.RATE_LIMITED };
+    }
 
     try {
       const result = await this.tracking.record(userId, points);

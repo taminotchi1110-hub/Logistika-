@@ -6,11 +6,12 @@ import { TrackingModule } from '@/modules/tracking/tracking.module';
 import { ChatController } from './chat.controller';
 import { ChatGateway } from './chat.gateway';
 import { ChatService } from './chat.service';
+import { WsRateLimiter } from './ws-rate-limit';
 
 @Module({
   imports: [AuthModule, TrackingModule],
   controllers: [ChatController],
-  providers: [ChatService, ChatGateway],
+  providers: [ChatService, ChatGateway, WsRateLimiter],
   exports: [ChatService],
 })
 export class ChatModule {}
