@@ -84,6 +84,13 @@ export const envSchema = z
       .or(z.literal('')),
     REVIEW_OTP_CODE: z.string().regex(/^\d+$/, 'Faqat raqamlar').optional().or(z.literal('')),
 
+    // --- davriy texnik xizmat ---
+    // 0 — o'chirilgan (masalan, tiklash yoki migratsiya paytida)
+    MAINTENANCE_INTERVAL_MINUTES: z.coerce.number().int().min(0).max(1440).default(15),
+    // Yetkazilgan buyurtma shu muddat ichida tasdiqlanmasa avtomatik
+    // yakunlanadi: escrow puli haydovchiga aynan COMPLETED da o'tadi
+    ORDER_AUTO_COMPLETE_HOURS: z.coerce.number().int().min(1).max(168).default(24),
+
     // --- sms ---
     SMS_PROVIDER: z.enum(['console', 'eskiz']).default('console'),
     SMS_SENDER_NAME: z.string().default('KARVON'),

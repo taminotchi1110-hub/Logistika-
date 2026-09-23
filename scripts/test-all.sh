@@ -74,6 +74,7 @@ run "9. Admin paneli" node scripts/admin-test.js
 run "10. Mijozning \"Yuklarim\" roʻyxati" node scripts/my-loads-test.js
 run "11. Hisobni oʻchirish" node scripts/account-deletion-test.js
 run "12. Xavfsizlik (token, IDOR, sarlavhalar)" node scripts/security-test.js
+run "13. Davriy texnik xizmat (avtomatik yakunlash, muddatlar)" node scripts/maintenance-test.js
 
 echo ""
 if [ "$FAILED" -eq 0 ]; then

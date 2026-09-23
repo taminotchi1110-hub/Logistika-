@@ -1,15 +1,11 @@
+import { Body, Controller, Get, Param, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Post,
-  Put,
-  Query,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiProperty, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
+  ApiBearerAuth,
+  ApiOperation,
+  ApiProperty,
+  ApiPropertyOptional,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   Allow,
@@ -368,7 +364,12 @@ export class AdminController {
     @ClientIp() ip: string,
     @UserAgent() userAgent: string,
   ) {
-    await this.admin.verifyDocument(this.context(request, ip, userAgent), id, dto.approve, dto.reason);
+    await this.admin.verifyDocument(
+      this.context(request, ip, userAgent),
+      id,
+      dto.approve,
+      dto.reason,
+    );
     return { ok: true };
   }
 
@@ -385,7 +386,12 @@ export class AdminController {
     @ClientIp() ip: string,
     @UserAgent() userAgent: string,
   ) {
-    await this.admin.verifyDriver(this.context(request, ip, userAgent), id, dto.approve, dto.reason);
+    await this.admin.verifyDriver(
+      this.context(request, ip, userAgent),
+      id,
+      dto.approve,
+      dto.reason,
+    );
     return { ok: true };
   }
 
@@ -402,7 +408,12 @@ export class AdminController {
     @ClientIp() ip: string,
     @UserAgent() userAgent: string,
   ) {
-    await this.admin.verifyVehicle(this.context(request, ip, userAgent), id, dto.approve, dto.reason);
+    await this.admin.verifyVehicle(
+      this.context(request, ip, userAgent),
+      id,
+      dto.approve,
+      dto.reason,
+    );
     return { ok: true };
   }
 
@@ -446,7 +457,12 @@ export class AdminController {
     @ClientIp() ip: string,
     @UserAgent() userAgent: string,
   ) {
-    await this.admin.setUserStatus(this.context(request, ip, userAgent), id, dto.status, dto.reason);
+    await this.admin.setUserStatus(
+      this.context(request, ip, userAgent),
+      id,
+      dto.status,
+      dto.reason,
+    );
     return { ok: true };
   }
 
@@ -595,6 +611,28 @@ export class AdminController {
     @UserAgent() userAgent: string,
   ) {
     return this.admin.orderChat(this.context(request, ip, userAgent), id);
+  }
+
+  @Public()
+  @UseGuards(AdminGuard)
+  @Post('maintenance/run')
+  @ApiBearerAuth()
+  @RequirePermission('maintenance.run')
+  @ApiOperation({
+    summary: 'Texnik xizmatni qoʻlda ishga tushirish',
+    description:
+      'Odatda davriy ishlaydi (`MAINTENANCE_INTERVAL_MINUTES`). Qoʻlda ishga tushirish server ' +
+      'uzoq toʻxtab turgandan keyin kerak boʻladi: muddati oʻtgan takliflar va eʼlonlar ' +
+      'yopiladi, yetkazilgandan keyin tasdiqlanmagan buyurtmalar avtomatik yakunlanadi ' +
+      '(escrow puli haydovchiga oʻtadi), GPS boʻlinmalari tekshiriladi, eski OTP va kirish ' +
+      'tarixi yozuvlari tozalanadi. Natija auditga yoziladi.',
+  })
+  runMaintenance(
+    @Req() request: AdminRequest,
+    @ClientIp() ip: string,
+    @UserAgent() userAgent: string,
+  ) {
+    return this.admin.runMaintenance(this.context(request, ip, userAgent));
   }
 
   @Public()

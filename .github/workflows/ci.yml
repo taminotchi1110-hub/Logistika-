@@ -32,7 +32,7 @@ jobs:
   #  Bazasiz — bu testlar mock bilan ishlaydi va tez qaytadi.
   # ------------------------------------------------------------------
   api:
-    name: API (lint, tsc, 253 unit test)
+    name: API (lint, tsc, 260 unit test)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -370,7 +370,7 @@ jobs:
   #  HAQIQATAN ishga tushadi.
   # ------------------------------------------------------------------
   integration:
-    name: Uchidan-uchiga (491 backend + 81 mobil)
+    name: Uchidan-uchiga (517 backend + 81 mobil)
     runs-on: ubuntu-latest
 
     # ISH DARAJASIDA, qadam darajasida emas.
@@ -545,7 +545,7 @@ jobs:
           done
           curl -sf http://localhost:3000/health
 
-      - name: Backend uchidan-uchiga (12 toʻplam)
+      - name: Backend uchidan-uchiga (13 toʻplam)
         run: bash scripts/test-all.sh
 
       - name: OTP limitlarini tozalash

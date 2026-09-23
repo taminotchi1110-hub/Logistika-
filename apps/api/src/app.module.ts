@@ -18,6 +18,7 @@ import { DriversModule } from '@/modules/drivers/drivers.module';
 import { GeoModule } from '@/modules/geo/geo.module';
 import { HealthModule } from '@/modules/health/health.module';
 import { LoadsModule } from '@/modules/loads/loads.module';
+import { MaintenanceModule } from '@/modules/maintenance/maintenance.module';
 import { MatchingModule } from '@/modules/matching/matching.module';
 import { MediaModule } from '@/modules/media/media.module';
 import { ChatModule } from '@/modules/chat/chat.module';
@@ -109,6 +110,8 @@ import { VehiclesModule } from '@/modules/vehicles/vehicles.module';
     PaymentsModule,
     RatingsModule,
     AdminModule,
+    // Davriy ishlar: bo'linmalar, muddati o'tganlar, avtomatik yakunlash
+    MaintenanceModule,
   ],
 })
 export class AppModule {}

@@ -11,6 +11,10 @@ import { LedgerService } from '@/modules/payments/ledger.service';
 import { PayoutsService } from '@/modules/payments/payouts.service';
 import { NotificationsService } from '@/modules/notifications/notifications.service';
 import { tpl } from '@/modules/notifications/notification-templates';
+import {
+  MaintenanceService,
+  type MaintenanceSummary,
+} from '@/modules/maintenance/maintenance.service';
 import type { OrderStatus } from '@/modules/orders/order-status';
 import { OrdersService } from '@/modules/orders/orders.service';
 
@@ -43,6 +47,7 @@ export class AdminService {
     // Holat oʻzgarishi mantigʻi BITTA joyda: admin ham foydalanuvchi
     // bilan bir xil yoʻldan oʻtadi
     private readonly orders: OrdersService,
+    private readonly maintenance: MaintenanceService,
   ) {}
 
   // =================================================================
@@ -384,12 +389,7 @@ export class AdminService {
   //  Foydalanuvchilar
   // =================================================================
 
-  async listUsers(options: {
-    search?: string;
-    role?: string;
-    status?: string;
-    limit?: number;
-  }) {
+  async listUsers(options: { search?: string; role?: string; status?: string; limit?: number }) {
     let query = this.database.db
       .selectFrom('users')
       .select([
@@ -476,7 +476,10 @@ export class AdminService {
       userId,
     );
 
-    this.logger.warn({ userId, status, adminId: ctx.adminId, reason }, 'Foydalanuvchi holati oʻzgardi');
+    this.logger.warn(
+      { userId, status, adminId: ctx.adminId, reason },
+      'Foydalanuvchi holati oʻzgardi',
+    );
   }
 
   async userDetail(userId: string) {
@@ -548,13 +551,9 @@ export class AdminService {
 
   async completePayout(ctx: AuditContext, payoutId: string, providerTxnId: string): Promise<void> {
     await this.payouts.complete(payoutId, providerTxnId);
-    await this.audit(
-      ctx,
-      'payout.complete',
-      { type: 'PAYOUT', id: payoutId },
-      undefined,
-      { providerTxnId },
-    );
+    await this.audit(ctx, 'payout.complete', { type: 'PAYOUT', id: payoutId }, undefined, {
+      providerTxnId,
+    });
   }
 
   async rejectPayout(ctx: AuditContext, payoutId: string, reason: string): Promise<void> {
@@ -621,6 +620,24 @@ export class AdminService {
       { key, before: before.value, after: value, adminId: ctx.adminId },
       'Platforma sozlamasi oʻzgartirildi',
     );
+  }
+
+  /**
+   * Texnik xizmatni qoʻlda ishga tushirish.
+   *
+   * Odatda u har N daqiqada oʻzi ishlaydi. Qoʻlda kerak boʻladigan
+   * holatlar: server uzoq toʻxtab turgandan keyin (navbat toʻplanib
+   * qolgan) yoki nosozlikdan soʻng "hozir bajarilsin" deganda. Kutmaydi:
+   * qulf chetlab oʻtiladi. Natija auditga yoziladi — nima oʻzgargani
+   * koʻrinib turadi (masalan nechta buyurtma avtomatik yakunlandi).
+   */
+  async runMaintenance(ctx: AuditContext): Promise<MaintenanceSummary> {
+    const summary = await this.maintenance.run({ force: true });
+
+    await this.audit(ctx, 'maintenance.run', { type: 'SYSTEM', id: null }, undefined, summary);
+    this.logger.warn({ ...summary, adminId: ctx.adminId }, 'Texnik xizmat qoʻlda ishga tushirildi');
+
+    return summary;
   }
 
   // =================================================================

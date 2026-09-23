@@ -312,3 +312,34 @@ DELETE FROM loads WHERE title LIKE 'YUKLAMA TESTI%';
 
 Natijani saqlab boring: har reliz oldidan taqqoslanadi — `p95` sezilarli
 o'sgan bo'lsa, bu regressiya va sababi shu relizdagi o'zgarishlarda.
+
+## 19.11 Davriy texnik xizmat
+
+Server har `MAINTENANCE_INTERVAL_MINUTES` (prodda 15) daqiqada quyidagilarni
+bajaradi:
+
+| Ish | Nega kerak |
+|---|---|
+| Yetkazilgan buyurtmani `ORDER_AUTO_COMPLETE_HOURS` (24) dan keyin yakunlash | Escrow puli haydovchiga aynan `COMPLETED` da o'tadi. Mijoz tasdiqlashni unutsa, haydovchi ishni bajarib pulini muddatsiz kutardi. Nizodagi buyurtmaga tegilmaydi — u admin ishi |
+| GPS jadvalining oylik bo'linmalari (joriy + 2 oy) | Bo'linma bo'lmasa `INSERT` xato beradi: `no partition ... found`. Kuzatuv jimgina emas, BUTUNLAY to'xtaydi |
+| Muddati o'tgan taklif va e'lonlarni yopish | Ular "faol" bo'lib turaverardi va egasining faol e'lonlar limitini band qilardi |
+| Eski OTP (30 kun) va kirish tarixi (12 oy) yozuvlarini o'chirish | Disk va maxfiylik: ikkalasida ham telefon raqami bor |
+
+Bir vaqtda ikki nusxa ishlamaydi (Redis qulfi) — deploy paytida eski va yangi
+konteyner birga tirik bo'ladi. Redis ishlamay qolsa qadam o'tkazib yuboriladi
+va API to'xtamaydi.
+
+**Qo'lda ishga tushirish** — server uzoq to'xtab turgandan keyin (navbat
+to'planib qolganda):
+
+```bash
+curl -X POST https://api.karvon.uz/v1/admin/maintenance/run \
+  -H "Authorization: Bearer <admin tokeni>"
+```
+
+Javobda nima bajarilgani qaytadi (nechta buyurtma yakunlandi, nechta e'lon
+yopildi) va natija audit jurnaliga yoziladi. Huquq: `maintenance.run` —
+moderatorda yo'q.
+
+**O'chirish:** `MAINTENANCE_INTERVAL_MINUTES=0` — masalan bazani tiklash yoki
+katta migratsiya paytida.

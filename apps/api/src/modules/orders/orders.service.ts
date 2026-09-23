@@ -457,6 +457,63 @@ export class OrdersService {
   }
 
   /**
+   * Yetkazilgan, lekin tasdiqlanmagan buyurtmalarni avtomatik yakunlash.
+   *
+   * NEGA BU KERAK: escrow puli haydovchiga AYNAN `COMPLETED` da o'tadi
+   * (`payments.listener`). Mijoz tasdiqlashni unutsa yoki umuman
+   * kirmasa, haydovchi ishni bajarib, pulini muddatsiz kutib qolardi.
+   * Holat grafigi bu o'tishni `SYSTEM` ga ataylab ruxsat beradi
+   * (`order-status.ts`).
+   *
+   * `DISPUTED` avtomatik yakunlanmaydi — nizo admin ishi.
+   *
+   * PARTIYALAR BILAN, ENG ESKISIDAN: server uzoq to'xtab turgan bo'lsa
+   * navbat to'planadi — bitta ishga tushish 2000 tagacha yakunlaydi,
+   * qolgani keyingisiga. Yiqilgan buyurtma keyingi partiyadan chiqariladi:
+   * aks holda doim yiqiladigan bittasi qolgan hammasini to'sib qo'yardi.
+   */
+  async autoCompleteDelivered(afterHours: number): Promise<number> {
+    const threshold = new Date(Date.now() - afterHours * 60 * 60 * 1000);
+    const batchSize = 200;
+    const failed: string[] = [];
+    let completed = 0;
+
+    for (let batch = 0; batch < 10; batch++) {
+      let query = this.database.db
+        .selectFrom('orders')
+        .select(['id', 'status', 'shipperId', 'driverId'])
+        .where('status', '=', 'DELIVERED')
+        .where('deliveredAt', '<', threshold);
+      if (failed.length > 0) query = query.where('id', 'not in', failed);
+
+      const overdue = await query.orderBy('deliveredAt').limit(batchSize).execute();
+      if (overdue.length === 0) break;
+
+      for (const order of overdue) {
+        try {
+          await this.applyStatusChange(order, 'COMPLETED', {
+            actorId: null,
+            actorRole: 'SYSTEM',
+            note: `Yetkazilgandan keyin ${afterHours} soat ichida tasdiqlanmadi — avtomatik yakunlandi`,
+          });
+          completed++;
+        } catch (error) {
+          // Bittasi yiqilsa qolganlari davom etadi
+          failed.push(order.id);
+          this.logger.warn({ err: error, orderId: order.id }, 'Avtomatik yakunlab boʻlmadi');
+        }
+      }
+
+      if (overdue.length < batchSize) break;
+    }
+
+    if (completed > 0) {
+      this.logger.log({ count: completed }, 'Buyurtmalar avtomatik yakunlandi');
+    }
+    return completed;
+  }
+
+  /**
    * Holat oʻzgarishining oʻzi: yozuv, tarix, haydovchi bandligi,
    * bildirishnoma va hodisa.
    *

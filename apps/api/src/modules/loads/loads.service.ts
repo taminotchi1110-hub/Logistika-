@@ -19,12 +19,7 @@ import { GeoService } from '@/modules/geo/geo.service';
 import { RoutingService } from '@/modules/geo/routing.service';
 
 import type { CreateLoadDto, LoadFeedQueryDto, UpdateLoadDto } from './dto/load.dto';
-import {
-  LOAD_PUBLISHED,
-  LOAD_VIEWED,
-  LoadPublishedEvent,
-  LoadViewedEvent,
-} from './load.events';
+import { LOAD_PUBLISHED, LOAD_VIEWED, LoadPublishedEvent, LoadViewedEvent } from './load.events';
 import { PricingService, type PriceSuggestion } from './pricing.service';
 
 export interface LoadView {
@@ -506,6 +501,28 @@ export class LoadsService {
     }
 
     return this.getOwnLoad(shipperId, loadId);
+  }
+
+  /**
+   * Muddati oʻtgan eʼlonlarni yopadi — texnik xizmat chaqiradi.
+   *
+   * Lentada ular baribir koʻrinmaydi (soʻrov `expires_at` ni tekshiradi),
+   * lekin egasining "Yuklarim" roʻyxatida "faol" boʻlib turaverardi va
+   * faol eʼlonlar limitini ham band qilardi.
+   */
+  async expireOverdue(): Promise<number> {
+    const expired = await this.database.db
+      .updateTable('loads')
+      .set({ status: 'EXPIRED' })
+      .where('status', 'in', ['PUBLISHED', 'MATCHING', 'OFFERS_RECEIVED'])
+      .where('expiresAt', '<', new Date())
+      .returning('id')
+      .execute();
+
+    if (expired.length > 0) {
+      this.logger.log({ count: expired.length }, 'Muddati oʻtgan eʼlonlar yopildi');
+    }
+    return expired.length;
   }
 
   async cancel(shipperId: string, loadId: string, reason: string): Promise<LoadView> {

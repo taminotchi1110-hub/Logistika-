@@ -82,7 +82,8 @@ vakolatli davlat organlariga taqdim etilishi mumkin.
 - **Yopilgan buyurtmalar, reytinglar, chat** — ikkinchi tomonning ham
   tarixi bo'lgani uchun saqlanadi; o'chirilgan hisob ular ichida ismsiz
   ko'rinadi.
-- **Xavfsizlik jurnallari** (kirish tarixi) — [muddat].
+- **Xavfsizlik jurnallari:** kirish tarixi — 12 oy, SMS kod soʻrovlari —
+  30 kun. Ikkalasi ham avtomatik tozalanadi (docs/19-deploy.md, 19.11).
 
 ## 6. Hisobni o'chirish
 
