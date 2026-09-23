@@ -1,8 +1,10 @@
-import { Controller, Get, HttpStatus, Res } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Inject, Res } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
 
 import { Public, SkipRateLimit } from '@/common/decorators';
+import type { Env } from '@/config/env.schema';
 import { DatabaseService } from '@/infra/database/database.service';
 import { RedisService } from '@/infra/redis/redis.service';
 
@@ -20,10 +22,43 @@ interface DependencyStatus {
 export class HealthController {
   private readonly startedAt = Date.now();
 
+  private readonly apiPrefix: string;
+  private readonly docsEnabled: boolean;
+
   constructor(
     private readonly database: DatabaseService,
     private readonly redis: RedisService,
-  ) {}
+    @Inject(ConfigService) config: ConfigService<Env, true>,
+  ) {
+    const nodeEnv = config.get('NODE_ENV', { infer: true });
+    this.apiPrefix = config.get('API_PREFIX', { infer: true });
+    // `main.ts` dagi shart bilan bir xil: prodda Swagger yopiq
+    this.docsEnabled =
+      !(nodeEnv === 'production' || nodeEnv === 'staging') || process.env.ENABLE_SWAGGER === 'true';
+  }
+
+  /**
+   * Ildiz manzil.
+   *
+   * API `/v1` prefiksida ishlaydi, shuning uchun brauzerda `/` ochilganda
+   * "Cannot GET /" chiqardi — bu ishlamayotgandek koʻrinadi. Endi xizmat
+   * nomi va asosiy manzillar qaytadi.
+   *
+   * Maxfiy maʼlumot yoʻq: versiya ham, ichki tafsilot ham berilmaydi,
+   * hujjat havolasi esa faqat u ochiq boʻlganda koʻrsatiladi.
+   */
+  @Public()
+  @Get()
+  @ApiOperation({ summary: 'Xizmat haqida qisqa maʼlumot' })
+  root() {
+    return {
+      name: 'Karvon API',
+      status: 'ok',
+      api: `/${this.apiPrefix}`,
+      health: '/health',
+      ...(this.docsEnabled ? { docs: '/docs' } : {}),
+    };
+  }
 
   /**
    * Liveness: "jarayon tirikmi?" — hech qanday tashqi bogʻliqlikka tegmaydi.

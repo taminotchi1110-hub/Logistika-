@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 
-import { ValidationPipe } from '@nestjs/common';
+import { RequestMethod, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
@@ -57,8 +57,9 @@ async function bootstrap(): Promise<void> {
   });
 
   app.setGlobalPrefix(prefix, {
-    // Health-check'lar prefikssiz — orkestrator uchun barqaror manzil
-    exclude: ['health', 'health/ready'],
+    // Health-check'lar prefikssiz — orkestrator uchun barqaror manzil.
+    // `/` ham chetda: brauzerda ochilganda "Cannot GET /" emas, xizmat nomi
+    exclude: ['health', 'health/ready', { path: '/', method: RequestMethod.GET }],
   });
 
   app.useGlobalPipes(
