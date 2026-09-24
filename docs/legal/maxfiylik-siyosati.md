@@ -97,7 +97,9 @@ pulingiz himoyasi uchun.
 
 ## 7. Huquqlaringiz
 
-- ma'lumotlaringiz haqida bilish va nusxasini olish;
+- ma'lumotlaringiz haqida bilish va **nusxasini olish** — ilovada:
+  **Profil → Ma'lumotlarimni yuklab olish**. Fayl qurilmangizda
+  tayyorlanadi, uni qayerga saqlashni o'zingiz tanlaysiz;
 - noto'g'ri ma'lumotni tuzatish (ism — ilovada, **Profil → Ma'lumotlarim**);
 - hisobni va ma'lumotlarni o'chirish (6-bo'lim);
 - joylashuv va bildirishnoma ruxsatini qurilma sozlamalarida istalgan

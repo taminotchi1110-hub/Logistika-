@@ -86,7 +86,7 @@ jobs:
   #  Integratsiya testlari alohida ishda (ular API talab qiladi).
   # ------------------------------------------------------------------
   mobile:
-    name: Mobil (analyze, 348 test)
+    name: Mobil (analyze, 353 test)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -370,7 +370,7 @@ jobs:
   #  HAQIQATAN ishga tushadi.
   # ------------------------------------------------------------------
   integration:
-    name: Uchidan-uchiga (517 backend + 81 mobil)
+    name: Uchidan-uchiga (560 backend + 81 mobil)
     runs-on: ubuntu-latest
 
     # ISH DARAJASIDA, qadam darajasida emas.

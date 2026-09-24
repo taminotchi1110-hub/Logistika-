@@ -1,11 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/providers.dart';
+import '../data/data_export_service.dart';
 import '../data/profile_repository.dart';
 import '../domain/driver_readiness.dart';
 
 final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
   return ProfileRepository(ref.watch(apiClientProvider));
+});
+
+final dataExportServiceProvider = Provider<DataExportService>((ref) {
+  return DataExportService(ref.watch(profileRepositoryProvider));
 });
 
 /// Haydovchining tayyorligi.

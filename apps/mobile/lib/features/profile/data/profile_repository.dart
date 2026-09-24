@@ -85,6 +85,15 @@ class ProfileRepository {
     await _api.delete<dynamic>('/me/driver/routes/$id');
   }
 
+  /// "Ma'lumotlarimning nusxasi" — maxfiylik siyosatining 7-bo'limidagi huquq.
+  ///
+  /// Server tokenlarni, shifrlangan hujjat raqamlarini va ikkinchi
+  /// tomonning to'liq telefon raqamini kiritmaydi — fayl foydalanuvchi
+  /// qo'lidan chiqib ketsa ham ular bilan hech narsa qilib bo'lmaydi.
+  Future<Map<String, dynamic>> exportData() async {
+    return _api.get<Map<String, dynamic>>('/me/export');
+  }
+
   /// Hisobni butunlay o'chiradi (App Store va Google Play talabi).
   ///
   /// Server ochiq buyurtma, hamyon qoldig'i yoki kutilayotgan pul yechish

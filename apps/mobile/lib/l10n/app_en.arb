@@ -632,6 +632,13 @@
   "pushChannelOrders": "Orders",
   "pushChannelOrdersHint": "New loads, offers and order status",
 
+  "menuExportData": "Download my data",
+  "exportDataSubtitle": "Profile, orders, messages — in one file",
+  "exportDataTitle": "A copy of my data",
+  "exportDataBody": "Your profile, vehicles, loads and orders, messages and financial records are collected into a single JSON file. You choose where to save it — the app sends it nowhere.\n\nThe file contains personal data: do not pass it on to anyone else.",
+  "exportDataConfirm": "Prepare",
+  "exportDataPreparing": "Preparing…",
+  "exportDataSubject": "Karvon — a copy of my data",
   "menuDeleteAccount": "Delete account",
   "deleteAccountTitle": "Delete your account?",
   "deleteAccountBody": "This can't be undone. Your name, phone number, documents and addresses will be deleted, and your listings cancelled. Payment history is kept in anonymised form as required by law.\n\nYou can create a new account with the same number later.",

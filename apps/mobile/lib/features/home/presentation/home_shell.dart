@@ -284,6 +284,17 @@ class ProfileTab extends ConsumerWidget {
             onTap: () => _confirmLogout(context, ref),
           ),
           const Divider(),
+          // Maxfiylik siyosatining 7-bo'limidagi huquq — "ma'lumotlarim
+          // nusxasini olish". Pochta orqali so'rash ham mumkin, lekin
+          // o'zi bosib oladigan tugma bundan ancha tez
+          ListTile(
+            leading: const Icon(Icons.download_outlined),
+            title: Text(l10n.menuExportData),
+            subtitle: Text(l10n.exportDataSubtitle),
+            trailing: const Icon(Icons.chevron_right_rounded),
+            onTap: () => _exportData(context, ref),
+          ),
+          const Divider(),
           // Do'konlar talabi: hisob ochish mumkin bo'lgan ilovada uni
           // ilovaning o'zidan o'chirish ham mumkin bo'lishi shart
           ListTile(
@@ -406,6 +417,65 @@ class ProfileTab extends ConsumerWidget {
 
     if (confirmed ?? false) {
       await ref.read(authStateProvider.notifier).logout();
+    }
+  }
+
+  /// Ma'lumotlar nusxasini tayyorlash.
+  ///
+  /// Server o'nlab jadvalni o'qiydi — bir necha soniya ketishi mumkin,
+  /// shuning uchun kutish banneri ko'rsatiladi. Fayl tayyor bo'lgach
+  /// tizimning ulashish oynasi ochiladi va foydalanuvchi uni qayerga
+  /// saqlashni o'zi tanlaydi.
+  Future<void> _exportData(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.exportDataTitle),
+        content: Text(l10n.exportDataBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n.actionCancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l10n.exportDataConfirm),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(l10n.exportDataPreparing),
+        duration: const Duration(seconds: 30),
+      ),
+    );
+
+    // iPad ulashish oynasini qalqib chiquvchi qilib ochadi va uni
+    // qayerdan chiqarishni bilishi shart — busiz ilova yiqiladi
+    final box = context.findRenderObject() as RenderBox?;
+    final origin = box == null ? null : box.localToGlobal(Offset.zero) & box.size;
+
+    try {
+      await ref.read(dataExportServiceProvider).exportAndShare(
+            subject: l10n.exportDataSubject,
+            origin: origin,
+          );
+      messenger.hideCurrentSnackBar();
+    } on ApiException catch (error) {
+      messenger.hideCurrentSnackBar();
+      if (!context.mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(localizeError(context, error)),
+          backgroundColor: AppColors.danger,
+        ),
+      );
     }
   }
 

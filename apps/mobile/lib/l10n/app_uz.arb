@@ -794,6 +794,13 @@
   "pushChannelOrders": "Buyurtmalar",
   "pushChannelOrdersHint": "Yangi yuklar, takliflar va buyurtma holati",
 
+  "menuExportData": "Maʼlumotlarimni yuklab olish",
+  "exportDataSubtitle": "Profil, buyurtmalar, yozishmalar — bitta faylda",
+  "exportDataTitle": "Maʼlumotlarim nusxasi",
+  "exportDataBody": "Profilingiz, transportingiz, eʼlon va buyurtmalaringiz, yozishmalaringiz hamda moliyaviy yozuvlaringiz bitta JSON faylga yigʻiladi. Faylni qayerga saqlashni oʻzingiz tanlaysiz — ilova uni hech qayerga yubormaydi.\n\nFaylda shaxsiy maʼlumotlar bor: uni begonaga bermang.",
+  "exportDataConfirm": "Tayyorlash",
+  "exportDataPreparing": "Tayyorlanmoqda…",
+  "exportDataSubject": "Karvon — maʼlumotlarim nusxasi",
   "menuDeleteAccount": "Hisobni oʻchirish",
   "deleteAccountTitle": "Hisob oʻchirilsinmi?",
   "deleteAccountBody": "Bu amalni qaytarib boʻlmaydi. Ismingiz, raqamingiz, hujjatlaringiz va manzillaringiz oʻchiriladi, eʼlonlaringiz bekor qilinadi. Toʻlovlar tarixi qonun talabiga koʻra shaxssiz holda saqlanadi.\n\nKeyinroq shu raqam bilan yangi hisob ochishingiz mumkin.",

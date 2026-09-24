@@ -2,10 +2,11 @@ import { Body, Controller, Delete, Get, Param, Patch, Put } from '@nestjs/common
 import { ApiBearerAuth, ApiOperation, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
 import { IsIn, IsOptional, IsString, Length, MaxLength } from 'class-validator';
 
-import { CurrentUser, type AuthenticatedUser } from '@/common/decorators';
+import { CurrentUser, RateLimit, type AuthenticatedUser } from '@/common/decorators';
 import { maskPhone } from '@/common/utils/phone.util';
 
 import { AccountDeletionService } from './account-deletion.service';
+import { DataExportService } from './data-export.service';
 import { UsersService } from './users.service';
 
 export class UpdateProfileDto {
@@ -55,6 +56,7 @@ export class UsersController {
   constructor(
     private readonly users: UsersService,
     private readonly accountDeletion: AccountDeletionService,
+    private readonly dataExport: DataExportService,
   ) {}
 
   @Put('me/devices')
@@ -83,6 +85,22 @@ export class UsersController {
   async updateMe(@CurrentUser() current: AuthenticatedUser, @Body() dto: UpdateProfileDto) {
     const updated = await this.users.updateProfile(current.id, dto);
     return this.users.toPublicProfile(updated);
+  }
+
+  @Get('me/export')
+  @ApiBearerAuth()
+  // Qimmat soʻrov: oʻnlab jadval oʻqiladi. Kuniga bir necha marta yetarli
+  @RateLimit({ limit: 5, windowSeconds: 3600 })
+  @ApiOperation({
+    summary: 'Maʼlumotlarimning nusxasi',
+    description:
+      'Maxfiylik siyosatining 7-boʻlimidagi huquq: profil, transport, eʼlon va ' +
+      'buyurtmalar, yozishmalar, reytinglar, moliyaviy yozuvlar va kirish tarixi ' +
+      'bitta JSON faylda. Tokenlar, shifrlangan hujjat raqamlari va boshqa ' +
+      'tomonlarning toʻliq telefon raqamlari kirmaydi. Soatiga 5 marta.',
+  })
+  exportMe(@CurrentUser() current: AuthenticatedUser) {
+    return this.dataExport.exportUser(current.id);
   }
 
   @Delete('me')

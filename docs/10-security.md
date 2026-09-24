@@ -67,12 +67,12 @@ Bu tekshiruv **avtomatik testda** har bir endpoint uchun majburiy:
 | Qatlam | Chora | Holat |
 |---|---|---|
 | App — global guard | `HTTP_RATE_LIMIT_PER_MINUTE` (prodda 300): **tizimga kirganlar uchun foydalanuvchi**, qolganlar uchun IP bo'yicha. Oshsa 429 + `Retry-After` | ✅ `common/guards/http-rate-limit.guard.ts` |
-| App — qimmat endpointlar | Geo (tashqi geokoder, OSRM): qo'shimcha 30/min | ✅ `@RateLimit()` |
+| App — qimmat endpointlar | Geo (tashqi geokoder, OSRM): qo'shimcha 30/min; ma'lumot eksporti (`GET /me/export`, o'nlab jadval o'qiladi): 5/soat | ✅ `@RateLimit()` |
 | App — OTP | Raqam bo'yicha 60 s oraliq va soatiga 3 ta, IP bo'yicha kuniga N ta; kodga 5 urinish | ✅ `OtpService` |
 | Istisnolar | To'lov webhook'lari (Click/Payme javob olmasa qayta yuboradi) va `/health` cheklanmaydi | ✅ `@SkipRateLimit()` |
 | Fayl | Max 20 MB, ruxsat etilgan MIME ro'yxati; yuklangach hajm va tur S3 dan **qayta o'qiladi** | ✅ |
 | Caddy | So'rov tanasi 25 MB, TLS + HSTS | ✅ `deploy/Caddyfile` |
-| DB | Connection pool limiti ✅ · `statement_timeout` | ⏳ reja |
+| DB | Connection pool limiti · `statement_timeout` 10 s (uzoq so'rov butun poolni bo'g'masin) | ✅ `infra/database/database.service.ts` |
 | WebSocket | Hodisa chastotasi foydalanuvchi bo'yicha: `chat:message` 30/min, `location:update` 60/min, `chat:typing` 120/min va h.k. Ochiq soket HTTP limiti uchun bitta so'rov — undan keyingi hodisalarni u ko'rmaydi | ✅ `chat/ws-rate-limit.ts` |
 | Og'ir so'rovlar | Hisobotlar read-replica'dan, navbat orqali | ⏳ reja |
 
