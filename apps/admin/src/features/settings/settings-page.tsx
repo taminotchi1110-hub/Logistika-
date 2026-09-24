@@ -33,7 +33,9 @@ export interface Setting {
  * massiv). Matnni shunchaki satr sifatida yuborish sozlamani buzardi:
  * `0.05` oʻrniga `"0.05"` yozilsa, uni oʻqiydigan kod NaN oladi.
  */
-export function parseValue(input: string): { ok: true; value: unknown } | { ok: false; error: string } {
+export function parseValue(
+  input: string,
+): { ok: true; value: unknown } | { ok: false; error: string } {
   const trimmed = input.trim();
   if (trimmed === '') return { ok: false, error: 'Qiymat boʻsh boʻlishi mumkin emas' };
 
@@ -51,6 +53,108 @@ export function parseValue(input: string): { ok: true; value: unknown } | { ok: 
 /** Qiymatni tahrirlash uchun matnga — obyekt va massiv oʻqiladigan koʻrinishda. */
 export function formatValue(value: unknown): string {
   return JSON.stringify(value, null, typeof value === 'object' && value !== null ? 2 : 0);
+}
+
+export interface MaintenanceSummary {
+  partitions: string[];
+  expiredOffers: number;
+  expiredLoads: number;
+  autoCompletedOrders: number;
+  deletedOtpRequests: number;
+  deletedLoginHistory: number;
+  skipped: boolean;
+}
+
+/** Natijani odam o'qiydigan qatorlarga aylantiradi. */
+export function summaryLines(summary: MaintenanceSummary): string[] {
+  if (summary.skipped) {
+    return ['Boshqa nusxa shu ishni bajarayotgan edi — oʻtkazib yuborildi'];
+  }
+
+  return [
+    `Yakunlangan buyurtmalar: ${summary.autoCompletedOrders}`,
+    `Muddati oʻtgan takliflar: ${summary.expiredOffers}`,
+    `Muddati oʻtgan eʼlonlar: ${summary.expiredLoads}`,
+    `Yangi GPS boʻlinmalari: ${summary.partitions.length > 0 ? summary.partitions.join(', ') : 'yoʻq'}`,
+    `Tozalangan OTP soʻrovlari: ${summary.deletedOtpRequests}`,
+    `Tozalangan kirish tarixi: ${summary.deletedLoginHistory}`,
+  ];
+}
+
+/**
+ * Davriy texnik xizmatni QOʻLDA ishga tushirish.
+ *
+ * Odatda uni server oʻzi bajaradi (`MAINTENANCE_INTERVAL_MINUTES`).
+ * Bu tugma ikki holat uchun: server uzoq oʻchib turganidan keyin
+ * navbatni darhol tozalash va ishlayotganini tekshirish.
+ *
+ * ZARARSIZ, LEKIN BEFARQ EMAS: yetkazilgan buyurtmalar yakunlanadi va
+ * pul haydovchilarga oʻtadi. Shuning uchun tasdiqlash soʻraladi va
+ * natija audit jurnaliga yoziladi.
+ */
+export function MaintenanceCard() {
+  const { can } = useSession();
+  const [confirming, setConfirming] = useState(false);
+  const [summary, setSummary] = useState<MaintenanceSummary | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const run = useMutation({
+    mutationFn: () => api.post<MaintenanceSummary>('/admin/maintenance/run'),
+    onSuccess: (result) => {
+      setSummary(result);
+      setError(null);
+      setConfirming(false);
+    },
+    onError: (cause: unknown) => {
+      setError(cause instanceof ApiError ? cause.message : 'Ishga tushirib boʻlmadi');
+      setConfirming(false);
+    },
+  });
+
+  if (!can('maintenance.run')) return null;
+
+  return (
+    <Card className="mt-6">
+      <h2 className="font-semibold text-slate-900">Texnik xizmat</h2>
+      <p className="mt-1 text-sm text-slate-600">
+        Yetkazilgan buyurtmalarni yakunlaydi (pul haydovchiga oʻtadi), muddati oʻtgan taklif va
+        eʼlonlarni yopadi, GPS boʻlinmalarini tayyorlaydi, eski OTP va kirish tarixini tozalaydi.
+        Server buni oʻzi davriy bajaradi — bu tugma shoshilinch holat uchun.
+      </p>
+
+      {error ? (
+        <div className="mt-3">
+          <Alert>{error}</Alert>
+        </div>
+      ) : null}
+
+      {summary ? (
+        <ul className="mt-3 space-y-1 text-sm text-slate-700">
+          {summaryLines(summary).map((line) => (
+            <li key={line}>{line}</li>
+          ))}
+        </ul>
+      ) : null}
+
+      <div className="mt-3 flex items-center gap-2">
+        {confirming ? (
+          <>
+            <span className="text-sm text-slate-700">Ishga tushirilsinmi?</span>
+            <Button onClick={() => run.mutate()} loading={run.isPending}>
+              Ha, ishga tushirilsin
+            </Button>
+            <Button variant="ghost" onClick={() => setConfirming(false)} disabled={run.isPending}>
+              Bekor
+            </Button>
+          </>
+        ) : (
+          <Button variant="secondary" onClick={() => setConfirming(true)}>
+            Hozir ishga tushirish
+          </Button>
+        )}
+      </div>
+    </Card>
+  );
 }
 
 export function SettingsPage() {
@@ -177,6 +281,8 @@ export function SettingsPage() {
           ))}
         </ul>
       )}
+
+      <MaintenanceCard />
     </div>
   );
 }

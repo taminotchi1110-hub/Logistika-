@@ -57,7 +57,7 @@ jobs:
   #  Admin panel
   # ------------------------------------------------------------------
   admin:
-    name: Admin panel (lint, tsc, 188 test)
+    name: Admin panel (lint, tsc, 194 test)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

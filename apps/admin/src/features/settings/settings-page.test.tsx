@@ -6,7 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { SessionProvider } from '@/features/auth/session';
 import { writeToken } from '@/lib/token-store';
 
-import { formatValue, parseValue, SettingsPage } from './settings-page';
+import { formatValue, parseValue, SettingsPage, summaryLines } from './settings-page';
 
 /**
  * Sozlamalar.
@@ -67,7 +67,7 @@ const SETTINGS = [
   },
 ];
 
-function stubApi(options: { permissions?: string[] } = {}) {
+function stubApi(options: { permissions?: string[]; maintenance?: unknown } = {}) {
   const calls: { path: string; method: string; body: unknown }[] = [];
 
   vi.stubGlobal(
@@ -90,7 +90,17 @@ function stubApi(options: { permissions?: string[] } = {}) {
           }
         : path.startsWith('/admin/settings') && (init?.method ?? 'GET') === 'GET'
           ? SETTINGS
-          : { ok: true };
+          : path.startsWith('/admin/maintenance/run')
+            ? (options.maintenance ?? {
+                partitions: [],
+                expiredOffers: 0,
+                expiredLoads: 0,
+                autoCompletedOrders: 0,
+                deletedOtpRequests: 0,
+                deletedLoginHistory: 0,
+                skipped: false,
+              })
+            : { ok: true };
 
       const text = JSON.stringify(payload);
       return Promise.resolve({
@@ -180,5 +190,88 @@ describe('SettingsPage', () => {
 
     await screen.findByText('commission.default_rate');
     expect(screen.queryByRole('button', { name: 'Oʻzgartirish' })).toBeNull();
+  });
+});
+
+/**
+ * Texnik xizmat.
+ *
+ * ZARARSIZ, LEKIN BEFARQ EMAS: yetkazilgan buyurtmalar yakunlanadi va
+ * pul haydovchilarga oʻtadi. Tasodifan bosilishi mumkin boʻlmasligi kerak.
+ */
+describe('summaryLines', () => {
+  const summary = {
+    partitions: ['driver_locations_2026_10'],
+    expiredOffers: 4,
+    expiredLoads: 2,
+    autoCompletedOrders: 7,
+    deletedOtpRequests: 100,
+    deletedLoginHistory: 50,
+    skipped: false,
+  };
+
+  it('har bir qadam natijasi koʻrsatiladi', () => {
+    const lines = summaryLines(summary);
+    expect(lines.join('\n')).toContain('Yakunlangan buyurtmalar: 7');
+    expect(lines.join('\n')).toContain('driver_locations_2026_10');
+  });
+
+  it('boʻlinma yaratilmasa — "yoʻq"', () => {
+    expect(summaryLines({ ...summary, partitions: [] }).join('\n')).toContain(
+      'Yangi GPS boʻlinmalari: yoʻq',
+    );
+  });
+
+  it('★ OʻTKAZIB YUBORILGANI YASHIRILMAYDI', () => {
+    // Aks holda admin "0 ta yakunlandi" ni koʻrib ish bajarildi deb
+    // oʻylaydi — aslida uni boshqa nusxa qulflab turgan edi
+    expect(summaryLines({ ...summary, skipped: true })).toEqual([
+      'Boshqa nusxa shu ishni bajarayotgan edi — oʻtkazib yuborildi',
+    ]);
+  });
+});
+
+describe('MaintenanceCard', () => {
+  it('★ BIR BOSISHDA ISHGA TUSHMAYDI', async () => {
+    const calls = stubApi();
+    renderSettings();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Hozir ishga tushirish' }));
+    // Birinchi bosish faqat tasdiq soʻraydi: pul koʻchishi mumkin
+    expect(calls.some((call) => call.path === '/admin/maintenance/run')).toBe(false);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Ha, ishga tushirilsin' }));
+    await waitFor(() => {
+      const call = calls.find((item) => item.path === '/admin/maintenance/run');
+      expect(call?.method).toBe('POST');
+    });
+  });
+
+  it('natija roʻyxati koʻrsatiladi', async () => {
+    stubApi({
+      maintenance: {
+        partitions: [],
+        expiredOffers: 1,
+        expiredLoads: 0,
+        autoCompletedOrders: 3,
+        deletedOtpRequests: 9,
+        deletedLoginHistory: 0,
+        skipped: false,
+      },
+    });
+    renderSettings();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Hozir ishga tushirish' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Ha, ishga tushirilsin' }));
+
+    expect(await screen.findByText('Yakunlangan buyurtmalar: 3')).toBeInTheDocument();
+  });
+
+  it('★ HUQUQSIZ ADMINGA TUGMA KOʻRINMAYDI', async () => {
+    stubApi({ permissions: ['settings.view'] });
+    renderSettings();
+
+    await screen.findByText('commission.default_rate');
+    expect(screen.queryByRole('button', { name: 'Hozir ishga tushirish' })).toBeNull();
   });
 });

@@ -330,7 +330,9 @@ konteyner birga tirik bo'ladi. Redis ishlamay qolsa qadam o'tkazib yuboriladi
 va API to'xtamaydi.
 
 **Qo'lda ishga tushirish** — server uzoq to'xtab turgandan keyin (navbat
-to'planib qolganda):
+to'planib qolganda). Admin panelda: **Sozlamalar → Texnik xizmat → Hozir
+ishga tushirish** (tasdiqlash so'raladi, natija ekranda ko'rsatiladi).
+API orqali:
 
 ```bash
 curl -X POST https://api.karvon.uz/v1/admin/maintenance/run \

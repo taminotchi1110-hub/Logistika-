@@ -103,6 +103,8 @@ moliyaviy natija (kimga qancha).
 - Bildirishnoma shablonlari (3 tilda, o'zgaruvchilar bilan)
 - Spravochniklar CRUD (viloyat, transport turi, kategoriya)
 - Feature flags (yangi funksiyani foydalanuvchilarning 10% ga yoqish)
+- **Texnik xizmat** — davriy ishlarni qo'lda ishga tushirish tugmasi
+  (`maintenance.run` huquqi, tasdiqlash bilan; docs/19-deploy.md, 19.11)
 
 ### Audit log
 Har bir admin harakati: kim, nima, qachon, IP, before/after JSON diff.
