@@ -99,13 +99,29 @@ jobs:
       - run: flutter pub get
         working-directory: apps/mobile
 
+      # Xato SABABI annotatsiyaga chiqadi. Actions loglarini koʻrish uchun
+      # GitHub'ga kirish kerak, annotatsiya esa ish sahifasining tepasida
+      # hammaga ochiq turadi — aks holda "exit code 1" dan boshqa hech
+      # narsa koʻrinmaydi va sababni taxmin qilishga toʻgʻri keladi
       - name: Analiz
-        run: flutter analyze
         working-directory: apps/mobile
+        run: |
+          set -o pipefail
+          if ! flutter analyze | tee analyze.txt; then
+            grep -E '^\s+(error|warning|info) -' analyze.txt | head -20 \
+              | while IFS= read -r line; do echo "::error::$line"; done
+            exit 1
+          fi
 
       - name: Unit va widget testlar
-        run: flutter test
         working-directory: apps/mobile
+        run: |
+          set -o pipefail
+          if ! flutter test | tee test.txt; then
+            grep -E '\[E\]|^Error|Expected:|Actual:' test.txt | head -20 \
+              | while IFS= read -r line; do echo "::error::$line"; done
+            exit 1
+          fi
 
   # ------------------------------------------------------------------
   #  Android reliz yigʻishi. Gradle sozlamasi (ruxsatlar, desugaring,

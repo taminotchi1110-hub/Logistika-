@@ -47,7 +47,8 @@ void main() {
 
     test('oʻzbekcha harflar buzilmaydi', () {
       final text = DataExportService.encode({'title': 'Yuk — Toshkentdan Samarqandga'});
-      expect(jsonDecode(text)['title'], 'Yuk — Toshkentdan Samarqandga');
+      final decoded = jsonDecode(text) as Map<String, dynamic>;
+      expect(decoded['title'], 'Yuk — Toshkentdan Samarqandga');
     });
   });
 
@@ -83,7 +84,8 @@ void main() {
       );
 
       expect(savedName, 'karvon-malumotlarim-2026-09-23.json');
-      expect(jsonDecode(savedBody!)['meta']['format'], 'karvon-export-v1');
+      final saved = jsonDecode(savedBody!) as Map<String, dynamic>;
+      expect((saved['meta'] as Map<String, dynamic>)['format'], 'karvon-export-v1');
       expect(path, '/kesh/karvon-malumotlarim-2026-09-23.json');
       expect(sharedPath, path);
       expect(sharedSubject, 'Karvon — maʼlumotlarim');
