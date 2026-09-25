@@ -35,7 +35,9 @@
 | `.env.production.example` | Sozlamalar namunasi (`.env.production` — gitda yo'q) |
 | `apps/api/Dockerfile`, `apps/admin/Dockerfile` | Tasvirlar (CI har push'da yig'ib sinaydi) |
 | `scripts/deploy.sh` · `rollback.sh` | Chiqarish va qaytarish |
-| `scripts/backup-db.sh` · `restore-db.sh` | Zaxira va tiklash |
+| `scripts/backup-db.sh` · `restore-db.sh` | Baza zaxirasi va tiklash |
+| `scripts/backup-files.sh` · `restore-files.sh` | Fayl ombori zaxirasi va tiklash |
+| `deploy/backup-loop.sh` | Kunlik zaxira sikli (ikkala nusxa uchun) |
 | `scripts/osrm-prepare.sh` | Marshrut ma'lumotlari |
 | `scripts/generate-secrets.sh` | Maxfiy qiymatlar |
 
@@ -126,7 +128,8 @@ sudo apt install -y unattended-upgrades fail2ban
    - [ ] Admin panelga kirish (parol + TOTP)
    - [ ] Haqiqiy raqamga SMS kod keladi
    - [ ] Mobil ilovada ro'yxatdan o'tish, yuk e'loni, hujjat yuklash
-   - [ ] `backups/` da ertasi kuni zaxira fayli paydo bo'ldi
+   - [ ] `backups/` da ertasi kuni baza zaxirasi (`karvon-*.dump`) va
+         `backups/files/` papkasi paydo bo'ldi
 
 ## 19.4 Yangilash
 
@@ -178,22 +181,30 @@ kunlik nusxa (masalan `rclone`), shifrlangan holda:
 30 3 * * * rclone copy /opt/karvon/backups remote:karvon-backups --max-age 26h
 ```
 
-**Fayllar (S3 ombori)** — hujjatlar va rasmlar bazada emas. Server ichidagi
-papkaga nusxa (so'ng `rclone` bilan tashqariga — yuqoridagidek). Kalitlar
-ombor konteyneridan olinadi, buyruq qatoriga yozilmaydi:
+**Fayllar (S3 ombori) — alohida xizmat.** Hujjat suratlari, avatarlar va
+POD fotolari bazada yo'q: `*.dump` dan tiklangan platformada hujjat yozuvi
+bor, surati yo'q bo'lardi. `backup-files` xizmati har kuni 03:00
+(Toshkent) da omborni `backups/files/` ga sinxronlaydi — faqat o'zgargan
+obyektlar ko'chiriladi, shuning uchun kunlik nusxa soniyalar oladi.
+
+Nusxa ombor **ko'zgusi**: hisobi o'chirilgan odamning hujjati zaxirada ham
+qolmaydi (maxfiylik siyosati talabi). Ombor javob bermay ro'yxat bo'sh
+kelsa, sinxronlash `ERROR` bilan to'xtaydi va eski nusxa saqlanib qoladi —
+aks holda ko'zgu butun zaxirani o'chirib yuborardi, aynan eng kerak paytda.
+
 ```bash
-cd /opt/karvon
-s3env() { docker compose --env-file .env.production -f docker-compose.prod.yml exec -T s3 printenv "$1"; }
-export AWS_ACCESS_KEY_ID="$(s3env S3_ACCESS_KEY)" AWS_SECRET_ACCESS_KEY="$(s3env S3_SECRET_KEY)"
-docker run --rm --network karvon_default -v /opt/karvon/backups/files:/out \
-  -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_DEFAULT_REGION=us-east-1 \
-  amazon/aws-cli:2.36.44 --endpoint-url http://s3:8333 s3 sync s3://karvon /out
+# qo'lda
+docker compose --env-file .env.production -f docker-compose.prod.yml \
+  exec backup-files sh /scripts/backup-files.sh
 ```
 
 **Tiklash:**
 ```bash
 bash scripts/restore-db.sh backups/karvon-20260912-210000.dump
+bash scripts/restore-files.sh backups/files
 ```
+Ikkalasi BIRGA: faqat baza tiklansa hujjat suratlari yo'qolgan bo'lib
+qoladi va haydovchilar qaytadan verifikatsiyadan o'tishi kerak bo'ladi.
 
 **Tiklash mashqi — oyiga bir marta.** Tekshirilmagan zaxira — umid, reja
 emas. Vaqtinchalik konteynerga tiklab, jadvallar sonini solishtiring:
@@ -215,7 +226,8 @@ docker rm -f restore-test
 | Xizmatlar holati | `docker compose ... ps` |
 | Loglar | `docker compose ... logs -f --tail=100 api` (JSON, pino) |
 | Disk | 80% dan oshsa ogohlantirish: `df -h`, `docker system df` |
-| Zaxira | eng oxirgi `backups/*.dump` 26 soatdan yosh bo'lishi kerak |
+| Zaxira (baza) | eng oxirgi `backups/*.dump` 26 soatdan yosh bo'lishi kerak |
+| Zaxira (fayllar) | `backups/files-last-sync.txt` 26 soatdan yosh bo'lishi kerak |
 
 ## 19.8 Nosozliklar — nima qilish kerak
 

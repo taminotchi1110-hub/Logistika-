@@ -6,10 +6,19 @@
 # `docker compose logs backup` da ko'rinadi.
 #
 # 21:00 UTC = 02:00 Toshkent — eng kam yuklama payti.
+#
+# Bajariladigan ish ARGUMENT bilan beriladi:
+#   sh backup-loop.sh bash /scripts/backup-db.sh      (baza)
+#   sh backup-loop.sh sh   /scripts/backup-files.sh   (fayllar)
+# Ikkala nusxa alohida konteynerda ishlaydi: `pg_dump` bazaning o'z
+# tasvirini, `aws s3 sync` esa AWS CLI tasvirini talab qiladi.
 
 set -eu
 
 target=${BACKUP_HOUR_UTC:-21}
+
+# Argumentsiz chaqirilsa — baza (eski xatti-harakat)
+[ "$#" -gt 0 ] || set -- bash /scripts/backup-db.sh
 
 while true; do
   now=$(date -u +%s)
@@ -22,5 +31,5 @@ while true; do
 
   # Yiqilsa ham sikl davom etadi: bir kungi xato keyingi kunlarni to'xtatmasin.
   # Xabar logga ERROR bilan chiqadi — monitoring shuni ushlaydi
-  bash /scripts/backup-db.sh || echo "ERROR: zaxira nusxa olinmadi" >&2
+  "$@" || echo "ERROR: zaxira nusxa olinmadi" >&2
 done

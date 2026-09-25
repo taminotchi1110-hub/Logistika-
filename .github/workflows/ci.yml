@@ -170,7 +170,8 @@ jobs:
         run: |
           shellcheck -S warning \
             scripts/deploy.sh scripts/rollback.sh scripts/backup-db.sh \
-            scripts/restore-db.sh scripts/osrm-prepare.sh scripts/generate-secrets.sh \
+            scripts/restore-db.sh scripts/backup-files.sh scripts/restore-files.sh \
+            scripts/osrm-prepare.sh scripts/generate-secrets.sh \
             deploy/backup-loop.sh deploy/s3-start.sh
 
       - name: Prod compose sintaksisi
@@ -188,7 +189,46 @@ jobs:
             compose logs s3 | tail -40
             exit 1
           fi
+
+      - name: Prod compose — fayllar zaxirasi haqiqatan olinadi
+        # Zaxira skripti yiliga bir marta kerak boʻladi va aynan oʻsha kun
+        # ishlamasligi — eng yomon xabar. Shuning uchun bu yerda toʻliq
+        # sinaladi: omborga fayl yoziladi, nusxa olinadi, nusxada oʻsha
+        # fayl borligi tekshiriladi. Soʻng BOʻSH OMBOR himoyasi: roʻyxat
+        # boʻsh kelsa skript toʻxtaydi va eski nusxa saqlanib qoladi
+        run: |
+          compose() { docker compose --env-file .env.production -f docker-compose.prod.yml "$@"; }
+          compose run --rm --entrypoint sh backup-files -c '
+            set -eu
+            # Ombor sogʻliq tekshiruvidan oʻtgan boʻlsa ham S3 qatlami bir
+            # necha soniya kechikadi — `scripts/deploy.sh` dagi kabi kutamiz
+            ready=false
+            for _ in $(seq 1 30); do
+              if aws --endpoint-url "$S3_ENDPOINT" s3api head-bucket --bucket "$S3_BUCKET" >/dev/null 2>&1 \
+                || aws --endpoint-url "$S3_ENDPOINT" s3api create-bucket --bucket "$S3_BUCKET" >/dev/null 2>&1; then
+                ready=true
+                break
+              fi
+              sleep 2
+            done
+            [ "$ready" = true ]
+
+            echo salom >/tmp/t.txt
+            aws --endpoint-url "$S3_ENDPOINT" s3 cp /tmp/t.txt "s3://$S3_BUCKET/hujjat/t.txt"
+
+            sh /scripts/backup-files.sh
+            test -f /backups/files/hujjat/t.txt
+            test -s /backups/files-last-sync.txt
+
+            aws --endpoint-url "$S3_ENDPOINT" s3 rm "s3://$S3_BUCKET/hujjat/t.txt"
+            if sh /scripts/backup-files.sh; then
+              echo "XATO: boʻsh ombor sinxronlashni toʻxtatmadi" >&2
+              exit 1
+            fi
+            test -f /backups/files/hujjat/t.txt
+          '
           compose down -v
+          sudo rm -rf backups
 
       - uses: docker/setup-buildx-action@v3
 

@@ -182,7 +182,7 @@ services:
     <<: *defaults
     # pg_dump bazaning O'Z versiyasida — boshqa versiya formatni o'qimasligi mumkin
     image: postgis/postgis:16-3.4
-    entrypoint: ['sh', '/scripts/backup-loop.sh']
+    entrypoint: ['sh', '/scripts/backup-loop.sh', 'bash', '/scripts/backup-db.sh']
     environment:
       PGHOST: postgres
       PGUSER: ${POSTGRES_USER}
@@ -197,6 +197,31 @@ services:
       - ./deploy/backup-loop.sh:/scripts/backup-loop.sh:ro
     depends_on:
       postgres:
+        condition: service_healthy
+
+  backup-files:
+    <<: *defaults
+    # Hujjat suratlari, avatarlar va POD fotolari bazada emas — ular
+    # alohida nusxalanadi. Tasvir AWS CLI uchun: `aws s3 sync` obyektlarni
+    # S3 API orqali o'qiydi va faqat o'zgarganini ko'chiradi
+    image: amazon/aws-cli:2.36.44
+    entrypoint: ['sh', '/scripts/backup-loop.sh', 'sh', '/scripts/backup-files.sh']
+    environment:
+      AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY}
+      AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY}
+      # SeaweedFS mintaqani tekshirmaydi, lekin AWS CLI usiz imzo tuzmaydi
+      AWS_DEFAULT_REGION: us-east-1
+      S3_BUCKET: ${S3_BUCKET}
+      S3_ENDPOINT: http://s3:8333
+      BACKUP_DIR: /backups/files
+      # Bazadan bir soat keyin: ikkalasi bir vaqtda diskni bo'g'masin
+      BACKUP_HOUR_UTC: ${BACKUP_FILES_HOUR_UTC:-22}
+    volumes:
+      - ./backups:/backups
+      - ./scripts/backup-files.sh:/scripts/backup-files.sh:ro
+      - ./deploy/backup-loop.sh:/scripts/backup-loop.sh:ro
+    depends_on:
+      s3:
         condition: service_healthy
 
 volumes:
