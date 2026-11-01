@@ -56,7 +56,7 @@ dependencies:
   flutter_local_notifications: ^17.2.3
 
   # --- fayl va rasm ---
-  image_picker: ^1.1.2
+  image_picker: ^1.2.4
   cached_network_image: ^3.4.1
 
   # --- foydali ---
